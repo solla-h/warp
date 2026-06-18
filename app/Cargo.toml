@@ -461,6 +461,11 @@ embed-resource = "3.0"
 
 # Note that we support channel-specific enables for these features
 [features]
+# Build Warp without any dependency on its cloud backend (no Warp server, no
+# Drive sync, no hosted Oz agent, no telemetry). When enabled, the OSS binary
+# injects NoOp cloud clients and a no-login path so the app runs fully local.
+# Off by default to keep the existing cloud-backed build unchanged.
+local-only = []
 ai_resume_button = []
 autoupdate = []
 figma_detection = []

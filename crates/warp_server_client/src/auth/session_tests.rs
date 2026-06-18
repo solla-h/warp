@@ -65,3 +65,31 @@ fn api_key_exchange_defers_owner_type_until_user_properties_are_fetched() {
         } if key == "api-key"
     ));
 }
+
+#[cfg(any(feature = "skip_login", feature = "integration_tests"))]
+#[test]
+fn test_credentials_yield_no_auth_token() {
+    // In skip_login / local-only builds, AuthState is initialized with
+    // Credentials::Test, which must resolve to AuthToken::NoAuth rather than
+    // an error, so local-first builds run without a backend.
+    let auth_state = Arc::new(AuthState::new_logged_out_for_test());
+    auth_state.set_credentials(Some(Credentials::Test));
+    let (session, _) = session_with_state(auth_state);
+
+    let token = block_on(session.get_or_refresh_access_token()).unwrap();
+
+    assert!(matches!(token, AuthToken::NoAuth));
+}
+
+#[test]
+fn session_cookie_credentials_yield_no_auth_token() {
+    // SessionCookie always resolves to NoAuth; this guards the non-erroring
+    // fall-through path introduced for local-only/no-credential sessions.
+    let auth_state = Arc::new(AuthState::new_logged_out_for_test());
+    auth_state.set_credentials(Some(Credentials::SessionCookie));
+    let (session, _) = session_with_state(auth_state);
+
+    let token = block_on(session.get_or_refresh_access_token()).unwrap();
+
+    assert!(matches!(token, AuthToken::NoAuth));
+}

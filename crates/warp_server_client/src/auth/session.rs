@@ -95,11 +95,16 @@ impl AuthSession {
     }
 
     pub async fn get_or_refresh_access_token(&self) -> Result<AuthToken> {
-        if cfg!(feature = "skip_login") {
-            bail!("skip_login enabled; failing all authenticated requests");
-        }
-
+        // In skip_login / local-only builds, AuthState is initialized with
+        // `Credentials::Test` (see AuthState::initialize), which maps to
+        // `AuthToken::NoAuth` below. Falling through to the normal credential
+        // match (instead of bailing) lets local-first builds run without a
+        // backend: every authenticated request simply carries no credential,
+        // and cloud-facing code fails to connect rather than short-circuiting.
         let Some(credentials) = self.auth_state.credentials() else {
+            if cfg!(feature = "skip_login") {
+                return Ok(AuthToken::NoAuth);
+            }
             bail!("missing authentication credentials");
         };
 
