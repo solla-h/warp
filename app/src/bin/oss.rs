@@ -3,23 +3,16 @@
 #![cfg_attr(feature = "release_bundle", windows_subsystem = "windows")]
 
 use anyhow::Result;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, OzConfig, WarpServerConfig};
+use warp_core::channel::{Channel, ChannelConfig, ChannelState};
 use warp_core::AppId;
 
 // Simple wrapper around warp::run() for Warp OSS builds.
 fn main() -> Result<()> {
     let mut state = ChannelState::new(
         Channel::Oss,
-        ChannelConfig {
-            app_id: AppId::new("dev", "warp", "WarpOss"),
-            logfile_name: "warp-oss.log".into(),
-            server_config: WarpServerConfig::production(),
-            oz_config: OzConfig::production(),
-            telemetry_config: None,
-            crash_reporting_config: None,
-            autoupdate_config: None,
-            mcp_static_config: None,
-        },
+        // OSS builds are local-first: they never talk to Warp's cloud. All server
+        // endpoints point at loopback, and telemetry/crash/autoupdate are disabled.
+        ChannelConfig::local_only(AppId::new("dev", "warp", "WarpOss"), "warp-oss.log"),
     );
     if cfg!(debug_assertions) {
         state = state.with_additional_features(warp_core::features::DEBUG_FLAGS);

@@ -11,6 +11,12 @@ use uuid::Uuid;
 
 use crate::{JsonModel, JsonSerializer};
 
+// The local MCP transport types (how a server is reached: CLI subprocess or
+// SSE endpoint) live in the dependency-light `mcp_types` crate so the local MCP
+// runtime can use them without pulling in cloud machinery. Re-export them here
+// for backward compatibility with existing `cloud_object_models` consumers.
+pub use mcp_types::{CLIServer, ServerSentEvents, StaticEnvVar, StaticHeader, TransportType};
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JSONMCPServer {
     #[serde(flatten)]
@@ -53,48 +59,6 @@ pub enum MCPServerState {
     Running,
     ShuttingDown,
     FailedToStart,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TransportType {
-    CLIServer(CLIServer),
-    ServerSentEvents(ServerSentEvents),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct CLIServer {
-    pub command: String,
-    #[serde(default)]
-    pub args: Vec<String>,
-    pub cwd_parameter: Option<String>,
-    /// Static env vars added via editor inputs.
-    pub static_env_vars: Vec<StaticEnvVar>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StaticEnvVar {
-    pub name: String,
-    /// To avoid leaking environment variables, we ensure that values are not
-    /// serialized before being sent to our servers
-    #[serde(skip_serializing, default)]
-    pub value: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct StaticHeader {
-    pub name: String,
-    /// To avoid leaking header values (which may contain secrets), we ensure that values are not
-    /// serialized before being sent to our servers
-    #[serde(skip_serializing, default)]
-    pub value: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ServerSentEvents {
-    pub url: String,
-    /// Static headers added via editor inputs.
-    #[serde(default)]
-    pub headers: Vec<StaticHeader>,
 }
 
 impl JsonModel for MCPServer {

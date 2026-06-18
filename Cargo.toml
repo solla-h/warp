@@ -3,6 +3,12 @@ members = [
   "crates/*",
   "app",
 ]
+exclude = [
+  # serve-wasm is a helper for serving web (wasm) builds, which a local-first
+  # desktop build does not use. Excluding it keeps it out of the workspace so it
+  # isn't scanned or compiled. (The directory is retained in git.)
+  "crates/serve-wasm",
+]
 resolver = "2"
 
 # Include all members except serve-wasm (since it's a helper helper for serving
@@ -13,7 +19,6 @@ default-members = [
   "crates/channel_versions",
   "crates/command",
   "crates/editor",
-  "crates/graphql",
   "crates/markdown_parser",
   "crates/sum_tree",
   "crates/warpui",
@@ -56,6 +61,7 @@ local_control = { path = "crates/local_control" }
 lsp = { path = "crates/lsp" }
 markdown_parser = { path = "crates/markdown_parser" }
 mcp = { path = "crates/mcp" }
+mcp_types = { path = "crates/mcp_types" }
 natural_language_detection = { path = "crates/natural_language_detection" }
 node_runtime = { path = "crates/node_runtime" }
 onboarding = { path = "crates/onboarding" }

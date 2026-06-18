@@ -69,3 +69,6 @@ __pycache__/
 
 # Project notes
 .note/
+
+# Code-graph index (tool-generated SQLite index, large; not source).
+.codegraph/

@@ -2876,6 +2876,7 @@ dependencies = [
  "handlebars",
  "lazy_static",
  "log",
+ "mcp_types",
  "persistence",
  "regex",
  "schemars",
@@ -6294,12 +6295,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-range-header"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ce4ef31cda248bbdb6e6820603b82dfcd9e833db65a43e997a0ccec777d11fe"
-
-[[package]]
 name = "http_client"
 version = "0.0.0"
 dependencies = [
@@ -7941,10 +7936,10 @@ dependencies = [
  "async-channel",
  "async-trait",
  "cfg-if",
- "cloud_object_models",
  "futures",
  "http 1.4.0",
  "log",
+ "mcp_types",
  "oauth2",
  "pin-project-lite",
  "reqwest",
@@ -7962,6 +7957,13 @@ dependencies = [
  "warpui",
  "warpui_extras",
  "windows 0.62.2",
+]
+
+[[package]]
+name = "mcp_types"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -12104,20 +12106,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serve-wasm"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-extra",
- "clap",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "session-sharing-protocol"
 version = "0.0.0"
 source = "git+https://github.com/warpdotdev/session-sharing-protocol.git?rev=b30fdd06379a3d073b398eabd106abed5b443aae#b30fdd06379a3d073b398eabd106abed5b443aae"
@@ -13737,12 +13725,7 @@ dependencies = [
  "http 1.4.0",
  "http-body 1.0.1",
  "http-body-util",
- "http-range-header",
- "httpdate",
  "iri-string",
- "mime",
- "mime_guess",
- "percent-encoding",
  "pin-project-lite",
  "tokio",
  "tokio-util",

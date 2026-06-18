@@ -7,7 +7,7 @@ use warp_core::features::FeatureFlag;
 use warp_core::register_telemetry_event;
 use warp_core::telemetry::{EnablementState, TelemetryEvent, TelemetryEventDesc};
 
-#[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
+#[cfg_attr(any(not(feature = "local_fs"), not(feature = "full_source_code_embedding")), allow(dead_code))]
 #[derive(Clone, EnumDiscriminants)]
 #[strum_discriminants(derive(EnumIter))]
 pub enum AITelemetryEvent {
@@ -44,7 +44,7 @@ pub enum AITelemetryEvent {
     },
 }
 
-#[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
+#[cfg_attr(any(not(feature = "local_fs"), not(feature = "full_source_code_embedding")), allow(dead_code))]
 #[derive(Clone, Serialize)]
 pub enum CodebaseContextSyncType {
     Full,

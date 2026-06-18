@@ -10,10 +10,10 @@ anyhow.workspace = true
 async-channel.workspace = true
 async-trait.workspace = true
 cfg-if.workspace = true
-cloud_object_models.workspace = true
 futures.workspace = true
 http = "1"
 log.workspace = true
+mcp_types.workspace = true
 oauth2.workspace = true
 pin-project-lite = "0.2"
 reqwest = { workspace = true, features = ["json", "stream"] }

@@ -27,6 +27,30 @@ pub struct ChannelConfig {
     pub mcp_static_config: Option<McpStaticConfig>,
 }
 
+impl ChannelConfig {
+    /// Configuration for a local-first build of Warp.
+    ///
+    /// This is the foundation for a build that has no dependency on Warp's cloud:
+    ///
+    /// - All server endpoints point at loopback (see [`WarpServerConfig::local_only`]),
+    ///   so any cloud-facing request fails to connect rather than reaching Warp.
+    /// - The hosted Oz (ambient agent) service is disabled ([`OzConfig::local_only`]).
+    /// - Telemetry, autoupdate, crash reporting, and static MCP OAuth credentials are
+    ///   all `None`, so none of those subsystems start.
+    pub fn local_only(app_id: AppId, logfile_name: &'static str) -> Self {
+        Self {
+            app_id,
+            logfile_name: logfile_name.into(),
+            server_config: WarpServerConfig::local_only(),
+            oz_config: OzConfig::local_only(),
+            telemetry_config: None,
+            autoupdate_config: None,
+            crash_reporting_config: None,
+            mcp_static_config: None,
+        }
+    }
+}
+
 /// Configuration for GCP Identity-Aware Proxy authentication, present only on staging builds.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct IapConfig {
@@ -63,6 +87,23 @@ impl WarpServerConfig {
             iap_config: None,
         }
     }
+
+    /// Configuration for a local-first build that talks to no remote server.
+    ///
+    /// Every endpoint points at loopback on port 0 (which accepts no connections),
+    /// session sharing is disabled, and the Firebase key is blank. Any cloud-facing
+    /// code that consults these URLs will fail to connect rather than reach Warp's
+    /// servers. Combined with [`ChannelConfig::local_only`], this makes a binary
+    /// fully self-contained with no dependency on Warp's cloud.
+    pub fn local_only() -> Self {
+        Self {
+            server_root_url: "http://localhost:0".into(),
+            rtc_server_url: "ws://localhost:0".into(),
+            session_sharing_server_url: None,
+            firebase_auth_api_key: "".into(),
+            iap_config: None,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -80,6 +121,19 @@ impl OzConfig {
     pub fn production() -> Self {
         Self {
             oz_root_url: "https://oz.warp.dev".into(),
+            workload_audience_url: None,
+        }
+    }
+
+    /// Disables the cloud-hosted Oz (ambient agent) service by pointing it at loopback.
+    ///
+    /// A local-first build never uses the hosted Oz agent; local CLI harnesses
+    /// (Claude Code, Codex, Gemini, ...) take its place. Pointing the URL at
+    /// loopback ensures any stray Oz request fails to connect rather than reaching
+    /// Warp's servers.
+    pub fn local_only() -> Self {
+        Self {
+            oz_root_url: "http://localhost:0".into(),
             workload_audience_url: None,
         }
     }
@@ -156,3 +210,7 @@ pub struct McpOAuthProviderConfig {
     /// The OAuth client secret registered for this channel.
     pub client_secret: Cow<'static, str>,
 }
+
+#[cfg(all(test, not(feature = "test-util")))]
+#[path = "config_tests.rs"]
+mod tests;
