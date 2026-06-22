@@ -40,6 +40,7 @@ pub use secrets::AgentProviderSecrets;
 
 use std::collections::HashMap;
 
+use ai::api_keys::ApiKeyManager;
 use settings::Setting;
 use warpui::{AppContext, SingletonEntity};
 
@@ -47,7 +48,7 @@ use crate::ai::llms::{
     AvailableLLMs, DisableReason, LLMContextWindow, LLMInfo, LLMProvider, LLMUsageMetadata,
     ModelsByFeature,
 };
-use crate::settings::{AISettings, AgentProvider};
+use crate::settings::{AISettings, AgentProvider, AgentProviderModel};
 
 /// 合成给定 provider 的所有合法 (provider, model) 对的 LLMInfo 列表。
 ///
@@ -57,7 +58,8 @@ use crate::settings::{AISettings, AgentProvider};
 /// 不合法的 provider(没填 base_url 或没模型)会整体被忽略,picker 中不展示其下的模型,
 /// 这样用户能直观地看到"哪些 provider 没填全 → 没出现"。
 fn build_byop_llm_infos(app: &AppContext) -> Vec<LLMInfo> {
-    let providers = AISettings::as_ref(app).agent_providers.value().clone();
+    let mut providers = AISettings::as_ref(app).agent_providers.value().clone();
+    providers.extend(custom_endpoints_as_providers(app).into_iter().map(|(p, _)| p));
     let mut out = Vec::new();
 
     for provider in providers {
@@ -166,12 +168,52 @@ pub fn build_byop_models_by_feature(app: &AppContext) -> ModelsByFeature {
 pub fn lookup_byop(app: &AppContext, id: &ai::LLMId) -> Option<(AgentProvider, String, String)> {
     let (provider_id, model_id) = llm_id::decode(id)?;
     let providers = AISettings::as_ref(app).agent_providers.value().clone();
-    let provider = providers.into_iter().find(|p| p.id == provider_id)?;
-    // API key 可选:无 key 时返回空字符串,下游 build_client 会传给 genai
-    // `AuthData::from_single("")` —— 不附带 `Authorization`,适配 ollama 等本地无认证服务。
-    let api_key = AgentProviderSecrets::as_ref(app)
-        .get(&provider_id)
-        .map(str::to_owned)
-        .unwrap_or_default();
-    Some((provider, api_key, model_id))
+    if let Some(provider) = providers.into_iter().find(|p| p.id == provider_id) {
+        let api_key = AgentProviderSecrets::as_ref(app)
+            .get(&provider_id)
+            .map(str::to_owned)
+            .unwrap_or_default();
+        return Some((provider, api_key, model_id));
+    }
+    // Fallback: check legacy custom endpoints (synthesized as BYOP providers)
+    custom_endpoints_as_providers(app)
+        .into_iter()
+        .find(|(p, _)| p.id == provider_id)
+        .map(|(p, key)| (p, key, model_id))
+}
+
+/// Stable synthetic provider ID for a legacy `CustomEndpoint`, derived from its index.
+/// Uses `custom-ep-<index>` so it's deterministic across sessions without needing a UUID.
+fn custom_endpoint_provider_id(index: usize) -> String {
+    format!("custom-ep-{index}")
+}
+
+/// Convert legacy `ApiKeyManager::custom_endpoints` into synthetic `AgentProvider` entries
+/// so the BYOP runtime can use them as a fallback.
+fn custom_endpoints_as_providers(app: &AppContext) -> Vec<(AgentProvider, String)> {
+    let keys = ApiKeyManager::as_ref(app).keys();
+    keys.custom_endpoints
+        .iter()
+        .enumerate()
+        .filter(|(_, ep)| !ep.url.trim().is_empty() && !ep.models.is_empty())
+        .map(|(i, ep)| {
+            let provider = AgentProvider {
+                id: custom_endpoint_provider_id(i),
+                name: ep.name.clone(),
+                base_url: ep.url.clone(),
+                api_type: Default::default(),
+                models: ep
+                    .models
+                    .iter()
+                    .map(|m| AgentProviderModel {
+                        id: m.name.clone(),
+                        name: m.display_label().to_owned(),
+                        ..Default::default()
+                    })
+                    .collect(),
+                extra_headers: Default::default(),
+            };
+            (provider, ep.api_key.clone())
+        })
+        .collect()
 }
