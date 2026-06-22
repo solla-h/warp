@@ -84,6 +84,12 @@ use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
 #[derive(Debug, Clone)]
+pub struct SshConnectionInfo {
+    pub host: Option<String>,
+    pub port: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct SessionContext {
     session_type: Option<SessionType>,
     shell: Option<ShellLaunchData>,
@@ -124,6 +130,14 @@ impl SessionContext {
     /// the remote server client is connected).
     pub fn is_remote(&self) -> bool {
         matches!(self.session_type, Some(SessionType::WarpifiedRemote { .. }))
+    }
+
+    pub fn is_legacy_ssh(&self) -> bool {
+        false
+    }
+
+    pub fn ssh_connection_info(&self) -> Option<&SshConnectionInfo> {
+        None
     }
 
     pub fn skill_path_origin(&self) -> SkillPathOrigin {

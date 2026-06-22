@@ -1257,6 +1257,15 @@ impl LLMPreferences {
             .vision_supported
     }
 
+    pub fn get_reasoning_effort(
+        &self,
+        _terminal_view_id: Option<EntityId>,
+        _api_type: crate::settings::AgentProviderApiType,
+        _model_id: &str,
+    ) -> crate::settings::ReasoningEffortSetting {
+        crate::settings::ReasoningEffortSetting::default()
+    }
+
     pub fn get_base_llm_override(&self, terminal_view_id: EntityId) -> Option<String> {
         if let Some(override_str) = self
             .base_llm_for_terminal_view

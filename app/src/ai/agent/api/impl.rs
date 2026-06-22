@@ -55,7 +55,7 @@ pub async fn generate_multi_agent_output(
 
     let api_keys = api_keys_with_warp_credit_fallback_setting(
         params.api_keys,
-        params.allow_use_of_warp_credits,
+        params.allow_use_of_warp_credits_with_byok,
     );
 
     let request = api::Request {
@@ -100,8 +100,8 @@ pub async fn generate_multi_agent_output(
                 FeatureFlag::SummarizationViaMessageReplacement.is_enabled(),
             supports_bundled_skills: FeatureFlag::BundledSkills.is_enabled(),
             supports_research_agent: params.research_agent_enabled,
-            supports_orchestration_v2: supports_orchestration_v2(params.orchestration_enabled),
-            custom_model_providers: params.custom_model_providers,
+            supports_orchestration_v2: false,
+            custom_model_providers: None,
             // Background computer use is not supported by the local client yet.
             supports_background_computer_use: false,
         }),
@@ -233,7 +233,7 @@ fn get_supported_tools(params: &RequestParams) -> Vec<api::ToolType> {
         supported_tools.push(api::ToolType::ReadSkill);
     }
 
-    if params.orchestration_enabled {
+    if false { // orchestration not yet ported
         supported_tools.extend([api::ToolType::RunAgents, api::ToolType::SendMessageToAgent]);
         // Declare client-handled wait_for_events so the server doesn't
         // fall back to the legacy server-handled form.

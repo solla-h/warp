@@ -703,7 +703,152 @@ impl settings_value::SettingsValue for ToolbarCommandMap {
     }
 }
 
+// ---------------------------------------------------------------------------
+// BYOP (Bring Your Own Provider) stub types
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, schemars::JsonSchema, settings_value::SettingsValue)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentProviderApiType {
+    #[default]
+    OpenAi,
+    OpenAiResp,
+    Anthropic,
+    Gemini,
+    Ollama,
+    DeepSeek,
+}
+
+impl AgentProviderApiType {
+    pub fn default_base_url(self) -> &'static str {
+        match self {
+            Self::OpenAi | Self::OpenAiResp => "https://api.openai.com/v1",
+            Self::Anthropic => "https://api.anthropic.com",
+            Self::Gemini => "https://generativelanguage.googleapis.com",
+            Self::Ollama => "http://localhost:11434",
+            Self::DeepSeek => "https://api.deepseek.com",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, schemars::JsonSchema, settings_value::SettingsValue)]
+#[serde(rename_all = "snake_case")]
+pub enum ReasoningEffortSetting {
+    Off,
+    Minimal,
+    Low,
+    #[default]
+    Medium,
+    High,
+    XHigh,
+    Max,
+    Auto,
+}
+
+impl ReasoningEffortSetting {
+    pub fn to_genai(self) -> Option<genai::chat::ReasoningEffort> {
+        match self {
+            Self::Off => None,
+            Self::Auto => None,
+            Self::Minimal => Some(genai::chat::ReasoningEffort::Minimal),
+            Self::Low => Some(genai::chat::ReasoningEffort::Low),
+            Self::Medium => Some(genai::chat::ReasoningEffort::Medium),
+            Self::High => Some(genai::chat::ReasoningEffort::High),
+            Self::XHigh => Some(genai::chat::ReasoningEffort::XHigh),
+            Self::Max => Some(genai::chat::ReasoningEffort::Max),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, schemars::JsonSchema, settings_value::SettingsValue)]
+pub struct AgentProviderModel {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub context_window: u32,
+    #[serde(default)]
+    pub max_output_tokens: u32,
+    #[serde(default)]
+    pub reasoning: bool,
+    #[serde(default)]
+    pub tool_call: bool,
+    pub image: Option<bool>,
+    pub pdf: Option<bool>,
+    pub audio: Option<bool>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, schemars::JsonSchema, settings_value::SettingsValue)]
+pub struct AgentProvider {
+    pub id: String,
+    pub name: String,
+    pub base_url: String,
+    #[serde(default)]
+    pub api_type: AgentProviderApiType,
+    #[serde(default)]
+    pub models: Vec<AgentProviderModel>,
+    #[serde(default)]
+    pub extra_headers: std::collections::HashMap<String, String>,
+}
+
 define_settings_group!(AISettings, settings: [
+    agent_providers: AgentProviders {
+        type: Vec<AgentProvider>,
+        default: vec![],
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
+        private: false,
+        toml_path: "agents.warp_agent.agent_providers",
+        description: "Custom AI provider configurations for BYOP.",
+    },
+    byop_compaction_model_provider_id: ByopCompactionModelProviderId {
+        type: String,
+        default: String::new(),
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_model_id: ByopCompactionModelId {
+        type: String,
+        default: String::new(),
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_preserve_recent_tokens: ByopCompactionPreserveRecentTokens {
+        type: u32,
+        default: 0,
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_reserved: ByopCompactionReserved {
+        type: u32,
+        default: 0,
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_auto: ByopCompactionAuto {
+        type: bool,
+        default: true,
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_prune: ByopCompactionPrune {
+        type: bool,
+        default: true,
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
+    byop_compaction_tail_turns: ByopCompactionTailTurns {
+        type: u32,
+        default: 2,
+        supported_platforms: SupportedPlatforms::ALL,
+        sync_to_cloud: SyncToCloud::Never,
+        private: true,
+    }
     // If `false`, all AI features are disabled.
     is_any_ai_enabled: IsAnyAIEnabled {
         type: bool,

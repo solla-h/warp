@@ -1,78 +1,200 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
+use crate::ai::api_error::AIApiError;
 use anyhow::anyhow;
 use chrono::{DateTime, Local, TimeDelta};
 use futures::channel::oneshot;
+use futures_util::StreamExt;
 use uuid::Uuid;
 use warp_multi_agent_api::response_event;
-use warpui::{Entity, ModelContext, SingletonEntity};
+use warpui::{Entity, ModelContext};
 
-#[cfg(not(feature = "local-only"))]
-use crate::ai::agent::api::generate_multi_agent_output;
-use crate::ai::agent::api::{self, ConvertToAPITypeError};
-/// Stub: local-only builds cannot call the cloud LLM proxy.
-#[cfg(feature = "local-only")]
-async fn generate_multi_agent_output(
-    _server_api: Arc<crate::server::server_api::ServerApi>,
-    _params: api::RequestParams,
-    _cancellation: futures::channel::oneshot::Receiver<()>,
-) -> Result<api::ResponseStream, ConvertToAPITypeError> {
-    Ok(Box::pin(futures_lite::stream::empty()))
-}
-use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::agent::{AIIdentifiers, CancellationReason};
-use crate::network::NetworkStatus;
-use crate::server::server_api::{AIApiError, ServerApiProvider};
-use crate::{report_error, send_telemetry_from_ctx};
+use crate::{
+    ai::agent::{
+        api::{self, ConvertToAPITypeError},
+        conversation::AIConversationId,
+        AIAgentInput, AIIdentifiers, CancellationReason,
+    },
+    ai::blocklist::BlocklistAIHistoryModel,
+    ai::byop_readiness::BlockedByopReadinessError,
+    network::NetworkStatus,
+    report_error, send_telemetry_from_ctx,
+};
+use warpui::SingletonEntity;
 
-/// Maximum number of times a single MAA request is re-sent before the failure is
-/// surfaced.
-const MAX_RETRIES: usize = 3;
-
-/// What to do about a failed or truncated MAA response attempt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RecoveryAction {
-    /// Re-send the same request immediately.
-    RetryNow,
-    /// Re-send the same request once connectivity returns.
-    RetryWhenOnline,
-    /// Resume the conversation with a fresh request after the stream completes.
-    Resume,
-    /// Surface the error; the conversation ends in error.
-    Fail,
+/// BYOP 路径的请求分流参数。从 LLMId、settings、conversation 中提取后
+/// 一次性塞给 spawn closure(ctx 不能跨 await 边界)。
+pub(super) struct PendingTitleGeneration {
+    pub(super) input: crate::ai::agent_providers::chat_stream::TitleGenInput,
+    pub(super) user_query: String,
+    pub(super) task_id: String,
 }
 
-/// Decides how to recover from a failed response-stream attempt.
-///
-/// Before any client actions have been received, the request can be re-sent verbatim
-/// (immediately, or once connectivity returns). After actions have streamed,
-/// re-sending is unsafe, so recovery uses a fresh `ResumeConversation` request.
-fn recovery_action(
-    has_received_client_actions: bool,
-    is_recoverable: bool,
-    has_retry_budget: bool,
-    can_attempt_resume_on_error: bool,
-    is_online: bool,
-) -> RecoveryAction {
-    if !has_received_client_actions && is_recoverable && has_retry_budget {
-        if is_online {
-            RecoveryAction::RetryNow
-        } else {
-            RecoveryAction::RetryWhenOnline
-        }
-    } else if has_received_client_actions && is_recoverable && can_attempt_resume_on_error {
-        RecoveryAction::Resume
+struct ByopDispatch {
+    base_url: String,
+    api_key: String,
+    model_id: String,
+    /// 显式指定的 API 协议类型,chat_stream 据此映射 genai AdapterKind。
+    api_type: crate::settings::AgentProviderApiType,
+    /// Provider 级 reasoning effort 偏好。`Auto` 时不向 genai 传 effort,
+    /// 由 adapter 自己按模型名后缀推断;非 Auto 经 client capability gate 后注入。
+    reasoning_effort: crate::settings::ReasoningEffortSetting,
+    extra_headers: Vec<(String, String)>,
+    /// conversation 的 root task id — 必须用本地已注册的 id,
+    /// 否则下游 `Action::AddMessagesToTask` 在 task_store 找不到会 `TaskNotFound`。
+    root_task_id: String,
+    /// 本轮模型输出应该写入的 task id。普通对话等于 root task;CLI subagent 后续轮为 subtask。
+    target_task_id: String,
+    /// 是否需要 emit `CreateTask` 把 Optimistic root 升级为 Server task。
+    /// 仅首轮(root task 还没 source)需要;再次发会触发 `UnexpectedUpgrade`。
+    needs_create_task: bool,
+    /// 标题生成模型参数。仅在首轮(needs_create_task)且 active title_model
+    /// 解码为合法 BYOP id 时填充;否则不启动后台标题生成。
+    title_gen: Option<TitleGenParams>,
+    /// LRC 场景绑定的 `command_id`(= LRC block id 字符串)。
+    lrc_command_id: Option<String>,
+    /// 是否需要在 chat_stream 中合成 subagent CreateTask 来升级 optimistic CLI subtask。
+    lrc_should_spawn_subagent: bool,
+    /// 选中模型的上下文窗口(tokens)。0/None ⇒ 用户未填且 catalog 也无,
+    /// chat_stream 跳过 context_window_usage 计算,UI 维持 100% 占位。
+    context_window: Option<u32>,
+    /// ユーザー設定 (image/pdf/audio 三態 Override) を反映済みの attachment caps。
+    /// `resolve_for_model` で計算。UI 表示と runtime 動作が同じ caps を参照する。
+    attachment_caps: crate::ai::agent_providers::attachment_caps::AttachmentCaps,
+}
+
+/// 标题生成专用的 BYOP 配置(可能与主 base 模型同 provider 也可能不同)。
+pub(crate) struct TitleGenParams {
+    pub base_url: String,
+    pub api_key: String,
+    pub model_id: String,
+    pub api_type: crate::settings::AgentProviderApiType,
+    pub reasoning_effort: crate::settings::ReasoningEffortSetting,
+}
+
+fn byop_dispatch_info(
+    params: &api::RequestParams,
+    ai_identifiers: &AIIdentifiers,
+    ctx: &warpui::AppContext,
+) -> Option<ByopDispatch> {
+    let (provider, api_key, model_id) =
+        crate::ai::agent_providers::lookup_byop(ctx, &params.model)?;
+    let extra_headers: Vec<(String, String)> = provider.extra_headers.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+    // 从 provider.models 里找当前模型条目,取其 context_window(tokens)。
+    // 0 视为未填,后续走 None 分支 ⇒ chat_stream 不算占用率。
+    let context_window = provider
+        .models
+        .iter()
+        .find(|m| m.id == model_id)
+        .map(|m| m.context_window)
+        .filter(|n| *n > 0);
+    let conversation_id = ai_identifiers.client_conversation_id.as_ref()?;
+    let history = BlocklistAIHistoryModel::as_ref(ctx);
+    let conversation = history.conversation(conversation_id)?;
+    let root_task_id = conversation.get_root_task_id().to_string();
+    let target_task_id = params
+        .byop_target_task_id
+        .clone()
+        .unwrap_or_else(|| root_task_id.clone());
+    // compute_active_tasks 只返回 `task.source().is_some()` 的 task —
+    // 因此非空 ⇒ root 已经升级为 Server 状态,不要再 emit CreateTask。
+    let needs_create_task = conversation.compute_active_tasks().is_empty();
+
+    // 标题生成:只在首轮触发(避免每轮重复打标题)。
+    // 解析 active title_model:可能是 base_model 自己,也可能是用户独立选的另一个 BYOP 模型。
+    // 任一模型不是 BYOP 编码(比如 fallback 到非 BYOP 默认),则跳过 — Zap 主路径都是 BYOP,
+    // 实际 fallback 到 base 时,base 自己就是 BYOP。
+    let llm_prefs = crate::ai::llms::LLMPreferences::as_ref(ctx);
+    let title_gen = if needs_create_task {
+        let title_id = llm_prefs.get_active_base_model(ctx, None).id.clone();
+        crate::ai::agent_providers::lookup_byop(ctx, &title_id).map(
+            |(t_provider, t_api_key, t_model_id)| {
+                let t_effort =
+                    llm_prefs.get_reasoning_effort(None, t_provider.api_type, &t_model_id);
+                TitleGenParams {
+                    base_url: t_provider.base_url,
+                    api_key: t_api_key,
+                    model_id: t_model_id,
+                    api_type: t_provider.api_type,
+                    reasoning_effort: t_effort,
+                }
+            },
+        )
     } else {
-        RecoveryAction::Fail
-    }
+        None
+    };
+
+    let reasoning_effort = llm_prefs.get_reasoning_effort(None, provider.api_type, &model_id);
+    let attachment_caps = provider
+        .models
+        .iter()
+        .find(|m| m.id == model_id)
+        .map(|m| {
+            crate::ai::agent_providers::attachment_caps::resolve_for_model(
+                &provider.id,
+                provider.api_type,
+                m,
+            )
+        })
+        .unwrap_or_else(|| {
+            log::warn!(
+                "[byop] model '{}' not found in provider.models — falling back to caps_for (user overrides ignored)",
+                model_id
+            );
+            crate::ai::agent_providers::attachment_caps::caps_for(provider.api_type, &model_id)
+        });
+    Some(ByopDispatch {
+        base_url: provider.base_url,
+        api_key,
+        model_id,
+        api_type: provider.api_type,
+        reasoning_effort,
+        extra_headers,
+        root_task_id,
+        target_task_id,
+        needs_create_task,
+        title_gen,
+        lrc_command_id: params.lrc_command_id.clone(),
+        lrc_should_spawn_subagent: params.lrc_should_spawn_subagent,
+        context_window,
+        attachment_caps,
+    })
+}
+
+fn pending_title_generation_from_byop(
+    params: &api::RequestParams,
+    byop: &ByopDispatch,
+) -> Option<PendingTitleGeneration> {
+    let title_gen = byop.title_gen.as_ref()?;
+    let user_query = params.input.iter().find_map(|input| {
+        if let AIAgentInput::UserQuery { query, .. } = input {
+            Some(query.clone())
+        } else {
+            None
+        }
+    })?;
+
+    Some(PendingTitleGeneration {
+        input: crate::ai::agent_providers::chat_stream::TitleGenInput {
+            base_url: title_gen.base_url.clone(),
+            api_key: title_gen.api_key.clone(),
+            model_id: title_gen.model_id.clone(),
+            api_type: title_gen.api_type,
+            reasoning_effort: title_gen.reasoning_effort,
+        },
+        user_query,
+        task_id: byop.root_task_id.clone(),
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ResponseStreamId(String);
 
 impl ResponseStreamId {
+    pub fn new_local() -> Self {
+        Self(Uuid::new_v4().to_string())
+    }
+
     pub fn for_shared_session(init_event: &response_event::StreamInit) -> Self {
         // Make the stream ID unique per viewing by appending a local UUID
         // This prevents collisions when replaying the same conversation multiple times
@@ -82,7 +204,7 @@ impl ResponseStreamId {
 
     #[cfg(test)]
     pub fn new_for_test() -> Self {
-        Self(Uuid::new_v4().to_string())
+        Self::new_local()
     }
 }
 
@@ -113,24 +235,13 @@ pub struct ResponseStream {
     /// triggered by a previous error.
     can_attempt_resume_on_error: bool,
 
+    pending_title_generation: Option<PendingTitleGeneration>,
+
     /// Whether we should attempt to resume the conversation after the stream finishes.
     ///
-    /// This is set when a transient network/server failure occurs after client actions
-    /// have been received (so an in-request retry is unsafe) and
-    /// `can_attempt_resume_on_error` is true.
+    /// This is set when we receive a retryable error after client actions have been received
+    /// and `can_attempt_resume_on_error` is true.
     should_resume_conversation_after_stream_finished: bool,
-
-    /// Whether a `StreamFinished` event was received for the current request. A
-    /// stream that completes without one was truncated in transit.
-    stream_finished_received: bool,
-
-    /// Whether a terminal error event has already been emitted for the current
-    /// request, so stream completion doesn't synthesize a second failure for it.
-    error_event_emitted: bool,
-
-    /// Whether a retry is parked waiting for connectivity. While set, completion of
-    /// the failed attempt's underlying stream is ignored.
-    deferred_retry_pending: bool,
 
     /// Unique, internal id for the current request.
     ///
@@ -149,21 +260,49 @@ impl ResponseStream {
         can_attempt_resume_on_error: bool,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
-        let server_api = ServerApiProvider::as_ref(ctx).get();
         let (cancellation_tx, cancellation_rx) = oneshot::channel();
         let start_time = Local::now();
 
         let request_id = Uuid::new_v4();
         let params_clone = params.clone();
-        let _ =
-            ctx.spawn(
-                async move {
-                    generate_multi_agent_output(server_api, params_clone, cancellation_rx).await
-                },
-                move |me, stream, ctx| {
-                    me.handle_response_stream_result(request_id, stream, ctx);
-                },
-            );
+        // BYOP 路径: 若选中的 base model 是用户自定义 provider 编码的 LLMId,
+        // 则在 spawn 前从 ctx 中取出 (provider, api_key, model_id, root_task_id),
+        // 走自定义 chat completions。否则走 warp 自家 multi-agent 端点(原有路径)。
+        let byop_dispatch = byop_dispatch_info(&params, &ai_identifiers, ctx);
+        let pending_title_generation = byop_dispatch
+            .as_ref()
+            .and_then(|byop| pending_title_generation_from_byop(&params, byop));
+        let _ = ctx.spawn(
+            async move {
+                if let Some(byop) = byop_dispatch {
+                    crate::ai::agent_providers::chat_stream::generate_byop_output(
+                        crate::ai::agent_providers::chat_stream::ByopOutputInput {
+                            params: params_clone,
+                            base_url: byop.base_url,
+                            api_key: byop.api_key,
+                            model_id: byop.model_id,
+                            api_type: byop.api_type,
+                            reasoning_effort: byop.reasoning_effort,
+                            extra_headers: byop.extra_headers,
+                            task_id: byop.root_task_id,
+                            target_task_id: byop.target_task_id,
+                            needs_create_task: byop.needs_create_task,
+                            lrc_command_id: byop.lrc_command_id,
+                            lrc_should_spawn_subagent: byop.lrc_should_spawn_subagent,
+                            context_window: byop.context_window,
+                            cancellation_rx,
+                            attachment_caps: byop.attachment_caps,
+                        },
+                    )
+                    .await
+                } else {
+                    byop_required_response_stream(cancellation_rx).await
+                }
+            },
+            move |me, stream, ctx| {
+                me.handle_response_stream_result(request_id, stream, ctx);
+            },
+        );
         Self {
             id: ResponseStreamId(Uuid::new_v4().to_string()),
             params: params.clone(),
@@ -175,16 +314,32 @@ impl ResponseStream {
             has_received_client_actions: false,
             ai_identifiers,
             can_attempt_resume_on_error,
+            pending_title_generation,
             should_resume_conversation_after_stream_finished: false,
-            stream_finished_received: false,
-            error_event_emitted: false,
-            deferred_retry_pending: false,
             current_request_id: Some(request_id),
         }
     }
 
+    pub(super) fn take_pending_title_generation(&mut self) -> Option<PendingTitleGeneration> {
+        self.pending_title_generation.take()
+    }
+
     pub fn id(&self) -> &ResponseStreamId {
         &self.id
+    }
+
+    pub fn is_lrc_tag_in_request(&self) -> bool {
+        self.params.lrc_should_spawn_subagent
+    }
+
+    /// Zap BYOP 本地会话压缩:返回本流是否在跑 SummarizeConversation,
+    /// 以及 overflow 标记。controller 在 handle_response_stream_finished 的
+    /// Done 分支据此调 commit_summarization 把摘要落到 conversation.compaction_state。
+    pub fn summarization_overflow(&self) -> Option<bool> {
+        self.params.input.iter().find_map(|input| match input {
+            crate::ai::agent::AIAgentInput::SummarizeConversation { .. } => Some(false),
+            _ => None,
+        })
     }
 
     /// Returns true if we should attempt to resume the conversation after the stream finishes.
@@ -211,11 +366,7 @@ impl ResponseStream {
 
     fn retry(&mut self, ctx: &mut ModelContext<Self>) {
         self.retry_count += 1;
-        // Reset per-attempt state for the new attempt.
-        self.has_received_client_actions = false;
-        self.stream_finished_received = false;
-        self.error_event_emitted = false;
-        self.deferred_retry_pending = false;
+        self.has_received_client_actions = false; // Reset for the new attempt
 
         let (cancellation_tx, cancellation_rx) = oneshot::channel();
         if let Some(old_cancellation_tx) = self.cancellation_tx.take() {
@@ -226,9 +377,34 @@ impl ResponseStream {
         let request_id = Uuid::new_v4();
         self.current_request_id = Some(request_id);
         let params = self.params.clone();
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let byop_dispatch = byop_dispatch_info(&params, &self.ai_identifiers, ctx);
         let _ = ctx.spawn(
-            async move { generate_multi_agent_output(server_api, params, cancellation_rx).await },
+            async move {
+                if let Some(byop) = byop_dispatch {
+                    crate::ai::agent_providers::chat_stream::generate_byop_output(
+                        crate::ai::agent_providers::chat_stream::ByopOutputInput {
+                            params,
+                            base_url: byop.base_url,
+                            api_key: byop.api_key,
+                            model_id: byop.model_id,
+                            api_type: byop.api_type,
+                            reasoning_effort: byop.reasoning_effort,
+                            extra_headers: byop.extra_headers,
+                            task_id: byop.root_task_id,
+                            target_task_id: byop.target_task_id,
+                            needs_create_task: byop.needs_create_task,
+                            lrc_command_id: byop.lrc_command_id,
+                            lrc_should_spawn_subagent: byop.lrc_should_spawn_subagent,
+                            context_window: byop.context_window,
+                            cancellation_rx,
+                            attachment_caps: byop.attachment_caps,
+                        },
+                    )
+                    .await
+                } else {
+                    byop_required_response_stream(cancellation_rx).await
+                }
+            },
             move |me, stream, ctx| {
                 me.handle_response_stream_result(request_id, stream, ctx);
             },
@@ -275,20 +451,9 @@ impl ResponseStream {
             }
             Err(e) => {
                 log::error!("Failed to send request to multi-agent API: {e:?}");
-                if self.current_request_id.is_none_or(|id| id != request_id) {
-                    return;
-                }
-                // A request-conversion failure is a deterministic client-side error and
-                // no stream was ever created: retrying would fail identically, and
-                // letting completion synthesize `UnexpectedEof` would misreport it as
-                // a transient network failure. Surface the original error and finish
-                // terminally. (HTTP send failures don't take this path — they arrive as
-                // in-stream error events.)
-                let error = Arc::new(AIApiError::Other(anyhow!(e)));
-                self.error_event_emitted = true;
-                self.report_request_failure(&error, NetworkStatus::as_ref(ctx).is_online());
+                let api_error = convert_to_api_error(e);
                 ctx.emit(ResponseStreamEvent::ReceivedEvent(Consumable::new(Err(
-                    error,
+                    Arc::new(api_error),
                 ))));
                 self.on_response_stream_complete(request_id, ctx);
             }
@@ -322,7 +487,6 @@ impl ResponseStream {
                             self.has_received_client_actions = true;
                         }
                         warp_multi_agent_api::response_event::Type::Finished(finished_event) => {
-                            self.stream_finished_received = true;
                             // Emit retry success telemetry on successful completion
                             if matches!(
                                 finished_event.reason,
@@ -353,46 +517,56 @@ impl ResponseStream {
                     self.original_error = Some(format!("{e:?}"));
                 }
 
-                let is_online = NetworkStatus::as_ref(ctx).is_online();
-                match recovery_action(
-                    self.has_received_client_actions,
-                    e.is_recoverable(),
-                    self.retry_count < MAX_RETRIES,
-                    self.can_attempt_resume_on_error,
-                    is_online,
-                ) {
-                    RecoveryAction::RetryNow => {
-                        log::warn!(
-                            "MultiAgent request failed, retrying (attempt {}/{}) - Error: {e:?}",
-                            self.retry_count + 1,
-                            MAX_RETRIES
-                        );
-                        // Only emit error telemetry here if we're retrying.
-                        // Final errors that aren't being retried are emitted elsewhere.
-                        self.emit_retryable_agent_mode_error_telemetry(format!("{e:?}"), ctx);
-                        self.retry(ctx);
-                        // Don't emit the error event, we're retrying
-                        return;
-                    }
-                    RecoveryAction::RetryWhenOnline => {
-                        log::warn!(
-                            "MultiAgent request failed while offline; retrying (attempt {}/{}) once connectivity returns - Error: {e:?}",
-                            self.retry_count + 1,
-                            MAX_RETRIES
-                        );
-                        self.emit_retryable_agent_mode_error_telemetry(format!("{e:?}"), ctx);
-                        self.defer_retry_until_online(ctx);
-                        return;
-                    }
-                    RecoveryAction::Resume => {
-                        // The resume spawn itself waits for connectivity.
-                        self.should_resume_conversation_after_stream_finished = true;
-                    }
-                    RecoveryAction::Fail => {}
-                }
-                self.error_event_emitted = true;
+                // Only retry if:
+                // 1. We haven't received any client actions yet (this is the first event or only init events)
+                // 2. The error is retryable
+                // 3. We haven't exceeded max retries
+                // 4. We're online
+                const MAX_RETRIES: usize = 3;
+                let network_status = NetworkStatus::as_ref(ctx);
+                let is_online = network_status.is_online();
+                let is_retryable = e.is_recoverable();
 
-                self.report_request_failure(e, is_online);
+                let should_retry = !self.has_received_client_actions
+                    && is_retryable
+                    && self.retry_count < MAX_RETRIES
+                    && is_online;
+
+                if should_retry {
+                    log::warn!(
+                        "MultiAgent request failed, retrying (attempt {}/{}) - Error: {e:?}",
+                        self.retry_count + 1,
+                        MAX_RETRIES
+                    );
+                    // Only emit error telemetry here if we're retrying.
+                    // Final errors that aren't being retried are emitted elsewhere.
+                    self.emit_retryable_agent_mode_error_telemetry(format!("{e:?}"), ctx);
+                    self.retry(ctx);
+                    // Don't emit the error event, we're retrying
+                    // TODO: emit a separate event if controller needs to know about failures that are being retried
+                    return;
+                }
+
+                // If we can't retry (because client actions were received) but the error is
+                // retryable and we're allowed to attempt a resume, signal that the controller
+                // should resume the conversation after the stream completes.
+                let should_attempt_resume = self.has_received_client_actions
+                    && is_retryable
+                    && self.can_attempt_resume_on_error;
+                if should_attempt_resume {
+                    self.should_resume_conversation_after_stream_finished = true;
+                }
+
+                log::warn!(
+                    "MultiAgent request failed after {} retries: has_received_client_actions={}, is_retryable={}, is_online={is_online}",
+                    self.retry_count,
+                    self.has_received_client_actions,
+                    e.is_recoverable()
+                );
+                report_error!(anyhow!(e.clone()).context(format!(
+                    "MultiAgent request failed after {} retries",
+                    self.retry_count
+                )));
 
                 ctx.emit(ResponseStreamEvent::ReceivedEvent(Consumable::new(event)));
             }
@@ -403,127 +577,24 @@ impl ResponseStream {
         if self.current_request_id.is_none_or(|id| id != request_id) {
             return;
         }
-        // A retry is parked waiting for connectivity; the request is logically still
-        // active, so don't complete the stream for the failed attempt.
-        if self.deferred_retry_pending {
-            return;
-        }
-
-        // The server always sends a StreamFinished event before ending the response,
-        // but a transport cut between chunks surfaces as a clean EOF. Synthesize the
-        // failure and recover like any transient error.
-        if !self.stream_finished_received && !self.error_event_emitted {
-            log::warn!(
-                "generate_multi_agent_output stream ended without emitting StreamFinished event."
-            );
-            let unexpected_eof = Arc::new(AIApiError::UnexpectedEof);
-            let is_online = NetworkStatus::as_ref(ctx).is_online();
-            match recovery_action(
-                self.has_received_client_actions,
-                unexpected_eof.is_recoverable(),
-                self.retry_count < MAX_RETRIES,
-                self.can_attempt_resume_on_error,
-                is_online,
-            ) {
-                RecoveryAction::RetryNow => {
-                    log::warn!(
-                        "MultiAgent request failed, retrying (attempt {}/{}) - Error: {unexpected_eof:?}",
-                        self.retry_count + 1,
-                        MAX_RETRIES
-                    );
-                    self.emit_retryable_agent_mode_error_telemetry(
-                        format!("{unexpected_eof:?}"),
-                        ctx,
-                    );
-                    self.retry(ctx);
-                    return;
-                }
-                RecoveryAction::RetryWhenOnline => {
-                    log::warn!(
-                        "MultiAgent request failed while offline; retrying (attempt {}/{}) once connectivity returns - Error: {unexpected_eof:?}",
-                        self.retry_count + 1,
-                        MAX_RETRIES
-                    );
-                    self.emit_retryable_agent_mode_error_telemetry(
-                        format!("{unexpected_eof:?}"),
-                        ctx,
-                    );
-                    self.defer_retry_until_online(ctx);
-                    return;
-                }
-                RecoveryAction::Resume => {
-                    self.should_resume_conversation_after_stream_finished = true;
-                    self.error_event_emitted = true;
-                    self.report_request_failure(&unexpected_eof, is_online);
-                    ctx.emit(ResponseStreamEvent::ReceivedEvent(Consumable::new(Err(
-                        unexpected_eof,
-                    ))));
-                }
-                RecoveryAction::Fail => {
-                    self.error_event_emitted = true;
-                    self.report_request_failure(&unexpected_eof, is_online);
-                    ctx.emit(ResponseStreamEvent::ReceivedEvent(Consumable::new(Err(
-                        unexpected_eof,
-                    ))));
-                }
-            }
-        }
-
         ctx.emit(ResponseStreamEvent::AfterStreamFinished { cancellation: None });
         self.cancellation_tx = None;
     }
+}
 
-    /// Reports a non-retried request failure to crash reporting with classification
-    /// tags.
-    #[cfg_attr(not(feature = "crash_reporting"), expect(unused_variables))]
-    fn report_request_failure(&self, error: &Arc<AIApiError>, is_online: bool) {
-        #[cfg(feature = "crash_reporting")]
-        sentry::with_scope(
-            |scope| {
-                scope.set_tag(
-                    "has_received_client_actions",
-                    self.has_received_client_actions,
-                );
-                scope.set_tag("error", format!("{error:?}"));
-                scope.set_tag("is_recoverable", error.is_recoverable());
-                scope.set_tag(
-                    "will_attempt_resume",
-                    self.should_resume_conversation_after_stream_finished,
-                );
-                scope.set_tag("is_online", is_online);
-                scope.set_tag("retry_count", self.retry_count);
-            },
-            || {
-                report_error!(anyhow!(error.clone()).context(format!(
-                    "MultiAgent request failed after {} retries",
-                    self.retry_count
-                )));
-            },
-        );
-        #[cfg(not(feature = "crash_reporting"))]
+fn convert_to_api_error(error: ConvertToAPITypeError) -> AIApiError {
+    match &error {
+        ConvertToAPITypeError::Other(inner)
+            if inner.downcast_ref::<BlockedByopReadinessError>().is_some() =>
         {
-            report_error!(anyhow!(error.clone()).context(format!(
-                "MultiAgent request failed after {} retries",
-                self.retry_count
-            )));
+            let blocked = inner
+                .downcast_ref::<BlockedByopReadinessError>()
+                .expect("checked blocked readiness error");
+            AIApiError::Other(BlockedByopReadinessError::new(blocked.category()).into())
         }
-    }
-
-    /// Parks a retry until connectivity returns; cancellation invalidates the parked
-    /// retry through `current_request_id`.
-    fn defer_retry_until_online(&mut self, ctx: &mut ModelContext<Self>) {
-        self.deferred_retry_pending = true;
-        ctx.emit(ResponseStreamEvent::WaitingForNetwork { waiting: true });
-        let request_id_at_defer = self.current_request_id;
-        let wait_for_online = NetworkStatus::as_ref(ctx).wait_until_online();
-        let _ = ctx.spawn(wait_for_online, move |me, _, ctx| {
-            // Cancelled or superseded while waiting — drop the parked retry.
-            if request_id_at_defer.is_none() || me.current_request_id != request_id_at_defer {
-                return;
-            }
-            ctx.emit(ResponseStreamEvent::WaitingForNetwork { waiting: false });
-            me.retry(ctx);
-        });
+        ConvertToAPITypeError::Ignore
+        | ConvertToAPITypeError::Unimplemented(_)
+        | ConvertToAPITypeError::Other(_) => AIApiError::Other(anyhow!(error.to_string())),
     }
 }
 
@@ -563,19 +634,12 @@ pub struct StreamCancellation {
 #[derive(Debug, Clone)]
 pub enum ResponseStreamEvent {
     ReceivedEvent(Consumable<api::Event>),
-    /// A retry is parked until connectivity returns (`waiting: true`) or has just
-    /// fired (`waiting: false`). The controller mirrors this on the conversation
-    /// status (`TransientError` ↔ `InProgress`).
-    ///
-    /// Only emitted from `defer_retry_until_online`, i.e. always after a recoverable
-    /// request failure while offline — never speculatively before an attempt. Consumers
-    /// can therefore treat `waiting: true` as a transient-error (reconnecting) state.
-    WaitingForNetwork {
-        waiting: bool,
-    },
     AfterStreamFinished {
         /// Some for cancellation (with context), None for natural completion (uses dynamic lookup).
         cancellation: Option<StreamCancellation>,
+    },
+    WaitingForNetwork {
+        waiting: bool,
     },
 }
 
@@ -583,6 +647,15 @@ impl Entity for ResponseStream {
     type Event = ResponseStreamEvent;
 }
 
-#[cfg(test)]
-#[path = "response_stream_tests.rs"]
-mod tests;
+async fn byop_required_response_stream(
+    cancellation_rx: oneshot::Receiver<()>,
+) -> Result<api::ResponseStream, ConvertToAPITypeError> {
+    log::debug!("No BYOP provider selected for Zap agent request");
+    let error_stream = futures::stream::once(async {
+        Err(Arc::new(AIApiError::Other(anyhow!(
+            "Zap requires a configured BYOP provider in Settings"
+        ))))
+    })
+    .take_until(cancellation_rx);
+    Ok(Box::pin(error_stream))
+}

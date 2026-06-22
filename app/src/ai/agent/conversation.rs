@@ -322,6 +322,9 @@ pub struct AIConversation {
     /// Whether the user has pinned this child agent in the orchestration
     /// pill bar. Persisted via `AgentConversationData.pinned`.
     pinned: bool,
+
+    /// BYOP local session compaction state.
+    pub compaction_state: crate::ai::byop_compaction::state::CompactionState,
 }
 
 pub(crate) fn artifact_from_fork_proto(
@@ -376,6 +379,7 @@ impl AIConversation {
             last_event_sequence: None,
             orchestration_configs: HashMap::new(),
             pinned: false,
+            compaction_state: Default::default(),
         }
     }
 
@@ -615,6 +619,7 @@ impl AIConversation {
             last_event_sequence,
             orchestration_configs: HashMap::new(),
             pinned,
+            compaction_state: Default::default(),
         })
     }
 
