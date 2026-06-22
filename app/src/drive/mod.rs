@@ -100,6 +100,7 @@ impl fmt::Display for DriveObjectType {
     }
 }
 
+#[cfg(not(feature = "local-only"))]
 pub fn should_auto_open_welcome_folder(app: &mut AppContext) -> bool {
     app.private_user_preferences()
         .read_value(settings::HAS_AUTO_OPENED_WELCOME_FOLDER)
@@ -109,15 +110,21 @@ pub fn should_auto_open_welcome_folder(app: &mut AppContext) -> bool {
         .unwrap_or(true)
 }
 
+#[cfg(feature = "local-only")]
+pub fn should_auto_open_welcome_folder(_app: &mut AppContext) -> bool {
+    false
+}
+
+#[cfg(not(feature = "local-only"))]
 pub fn write_has_auto_opened_welcome_folder_to_user_defaults(app: &mut AppContext) {
     let _ = app
         .private_user_preferences()
         .write_value(settings::HAS_AUTO_OPENED_WELCOME_FOLDER, true.to_string());
 }
 
-/// Enum used for sorting elements in the Warp Drive Index (and potentially other places).
-/// In the future it can be used to add other options (like, by name or by author), and exposed to
-/// users in the index.
+#[cfg(feature = "local-only")]
+pub fn write_has_auto_opened_welcome_folder_to_user_defaults(_app: &mut AppContext) {}
+
 #[derive(
     Default,
     PartialEq,
@@ -136,21 +143,14 @@ pub fn write_has_auto_opened_welcome_folder_to_user_defaults(app: &mut AppContex
     rename_all = "snake_case"
 )]
 pub enum DriveSortOrder {
-    /// Sort by newest revision first in main index, most recently trashed in trash index
     #[default]
     ByTimestamp,
-    /// A => Z
     AlphabeticalDescending,
-    /// Z => A
     AlphabeticalAscending,
-    /// Sort by object type, with folders first
     ByObjectType,
 }
 
 impl DriveSortOrder {
-    /// Returns the comparator that can be used for sorting items returned by
-    /// CloudModel::cloud_objects_in_space, for example (so more specifically, on the iterator of
-    /// type Iterator<Item = &'_ dyn CloudObject>)
     pub fn sort_by<'a>(
         &self,
         cloud_model: &'a CloudViewModel,
@@ -158,7 +158,6 @@ impl DriveSortOrder {
         app: &'a AppContext,
     ) -> Box<SortByComparator<'a>> {
         match self {
-            // Sorts newly-created objects to be at the top of the list
             Self::ByTimestamp => Box::new(
                 move |a: &&dyn CloudObject, b: &&dyn CloudObject| -> Ordering {
                     cloud_model
@@ -201,7 +200,6 @@ impl DriveSortOrder {
                         }
                     };
 
-                    // First compare by object type ordering, then by display name alphabetically if equal
                     order(a).cmp(&order(b)).then_with(|| {
                         a.display_name()
                             .to_lowercase()
@@ -212,7 +210,6 @@ impl DriveSortOrder {
         }
     }
 
-    /// Returns the text that is used to display the sorting option in the KnowledgeIndex's sorting menu
     pub fn menu_text(&self, index_variant: DriveIndexVariant) -> &str {
         match (self, index_variant) {
             (DriveSortOrder::ByTimestamp, DriveIndexVariant::MainIndex) => "Last updated",
