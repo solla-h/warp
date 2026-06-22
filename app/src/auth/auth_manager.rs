@@ -469,13 +469,23 @@ impl AuthManager {
                         // Note that this snapshot might get overwritten to disabled after the server fetch.
                         // However, it is still fine to flush to Rudderstack here as the login event is low-risk
                         // and it is better to err on the side of over-reporting than under-reporting.
+                        #[cfg(not(feature = "local-only"))]
                         if let Err(e) = server_api
                             .flush_telemetry_events(privacy_settings_snapshot)
                             .await
                         {
                             log::info!("Failed to flush events from Telemetry queue: {e}");
                         }
+                        #[cfg(not(feature = "local-only"))]
                         server_api.notify_login().await;
+                        #[cfg(feature = "local-only")]
+                        {
+                            // Local-first builds have no cloud backend to flush
+                            // telemetry to or notify of login; the server_api is
+                            // unused in this branch. Silence the unused-variable
+                            // warning for the moved `server_api`.
+                            drop(&server_api);
+                        }
                     },
                     |_, _, _| {},
                 );

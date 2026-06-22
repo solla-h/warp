@@ -28052,8 +28052,11 @@ impl Drop for TerminalView {
                 let was_ever_visible = self.was_ever_visible;
                 let duration_since_start =
                     self.bootstrap_start.unwrap_or_else(Instant::now).elapsed();
+                #[cfg(not(feature = "local-only"))]
                 let server_api = self.server_api.clone();
+                #[cfg(not(feature = "local-only"))]
                 let privacy_settings_snapshot = self.privacy_settings_snapshot;
+                #[cfg(not(feature = "local-only"))]
                 let task = self.background_executor.spawn(async move {
                     if let Err(error) = server_api
                         .send_telemetry_event(
@@ -28069,6 +28072,17 @@ impl Drop for TerminalView {
                     {
                         log::warn!("Error occurred with sending telemetry event: {error}");
                     }
+                });
+                #[cfg(feature = "local-only")]
+                let task = self.background_executor.spawn(async move {
+                    // Local-first builds have no cloud backend to report this
+                    // telemetry event to; record it locally and move on.
+                    let _ = (
+                        pending_shell,
+                        has_pending_ssh_session,
+                        was_ever_visible,
+                        duration_since_start,
+                    );
                 });
                 task.detach();
             }

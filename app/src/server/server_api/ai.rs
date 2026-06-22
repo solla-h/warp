@@ -1,7 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
+#[cfg(feature = "full_source_code_embedding")]
 use ai::index::full_source_code_embedding::store_client::{IntermediateNode, StoreClient};
+#[cfg(feature = "full_source_code_embedding")]
 use ai::index::full_source_code_embedding::{
     self, CodebaseContextConfig, ContentHash, EmbeddingConfig, NodeHash, RepoMetadata,
 };
@@ -34,6 +36,7 @@ use warp_graphql::mutations::delete_ai_conversation::{
     DeleteAIConversation, DeleteAIConversationVariables, DeleteConversationInput,
     DeleteConversationResult,
 };
+#[cfg(feature = "full_source_code_embedding")]
 use warp_graphql::mutations::generate_code_embeddings::{
     GenerateCodeEmbeddings, GenerateCodeEmbeddingsInput, GenerateCodeEmbeddingsResult,
     GenerateCodeEmbeddingsVariables,
@@ -63,10 +66,12 @@ use warp_graphql::mutations::update_agent_task::{
     AgentTaskStatusMessageInput, UpdateAgentTask, UpdateAgentTaskInput, UpdateAgentTaskResult,
     UpdateAgentTaskVariables,
 };
+#[cfg(feature = "full_source_code_embedding")]
 use warp_graphql::mutations::update_merkle_tree::{
     MerkleTreeNode, UpdateMerkleTree, UpdateMerkleTreeInput, UpdateMerkleTreeResult,
     UpdateMerkleTreeVariables,
 };
+#[cfg(feature = "full_source_code_embedding")]
 use warp_graphql::queries::codebase_context_config::{
     CodebaseContextConfigQuery, CodebaseContextConfigResult, CodebaseContextConfigVariables,
 };
@@ -94,9 +99,11 @@ use warp_graphql::queries::get_scheduled_agent_history::{
     GetScheduledAgentHistory, GetScheduledAgentHistoryVariables, ScheduledAgentHistory,
     ScheduledAgentHistoryInput, ScheduledAgentHistoryResult,
 };
+#[cfg(feature = "full_source_code_embedding")]
 use warp_graphql::queries::rerank_fragments::{
     RerankFragments, RerankFragmentsResult, RerankFragmentsVariables,
 };
+#[cfg(feature = "full_source_code_embedding")]
 use warp_graphql::queries::sync_merkle_tree::{
     SyncMerkleTree, SyncMerkleTreeInput, SyncMerkleTreeResult, SyncMerkleTreeVariables,
 };
@@ -1060,12 +1067,14 @@ pub trait AIClient: 'static + Send + Sync {
         referrer: Option<String>,
     ) -> Result<ModelsByFeature, anyhow::Error>;
 
+    #[cfg(feature = "full_source_code_embedding")]
     async fn update_merkle_tree(
         &self,
         embedding_config: EmbeddingConfig,
         nodes: Vec<IntermediateNode>,
     ) -> anyhow::Result<HashMap<NodeHash, bool>>;
 
+    #[cfg(feature = "full_source_code_embedding")]
     async fn generate_code_embeddings(
         &self,
         embedding_config: EmbeddingConfig,
@@ -1751,6 +1760,7 @@ impl AIClient for ServerApi {
         }
     }
 
+    #[cfg(feature = "full_source_code_embedding")]
     async fn update_merkle_tree(
         &self,
         embedding_config: EmbeddingConfig,
@@ -1789,6 +1799,7 @@ impl AIClient for ServerApi {
         }
     }
 
+    #[cfg(feature = "full_source_code_embedding")]
     async fn generate_code_embeddings(
         &self,
         embedding_config: EmbeddingConfig,
@@ -3107,6 +3118,7 @@ impl TryFrom<warp_graphql::queries::list_ai_conversations::AIConversationMetadat
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
+#[cfg(feature = "full_source_code_embedding")]
 impl StoreClient for ServerApi {
     async fn update_intermediate_nodes(
         &self,
