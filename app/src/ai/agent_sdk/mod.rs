@@ -77,7 +77,6 @@ mod agent_config;
 mod agent_management;
 // `ambient` is the `warp run-cloud` / `warp task *` CLI — cloud Oz agent
 // orchestration. Local-first builds have no Oz backend; gate behind local-only.
-#[cfg(not(feature = "local-only"))]
 mod ambient;
 mod api_key;
 mod artifact;

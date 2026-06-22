@@ -1659,7 +1659,7 @@ impl BlocklistAIController {
         true
     }
 
-    #[cfg(target_family = "wasm")]
+    #[cfg(any(target_family = "wasm", feature = "local-only"))]
     fn maybe_prepare_local_claude_wake(
         &mut self,
         _conversation_id: AIConversationId,
@@ -1669,13 +1669,14 @@ impl BlocklistAIController {
         false
     }
 
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     fn maybe_prepare_local_claude_wake(
         &mut self,
         conversation_id: AIConversationId,
         trigger: LocalClaudeWakeTrigger,
         ctx: &mut ModelContext<Self>,
     ) -> bool {
+        // Local-only builds have no cloud Oz wake path.
         if self
             .pending_local_claude_wakes
             .contains_key(&conversation_id)

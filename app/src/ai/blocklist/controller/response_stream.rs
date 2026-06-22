@@ -12,6 +12,15 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 #[cfg(not(feature = "local-only"))]
 use crate::ai::agent::api::generate_multi_agent_output;
 use crate::ai::agent::api::{self, ConvertToAPITypeError};
+/// Stub: local-only builds cannot call the cloud LLM proxy.
+#[cfg(feature = "local-only")]
+async fn generate_multi_agent_output(
+    _server_api: Arc<crate::server::server_api::ServerApi>,
+    _params: api::RequestParams,
+    _cancellation: futures::channel::oneshot::Receiver<()>,
+) -> Result<api::ResponseStream, ConvertToAPITypeError> {
+    Ok(Box::pin(futures_lite::stream::empty()))
+}
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent::{AIIdentifiers, CancellationReason};
 use crate::network::NetworkStatus;

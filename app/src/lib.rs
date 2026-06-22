@@ -8,7 +8,6 @@ mod app_menus;
 mod app_services;
 mod app_state;
 mod auth;
-#[cfg(not(feature = "local-only"))]
 mod autoupdate;
 mod banner;
 mod billing;
@@ -1718,6 +1717,7 @@ pub(crate) fn initialize_app(
     let display_count = ctx.windows().display_count();
     ctx.add_singleton_model(|_| DisplayCount(display_count));
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| RelaunchModel::new());
     ctx.add_singleton_model(|_| ChangelogModel::new(server_api.clone()));
     ctx.add_singleton_model(|_| GitHubAuthNotifier::new());

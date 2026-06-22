@@ -465,7 +465,7 @@ embed-resource = "3.0"
 # Drive sync, no hosted Oz agent, no telemetry). When enabled, the OSS binary
 # injects NoOp cloud clients and a no-login path so the app runs fully local.
 # Off by default to keep the existing cloud-backed build unchanged.
-local-only = []
+local-only = ["skip_login"]
 ai_resume_button = []
 autoupdate = []
 figma_detection = []
