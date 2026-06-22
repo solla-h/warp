@@ -1768,46 +1768,49 @@ pub(crate) fn initialize_app(
         .cloned()
         .collect::<Vec<_>>();
 
-    let mut all_queue_items = Vec::new();
-    let objects_with_pending_changes = cloud_objects
-        .iter()
-        .filter(|object| object.metadata().has_pending_content_changes())
-        .cloned()
-        .collect::<Vec<_>>();
-    all_queue_items.extend(QueueItem::from_cached_objects(
-        objects_with_pending_changes.into_iter(),
-    ));
+    #[cfg(not(feature = "local-only"))]
+    {
+        let mut all_queue_items = Vec::new();
+        let objects_with_pending_changes = cloud_objects
+            .iter()
+            .filter(|object| object.metadata().has_pending_content_changes())
+            .cloned()
+            .collect::<Vec<_>>();
+        all_queue_items.extend(QueueItem::from_cached_objects(
+            objects_with_pending_changes.into_iter(),
+        ));
 
-    let cloud_model = ctx.add_singleton_model(|_ctx| {
-        CloudModel::new(
-            persistence_writer.sender(),
-            cloud_objects,
-            time_of_next_force_object_refresh,
-        )
-    });
+        let cloud_model = ctx.add_singleton_model(|_ctx| {
+            CloudModel::new(
+                persistence_writer.sender(),
+                cloud_objects,
+                time_of_next_force_object_refresh,
+            )
+        });
 
-    let unsynced_actions: Vec<(CloudObjectTypeAndId, ObjectAction)> = object_actions
-        .iter()
-        .filter(|action| action.is_pending())
-        .filter_map(|action| {
-            cloud_model.read(ctx, |model, _| {
-                let object = model.get_by_uid(&action.uid);
-                object.map(|o| (o.cloud_object_type_and_id(), action.clone()))
+        let unsynced_actions: Vec<(CloudObjectTypeAndId, ObjectAction)> = object_actions
+            .iter()
+            .filter(|action| action.is_pending())
+            .filter_map(|action| {
+                cloud_model.read(ctx, |model, _| {
+                    let object = model.get_by_uid(&action.uid);
+                    object.map(|o| (o.cloud_object_type_and_id(), action.clone()))
+                })
             })
-        })
-        .collect::<Vec<_>>();
+            .collect::<Vec<_>>();
 
-    all_queue_items.extend(QueueItem::from_unsynced_actions(
-        unsynced_actions.into_iter(),
-    ));
+        all_queue_items.extend(QueueItem::from_unsynced_actions(
+            unsynced_actions.into_iter(),
+        ));
 
-    ctx.add_singleton_model(|ctx| {
-        SyncQueue::new(
-            all_queue_items,
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
-            ctx,
-        )
-    });
+        ctx.add_singleton_model(|ctx| {
+            SyncQueue::new(
+                all_queue_items,
+                server_api_provider.as_ref(ctx).get_cloud_objects_client(),
+                ctx,
+            )
+        });
+    }
 
     // Seed the orchestration pin set from persisted conversation data
     // before the conversations vec is consumed by the singletons below.
@@ -1868,6 +1871,7 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| ObjectActions::new(object_actions));
 
     ctx.add_singleton_model(|_| AudibleBell::new());
@@ -1884,6 +1888,7 @@ pub(crate) fn initialize_app(
         )
     });
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         UpdateManager::new(
             persistence_writer.sender(),
@@ -1935,6 +1940,7 @@ pub(crate) fn initialize_app(
 
     // CloudViewModel subscribes to UpdateManager so that it can be notified when objects are
     // created on the server.
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(CloudViewModel::new);
 
     // AIDocumentModel subscribes to UpdateManager so that it can be notified when notebooks are created on the server.
@@ -1954,6 +1960,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(NotebookKeybindings::new);
     ctx.add_singleton_model(TerminalKeybindings::new);
     ctx.add_singleton_model(|_| ActiveSession::default());
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         Listener::new(
             server_api_provider.as_ref(ctx).get_cloud_objects_client(),
