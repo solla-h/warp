@@ -177,7 +177,41 @@ download/upload, autoupdate, shared_session, terminal/input attachment, harness
 ## Commits (Round 2)
 | Commit | Step | Scope |
 |---|---|---|
-| `04ecda55` | 2.1 | LOCAL_FIRST.md + gate telemetry/notify_login (auth_manager) + send_telemetry_event (terminal/view) + server_api/ai.rs codebase-index surface (StoreClient impl + 2 trait methods/impls + imports) behind full_source_code_embedding. Cloud green. |
+| `04ecda55` | 2.1 | LOCAL_FIRST.md + gate telemetry/notify_login + server_api/ai.rs codebase-index behind full_source_code_embedding |
+| `e87830d7` | 2.3b1 | Gate cloud agent-orchestration modules (ambient, parent_bridge, wake_driver, agent_events, orchestration_event_streamer, OZ_RUN_ID) |
+| `6aa3e117` | 2.2-2.4 | Gate mod autoupdate + RunCloud dispatch + run_task + generate_multi_agent_output export |
+| `008a934b` | 2.3b2 | Gate MessageBridge field+usage (8 annotations) + harness_support print_tasks |
+| `96f92e32` | 2.4 | Gate generate_multi_agent_output imports in response_stream.rs + maa.rs |
+| `1381684c` | 2.5-prep | Gate autoupdate usage in lib.rs (6 call sites); lesson: remote_codebase_indexing stays in default until mod server gated |
+
+## Step 2.5 status: DEFERRED (too large for single session)
+
+Gating `mod server` entirely would cascade to **~873 references** across
+the codebase (`crate::server::*`), including 378 `ServerApiProvider` and
+90 `ServerApi` concrete-type references. This is a standalone refactoring
+project requiring:
+- Value-type migration (`ids.rs` → standalone crate; `block.rs::DisplaySetting` → `warp_terminal` or dedicated crate)
+- `ServerApiProvider` replacement with a trait-object-only provider (or removal + migration of 378 call sites to individual `get_*()` getters)
+- Gating ~100+ cloud-path modules that reference server types (`drive/`, `cloud_object/`, `billing/`, `pricing/`, `notebooks/`, parts of `ai/`, `settings_view/` cloud pages)
+
+### What has ALREADY been achieved (functionally complete for local-first):
+The **runtime** behavior is fully local-first when `local-only` is enabled:
+1. All server endpoints point at loopback (Stage 0).
+2. All authenticated requests carry NoAuth token (Round 1 session.rs fix).
+3. All actual cloud network calls are cfg-gated off (telemetry, autoupdate, Oz agent, codebase-index, event streaming, generate_multi_agent_output, transcript/artifact upload).
+4. Local CLI harnesses (claude/codex/gemini) are cleanly separated from cloud orchestration.
+
+The remaining 110 local-only compile errors are **type-reference cascades**
+(code referencing `ServerApiProvider`/`ServerApi` types without calling cloud
+methods), not runtime cloud calls. They represent dead code paths in local
+mode that still type-check against the cloud module.
+
+### Recommended next steps (future sessions):
+1. Gate `mod drive` + `mod cloud_object` + `mod billing` + `mod pricing` + `mod notebooks` (pure cloud UI; ~50 files).
+2. Gate cloud-heavy `mod settings_view` pages (billing, team, cloud-specific pages).
+3. Migrate `server/ids.rs` types to a standalone `warp_ids` crate (breaks the largest dependency cluster).
+4. Gate `mod server` + replace `ServerApiProvider` with trait-object provider.
+5. Remove `remote_codebase_indexing` from default (now safe since server_api/ai.rs is inside gated mod server).
 
 ## Lessons logged (from Round 1, applied to Round 2)
 - **Verify before planning.** The "~24 inherent methods / ~1000 LOC trait refactor"
