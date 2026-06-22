@@ -9,6 +9,7 @@ use warpui::r#async::SpawnedFutureHandle;
 use warpui::{Entity, EntityId, ModelContext, ModelHandle, SingletonEntity};
 
 use super::super::controller::{BlocklistAIController, BlocklistAIControllerEvent};
+#[cfg(not(feature = "local-only"))]
 use crate::ai::agent::api::generate_multi_agent_output;
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent::{
