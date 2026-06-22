@@ -252,6 +252,7 @@ use crate::ai::skills::SkillManager;
 use crate::ai::AIRequestUsageModel;
 use crate::antivirus::AntivirusInfo;
 use crate::app_state::AppState;
+#[cfg(not(feature = "local-only"))]
 use crate::autoupdate::{AutoupdateState, RelaunchModel};
 use crate::changelog_model::ChangelogModel;
 use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
@@ -1411,6 +1412,7 @@ pub(crate) fn initialize_app(
     timer.mark_interval_end("INIT_CRASH_REPORTING");
 
     if let LaunchMode::App { .. } = launch_mode {
+        #[cfg(not(feature = "local-only"))]
         autoupdate::check_and_report_update_errors(ctx);
     }
 
@@ -1423,6 +1425,7 @@ pub(crate) fn initialize_app(
         // explicitly launched as part of the auto-update process.  We may have
         // failed to remove the executable on a previous launch of the app and
         // should try again.
+        #[cfg(not(feature = "local-only"))]
         if let Err(e) = autoupdate::remove_old_executable() {
             log::error!("Failed to remove old executable: {e:?}");
         }
@@ -1984,6 +1987,7 @@ pub(crate) fn initialize_app(
         ctx.add_singleton_model(ScheduledAgentManager::new);
     }
 
+    #[cfg(not(feature = "local-only"))]
     AutoupdateState::register(ctx, server_api.clone());
 
     ctx.add_singleton_model(LocalWorkflows::new);
@@ -2233,6 +2237,7 @@ pub(crate) fn app_callbacks(
             // ensure that the new process doesn't find the old process while
             // attempting to enforce our single-instance policy on Linux.
             app_services::teardown(ctx);
+            #[cfg(not(feature = "local-only"))]
             autoupdate::spawn_child_if_necessary(ctx);
 
             // Tear down any application profilers that are running, writing
@@ -2308,14 +2313,17 @@ pub(crate) fn app_callbacks(
 
             // If there's a pending autoupdate, apply that before showing the unsaved changes
             // dialog. We apply the update first so that the dialog can force-terminate.
-            let applying_update = autoupdate::apply_pending_update(ctx, |ctx| {
-                // Once the deferred update is applied, re-terminate the app. This termination is
-                // cancellable so that we still show the unsaved changes dialog.
-                log::info!("Deferred autoupdate applied, terminating app");
-                ctx.terminate_app(TerminationMode::Cancellable, None);
-            });
-            if applying_update {
-                return ApproveTerminateResult::Cancel;
+            #[cfg(not(feature = "local-only"))]
+            {
+                let applying_update = autoupdate::apply_pending_update(ctx, |ctx| {
+                    // Once the deferred update is applied, re-terminate the app. This termination is
+                    // cancellable so that we still show the unsaved changes dialog.
+                    log::info!("Deferred autoupdate applied, terminating app");
+                    ctx.terminate_app(TerminationMode::Cancellable, None);
+                });
+                if applying_update {
+                    return ApproveTerminateResult::Cancel;
+                }
             }
 
             let summary = UnsavedStateSummary::for_app(ctx);
@@ -2465,6 +2473,7 @@ fn focus_running_window_and_show_native_modal(
 }
 
 fn on_close_app_cancelled(open_navigation_palette: bool, ctx: &mut AppContext) {
+    #[cfg(not(feature = "local-only"))]
     autoupdate::cancel_relaunch(ctx);
 
     send_telemetry_from_app_ctx!(
