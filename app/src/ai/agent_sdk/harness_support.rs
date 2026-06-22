@@ -75,7 +75,10 @@ fn ping(
                             println!("{json}");
                         }
                         OutputFormat::Pretty | OutputFormat::Text => {
+                            #[cfg(not(feature = "local-only"))]
                             super::ambient::print_tasks(&[task]);
+                            #[cfg(feature = "local-only")]
+                            println!("{task:?}");
                         }
                     }
                     ctx.terminate_app(TerminationMode::ForceTerminate, None);

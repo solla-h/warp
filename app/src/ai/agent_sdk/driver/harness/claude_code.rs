@@ -57,6 +57,7 @@ use parent_bridge::{
     write_parent_bridge_event_cursor, MessageBridgeHookOutput, MessageBridgeMessageRecord,
     MESSAGE_BRIDGE_CONTEXT_PREAMBLE,
 };
+#[cfg(not(feature = "local-only"))]
 use parent_bridge::{MessageBridge, MessageBridgeCleanupDisposition};
 #[cfg(test)]
 use shell_words::quote as shell_quote;
@@ -249,6 +250,7 @@ struct ClaudeHarnessRunner {
     state: Mutex<ClaudeRunnerState>,
     session_id: Uuid,
     working_dir: PathBuf,
+    #[cfg(not(feature = "local-only"))]
     parent_bridge: Option<MessageBridge>,
     /// Lazily cached output of `claude --version`.
     claude_version: Mutex<Option<String>>,
@@ -325,6 +327,7 @@ impl ClaudeHarnessRunner {
             .as_ref()
             .map(|f| f.path().display().to_string());
 
+        #[cfg(not(feature = "local-only"))]
         let parent_bridge = task_id
             .map(|task_id| MessageBridge::new(task_id.to_string(), session_id))
             .transpose()
@@ -350,6 +353,7 @@ impl ClaudeHarnessRunner {
             state: Mutex::new(ClaudeRunnerState::Preexec),
             session_id,
             working_dir: working_dir.to_path_buf(),
+            #[cfg(not(feature = "local-only"))]
             parent_bridge,
             claude_version: Mutex::new(None),
             preexisting_conversation_id,
@@ -358,6 +362,7 @@ impl ClaudeHarnessRunner {
 }
 
 impl ClaudeHarnessRunner {
+    #[cfg(not(feature = "local-only"))]
     async fn handle_parent_bridge_session_update(&self) -> Result<()> {
         let Some(parent_bridge) = self.parent_bridge.as_ref() else {
             return Ok(());
@@ -367,6 +372,7 @@ impl ClaudeHarnessRunner {
             .await
     }
 
+    #[cfg(not(feature = "local-only"))]
     async fn flush_parent_bridge_acks(&self) -> Result<()> {
         let Some(parent_bridge) = self.parent_bridge.as_ref() else {
             return Ok(());
@@ -413,6 +419,7 @@ impl ClaudeHarnessRunner {
         Some(version)
     }
 
+    #[cfg(not(feature = "local-only"))]
     async fn start_parent_bridge(&self, foreground: &ModelSpawner<AgentDriver>) -> Result<()> {
         let Some(parent_bridge) = self.parent_bridge.as_ref() else {
             return Ok(());
@@ -422,6 +429,7 @@ impl ClaudeHarnessRunner {
             .await
     }
 
+    #[cfg(not(feature = "local-only"))]
     async fn should_preserve_parent_bridge(
         &self,
         cleanup_disposition: HarnessCleanupDisposition,
@@ -441,6 +449,7 @@ impl ClaudeHarnessRunner {
         )
     }
 
+    #[cfg(not(feature = "local-only"))]
     fn cleanup_parent_bridge(&self, preserve_state: bool) -> Result<()> {
         if let Some(parent_bridge) = self.parent_bridge.as_ref() {
             let cleanup_disposition = if preserve_state {
@@ -491,6 +500,7 @@ impl HarnessRunner for ClaudeHarnessRunner {
                 id
             }
         };
+        #[cfg(not(feature = "local-only"))]
         self.start_parent_bridge(foreground)
             .await
             .map_err(AgentDriverError::ConfigBuildFailed)?;
@@ -506,6 +516,7 @@ impl HarnessRunner for ClaudeHarnessRunner {
         {
             Ok(command_handle) => command_handle,
             Err(err) => {
+                #[cfg(not(feature = "local-only"))]
                 self.cleanup_parent_bridge(false)
                     .map_err(AgentDriverError::ConfigBuildFailed)?;
                 return Err(err);
@@ -539,7 +550,9 @@ impl HarnessRunner for ClaudeHarnessRunner {
     }
 
     async fn handle_session_update(&self, _foreground: &ModelSpawner<AgentDriver>) -> Result<()> {
-        self.handle_parent_bridge_session_update().await
+        #[cfg(not(feature = "local-only"))]
+        self.handle_parent_bridge_session_update().await?;
+        Ok(())
     }
 
     async fn save_conversation(
@@ -595,11 +608,19 @@ impl HarnessRunner for ClaudeHarnessRunner {
         cleanup_disposition: HarnessCleanupDisposition,
         foreground: &ModelSpawner<AgentDriver>,
     ) -> Result<()> {
-        self.flush_parent_bridge_acks().await?;
-        let preserve_state = self
-            .should_preserve_parent_bridge(cleanup_disposition, foreground)
-            .await;
-        self.cleanup_parent_bridge(preserve_state)
+        #[cfg(not(feature = "local-only"))]
+        {
+            self.flush_parent_bridge_acks().await?;
+            let preserve_state = self
+                .should_preserve_parent_bridge(cleanup_disposition, foreground)
+                .await;
+            self.cleanup_parent_bridge(preserve_state)?;
+        }
+        #[cfg(feature = "local-only")]
+        {
+            let _ = (cleanup_disposition, foreground);
+        }
+        Ok(())
     }
 }
 
