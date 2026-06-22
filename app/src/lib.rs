@@ -1439,6 +1439,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| AIFactManager::new());
     ctx.add_singleton_model(|_| ExecutionProfileEditorManager::default());
     ctx.add_singleton_model(|_| NetworkLogPaneManager::default());
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
     ctx.add_singleton_model(|ctx| {
         // Not using the *Provider types isn't ideal, but it's worth it for the ability to move managed secrets to a separate crate.
@@ -1694,6 +1695,7 @@ pub(crate) fn initialize_app(
     prompt::editor_modal::init(ctx);
     ai::blocklist::agent_view::editor::init(ctx);
     undo_close::init(ctx);
+    #[cfg(not(feature = "local-only"))]
     billing::shared_objects_creation_denied_modal::init(ctx);
     tab_configs::new_worktree_modal::init(ctx);
     tab_configs::params_modal::init(ctx);
