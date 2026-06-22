@@ -1159,6 +1159,7 @@ pub(crate) fn initialize_app(
     let auth_state = Arc::new(AuthState::initialize(ctx, api_key));
     timer.mark_interval_end("AUTH_MANAGER_SET_USER");
 
+    #[cfg(not(feature = "local-only"))]
     let agent_source = determine_agent_source(launch_mode);
 
     // NetworkLogModel must be registered before ServerApiProvider so that
@@ -1176,12 +1177,14 @@ pub(crate) fn initialize_app(
     #[cfg(target_family = "wasm")]
     let iap_state: Option<Arc<crate::server::iap::IapState>> = None;
 
+    #[cfg(not(feature = "local-only"))]
     let server_api_provider = ctx.add_singleton_model({
         let auth_state = auth_state.clone();
         let iap_state = iap_state.clone();
         move |ctx| ServerApiProvider::new(auth_state, agent_source, iap_state, ctx)
     });
 
+    #[cfg(not(feature = "local-only"))]
     let server_api = server_api_provider.as_ref(ctx).get();
     #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     if let Ok(run_id) = std::env::var(warp_cli::OZ_RUN_ID_ENV) {
@@ -1190,8 +1193,9 @@ pub(crate) fn initialize_app(
             Err(err) => log::warn!("Ignoring invalid {}: {err}", warp_cli::OZ_RUN_ID_ENV),
         }
     }
+    #[cfg(not(feature = "local-only"))]
     let ai_client = server_api_provider.as_ref(ctx).get_ai_client();
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     // Refresh starts only after the authenticated server client exists; tracing initialization
     // remains responsible for deciding whether this process opted in to cloud-agent export.
     tracing::start_auth_refresh(
@@ -1203,6 +1207,7 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         AuthManager::new(
             server_api.clone(),
@@ -1356,6 +1361,7 @@ pub(crate) fn initialize_app(
     // be initialized after it.
     ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(ai_client, ctx));
 
     #[cfg(not(feature = "local-only"))]
@@ -1448,6 +1454,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| NetworkLogPaneManager::default());
     #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         // Not using the *Provider types isn't ideal, but it's worth it for the ability to move managed secrets to a separate crate.
         ManagedSecretManager::new(
@@ -1523,6 +1530,7 @@ pub(crate) fn initialize_app(
         // Skip refresh_user for CLI mode — the CLI handles auth refresh in
         // ensure_auth_state so it can detect invalid credentials before running
         // a command.
+        #[cfg(not(feature = "local-only"))]
         if !matches!(launch_mode, LaunchMode::CommandLine { .. }) {
             AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
                 auth_manager.refresh_user(ctx);
@@ -1733,6 +1741,7 @@ pub(crate) fn initialize_app(
 
     #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| RelaunchModel::new());
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| ChangelogModel::new(server_api.clone()));
     ctx.add_singleton_model(|_| GitHubAuthNotifier::new());
     ctx.add_singleton_model(|_| NetworkStatus::new());
@@ -1759,6 +1768,7 @@ pub(crate) fn initialize_app(
 
     #[cfg(feature = "voice_input")]
     ctx.add_singleton_model(voice_input::VoiceInput::new);
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| {
         VoiceTranscriber::new(Arc::new(ServerVoiceTranscriber::new(server_api.clone())))
     });
@@ -2079,13 +2089,24 @@ pub(crate) fn initialize_app(
             vec![]
         };
 
+        #[cfg(not(feature = "local-only"))]
         let codebase_limits = AIRequestUsageModel::as_ref(ctx).codebase_context_limits();
+        #[cfg(feature = "local-only")]
+        let codebase_limits = ai::CodebaseContextUsageLimit {
+            max_files_per_repo: 5000,
+            max_indices_allowed: None,
+            embedding_generation_batch_size: 50,
+        };
+        #[cfg(not(feature = "local-only"))]
+        let store_client: Arc<dyn ::ai::index::full_source_code_embedding::store_client::StoreClient> = server_api_provider.as_ref(ctx).get();
+        #[cfg(feature = "local-only")]
+        let store_client: Arc<dyn ::ai::index::full_source_code_embedding::store_client::StoreClient> = Arc::new(::ai::index::full_source_code_embedding::store_client::MockStoreClient);
         let mut codebase_index_config = CodebaseIndexManagerConfig::new(
             indices_to_restore,
             codebase_limits.max_indices_allowed,
             codebase_limits.max_files_per_repo,
             codebase_limits.embedding_generation_batch_size,
-            server_api_provider.as_ref(ctx).get(),
+            store_client,
             launch_mode.supports_indexing(),
         );
         if matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. }) {
