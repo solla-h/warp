@@ -315,8 +315,11 @@ use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::{
     ActiveSession, OneTimeModalModel, PaneViewLocator, ToastStack, Workspace, WorkspaceAction,
 };
+#[cfg(not(feature = "local-only"))]
 use crate::workspaces::team_tester::TeamTesterStatus;
+#[cfg(not(feature = "local-only"))]
 use crate::workspaces::update_manager::TeamUpdateManager;
+#[cfg(not(feature = "local-only"))]
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
@@ -1355,6 +1358,7 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(ai_client, ctx));
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         UserWorkspaces::new(
             server_api_provider.as_ref(ctx).get_team_client(),
@@ -1382,7 +1386,7 @@ pub(crate) fn initialize_app(
         // here. The initial value resumes proactive refresh of any tokens
         // restored from secure storage; TeamsChanged keeps the policy aligned
         // as team data loads or the workspace changes.
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
         if FeatureFlag::SuperGrok.is_enabled() {
             use crate::workspaces::user_workspaces::UserWorkspacesEvent;
             ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |manager, event, ctx| {
@@ -1869,6 +1873,7 @@ pub(crate) fn initialize_app(
         )
     });
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
 
     #[cfg(not(feature = "local-only"))]
@@ -1878,8 +1883,10 @@ pub(crate) fn initialize_app(
 
     // This model has to be registered after the user workspaces model because it relies on it,
     // and before the UpdateManager models because they rely on the TeamTester model.
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(TeamTesterStatus::new);
 
+    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         TeamUpdateManager::new(
             server_api_provider.as_ref(ctx).get_team_client(),
@@ -2029,14 +2036,17 @@ pub(crate) fn initialize_app(
         // Also revalidate when workspace/team data changes (e.g. voice toggled at
         // the org level). Billing metadata — including `warp_ai_policy.is_voice_enabled`
         // — lives inside the team data, so `TeamsChanged` covers all policy updates.
-        let tip_model_handle_for_teams = tip_model_handle.clone();
-        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), move |_, event, ctx| {
-            if matches!(event, UserWorkspacesEvent::TeamsChanged) {
-                tip_model_handle_for_teams.update(ctx, |model, ctx| {
-                    model.revalidate_tips(ctx);
-                });
-            }
-        });
+        #[cfg(not(feature = "local-only"))]
+        {
+            let tip_model_handle_for_teams = tip_model_handle.clone();
+            ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), move |_, event, ctx| {
+                if matches!(event, UserWorkspacesEvent::TeamsChanged) {
+                    tip_model_handle_for_teams.update(ctx, |model, ctx| {
+                        model.revalidate_tips(ctx);
+                    });
+                }
+            });
+        }
         // Revalidate when any keybinding changes so tips with `<keybinding>`
         // placeholders are hidden/shown when the referenced binding is cleared
         // or reassigned.
@@ -2056,9 +2066,13 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(DefaultTerminal::new);
 
     ctx.add_singleton_model(|ctx| {
+        #[cfg(not(feature = "local-only"))]
         let should_restore_indices = launch_mode.supports_indexing()
             && (matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. })
                 || UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx));
+        #[cfg(feature = "local-only")]
+        let should_restore_indices = launch_mode.supports_indexing()
+            && matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. });
         let indices_to_restore = if should_restore_indices {
             persisted_workspaces.clone()
         } else {
