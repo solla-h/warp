@@ -38,7 +38,12 @@ use crate::server::server_api::ServerApi;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::session::ExecuteCommandOptions;
 use crate::terminal::CLIAgent;
+// parent_bridge (MessageBridge) and wake_driver are cloud Oz orchestration:
+// the parent agent <-> child agent mailbox bridge and the dormant-session wake
+// path. Local CLI harness runs don't use them; gate behind local-only.
+#[cfg(not(feature = "local-only"))]
 mod parent_bridge;
+#[cfg(not(feature = "local-only"))]
 mod wake_driver;
 
 #[cfg(test)]

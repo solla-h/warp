@@ -1176,7 +1176,7 @@ pub(crate) fn initialize_app(
     });
 
     let server_api = server_api_provider.as_ref(ctx).get();
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     if let Ok(run_id) = std::env::var(warp_cli::OZ_RUN_ID_ENV) {
         match run_id.parse() {
             Ok(task_id) => server_api.set_ambient_agent_task_id(Some(task_id)),

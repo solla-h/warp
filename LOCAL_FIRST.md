@@ -159,13 +159,25 @@ download/upload, autoupdate, shared_session, terminal/input attachment, harness
   rollback once `server_api/ai.rs` is gated).
 
 ## Verification protocol (per step)
-1. `cargo check --bin warp-oss` — cloud mode stays green (regression guard).
+1. `cargo check --bin warp-oss` — cloud mode stays green (**this is the per-step
+   regression guard**). The cloud build is unchanged by `#[cfg(not(feature="local-only"))]`
+   gating, so it must compile at every commit.
 2. `cargo check --bin warp-oss --no-default-features --features local-only` —
-   target: cloud crates not compiled.
+   the **target**, but only expected to be clean at **Step 2.5** (after
+   `remote_codebase_indexing` is dropped from `default` and `mod server` is gated).
+   Before 2.5, local-only has cascading errors from still-default cloud features
+   (`remote_codebase_indexing`, `full_source_code_embedding`) referencing gated
+   types — these are expected and not a per-step blocker.
 3. `cargo tree --bin warp-oss --no-default-features --features local-only | grep -c warp_graphql`
-   → expect 0 (also for `firebase`/`warp_server_auth`/`warp_server_client`/`cloud_object_*`).
+   → expect 0 (also for `firebase`/`warp_server_auth`/`warp_server_client`/`cloud_object_*`)
+   — final acceptance at 2.5.
 4. `cargo fmt` + `cargo clippy` on changed crates.
 5. Existing tests: `cargo test -p warp_core -p ai -p mcp -p mcp_types -p cloud_object_models -p warp_server_client`.
+
+## Commits (Round 2)
+| Commit | Step | Scope |
+|---|---|---|
+| `04ecda55` | 2.1 | LOCAL_FIRST.md + gate telemetry/notify_login (auth_manager) + send_telemetry_event (terminal/view) + server_api/ai.rs codebase-index surface (StoreClient impl + 2 trait methods/impls + imports) behind full_source_code_embedding. Cloud green. |
 
 ## Lessons logged (from Round 1, applied to Round 2)
 - **Verify before planning.** The "~24 inherent methods / ~1000 LOC trait refactor"

@@ -8,6 +8,7 @@ mod controller;
 pub(crate) mod handoff;
 
 pub(crate) mod local_agent_task_sync_model;
+#[cfg(not(feature = "local-only"))]
 pub(crate) mod orchestration_event_streamer;
 pub(crate) mod orchestration_events;
 pub(crate) mod orchestration_topology;
