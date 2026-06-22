@@ -1,6 +1,7 @@
 pub(crate) mod convert_conversation;
 mod convert_from;
 mod convert_to;
+#[cfg(not(feature = "local-only"))]
 mod r#impl;
 
 use std::path::Path;
@@ -15,6 +16,7 @@ pub use convert_from::{
 };
 use futures_lite::Stream;
 use mcp::TemplatableMCPServerInfo;
+#[cfg(not(feature = "local-only"))]
 pub use r#impl::generate_multi_agent_output;
 use serde::Serialize;
 use warp_core::channel::ChannelState;

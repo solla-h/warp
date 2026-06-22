@@ -8,6 +8,7 @@ mod app_menus;
 mod app_services;
 mod app_state;
 mod auth;
+#[cfg(not(feature = "local-only"))]
 mod autoupdate;
 mod banner;
 mod billing;

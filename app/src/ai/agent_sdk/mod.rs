@@ -150,7 +150,12 @@ fn dispatch_command(
             environment::run(ctx, global_options, environment_cmd)
         }
         CliCommand::MCP(mcp_cmd) => mcp::run(ctx, global_options, mcp_cmd),
+        #[cfg(not(feature = "local-only"))]
         CliCommand::Run(task_cmd) => run_task(ctx, global_options, task_cmd),
+        #[cfg(feature = "local-only")]
+        CliCommand::Run(_) => Err(anyhow::anyhow!(
+            "task commands require cloud; not available in local-only mode"
+        )),
         CliCommand::Model(model_cmd) => model::run(ctx, global_options, model_cmd),
         CliCommand::Login => admin::login(ctx),
         CliCommand::Logout => admin::logout(ctx),
@@ -296,6 +301,7 @@ fn run_agent(
 
             Ok(())
         }
+        #[cfg(not(feature = "local-only"))]
         AgentCommand::RunCloud(args) => {
             if args.environment.environment.is_some()
                 && !FeatureFlag::CloudEnvironments.is_enabled()
@@ -317,6 +323,10 @@ fn run_agent(
             }
             ambient::run_ambient_agent(ctx, args)
         }
+        #[cfg(feature = "local-only")]
+        AgentCommand::RunCloud(_) => Err(anyhow::anyhow!(
+            "run-cloud requires cloud; not available in local-only mode"
+        )),
         AgentCommand::Profile(sub) => profiles::run(ctx, global_options, sub),
         AgentCommand::List(args) => {
             agent_management::list_agents(ctx, global_options.output_format, args)
@@ -552,6 +562,7 @@ fn resolve_prompt(prompt: &Prompt, ctx: &AppContext) -> Result<String, AgentDriv
 }
 
 /// Run the task with the provided command.
+#[cfg(not(feature = "local-only"))]
 fn run_task(
     ctx: &mut AppContext,
     global_options: GlobalOptions,
