@@ -262,8 +262,8 @@ use crate::ai::skills::SkillManager;
 use crate::ai::AIRequestUsageModel;
 use crate::antivirus::AntivirusInfo;
 use crate::app_state::AppState;
-#[cfg(not(feature = "local-only"))]
-use crate::autoupdate::{AutoupdateState, RelaunchModel};
+use crate::autoupdate::AutoupdateState;
+use crate::autoupdate::RelaunchModel;
 use crate::changelog_model::ChangelogModel;
 #[cfg(feature = "cloud")]
 use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
@@ -1768,7 +1768,6 @@ pub(crate) fn initialize_app(
     let display_count = ctx.windows().display_count();
     ctx.add_singleton_model(|_| DisplayCount(display_count));
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| RelaunchModel::new());
     #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| ChangelogModel::new(server_api.clone()));
@@ -2051,7 +2050,6 @@ pub(crate) fn initialize_app(
         ctx.add_singleton_model(ScheduledAgentManager::new);
     }
 
-    #[cfg(not(feature = "local-only"))]
     AutoupdateState::register(ctx, server_api.clone());
 
     ctx.add_singleton_model(LocalWorkflows::new);
