@@ -1538,7 +1538,7 @@ fn launch_command(
     let cli_name = warp_cli::binary_name().unwrap_or_else(|| "warp".to_string());
 
     let auth_state = AuthStateProvider::handle(ctx).as_ref(ctx).get();
-    if !auth_state.is_logged_in() && !cfg!(feature = "local-only") {
+    if !auth_state.is_logged_in() && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
         return Err(anyhow::anyhow!(
             "You are not logged in - please log in with `{cli_name} login` to continue."
         ));
