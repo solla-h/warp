@@ -322,3 +322,36 @@ crates/warp_assets async/ 目录(41MB onboarding PNG)
 - [ ] 添加 graphql feature (default on) gate graphql-ws-client
 - [ ] 添加 cloud-auth feature (default on) gate connect_with_headers
 - [ ] local-only build 可排除以上全部，仅保留 plain ws://
+
+---
+
+## 任务状态更新 (commit 362b3d90)
+
+### 全部已完成:
+- [x] T9: ID types (ClientId/SyncId/ServerId/HashableId/ToServerId) → warp_types
+- [x] T10: Auth types (UserUid/UserMetadata/AnonymousUserType/PrincipalType) → warp_types
+- [x] T11: http_client warp-cloud feature split (IAP/headers optional)
+- [x] T13: strip = "debuginfo" 添加到 release profile
+- [x] T14: 14 Channel::Oss 单元测试全部通过
+- [x] T16: 删除 warp_server_client 幽灵 session-sharing-protocol 依赖
+- [x] T17: warp-workflows optional (bundled_workflows feature)
+- [x] T18: warp_isolation_platform 中 warp_core optional (env var fallback)
+- [x] T19: 14 云 features 整合为 cloud_ui feature group
+- [x] T20: warp_assets slim feature (exclude 41MB async/)
+- [x] T21: websocket tls/proxy/graphql feature split
+
+### 待执行:
+- [ ] T12: 196 文件 warp_graphql import gating (最大工作, 3-5天)
+  - Phase A: server/ 模块整体 cfg gate
+  - Phase B: cloud_object/ 模块整体 cfg gate
+  - Phase C: workspaces/ 模块整体 cfg gate
+  - Phase D: drive/ 模块相关 imports
+  - Phase E: 散落的 73 个 shared type imports
+- [ ] T15: BYOP 集成测试
+
+### warp_types crate 当前包含:
+- ServerTimestamp, Uint32 (scalars)
+- ClientId, ServerId, SyncId, ObjectUid, HashedSqliteId (IDs)
+- HashableId, ToServerId traits + server_id_traits! macro
+- UserUid (with lasso interner)
+- UserMetadata, AnonymousUserType, PrincipalType, PersonalObjectLimits
