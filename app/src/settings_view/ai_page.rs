@@ -6,7 +6,7 @@ use pathfinder_geometry::vector::vec2f;
 use regex::Regex;
 use settings::{Setting, ToggleableSetting};
 use strum::IntoEnumIterator;
-use warp_core::channel::ChannelState;
+use warp_core::channel::{Channel, ChannelState};
 use warp_core::context_flag::ContextFlag;
 use warp_core::features::FeatureFlag;
 use warp_core::ui::color::contrast::MinimumAllowedContrast;
@@ -4128,7 +4128,8 @@ impl SettingsWidget for GlobalAIWidget {
 
         let is_anonymous = AuthStateProvider::as_ref(app)
             .get()
-            .is_anonymous_or_logged_out();
+            .is_anonymous_or_logged_out()
+            && ChannelState::channel() != Channel::Oss;
 
         let mut row = Flex::row()
             .with_main_axis_size(MainAxisSize::Max)
@@ -4503,6 +4504,7 @@ impl SettingsWidget for UsageWidget {
         if AuthStateProvider::as_ref(app)
             .get()
             .is_anonymous_or_logged_out()
+            && ChannelState::channel() != Channel::Oss
         {
             upgrade_cta = upgrade_cta.register_default_click_handlers(|_, ctx, _| {
                 ctx.dispatch_typed_action(AISettingsPageAction::AttemptLoginGatedUpgrade);
@@ -8130,6 +8132,7 @@ impl SettingsWidget for ApiKeysWidget {
                 }
             } else if FeatureFlag::SoloUserByok.is_enabled()
                 && auth_state.is_anonymous_or_logged_out()
+                && ChannelState::channel() != Channel::Oss
             {
                 vec![
                     FormattedTextFragment::hyperlink_action(
