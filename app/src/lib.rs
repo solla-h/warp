@@ -14,6 +14,7 @@ mod banner;
 mod billing;
 mod changelog_model;
 mod chip_configurator;
+#[cfg(feature = "cloud")]
 mod cloud_object;
 mod code;
 mod code_review;
@@ -72,6 +73,7 @@ mod resource_limits;
 mod reward_view;
 mod safe_triangle;
 mod search_bar;
+#[cfg(feature = "cloud")]
 mod server;
 mod session_management;
 mod shell_indicator;
@@ -97,6 +99,7 @@ mod warp_managed_paths_watcher;
 mod wasm_nux_dialog;
 mod window_settings;
 mod word_block_editor;
+#[cfg(feature = "cloud")]
 mod workspaces;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
