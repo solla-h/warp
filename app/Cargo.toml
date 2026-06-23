@@ -86,9 +86,9 @@ cfg-if.workspace = true
 channel_versions.workspace = true
 chrono.workspace = true
 clap.workspace = true
-cloud_object_client.workspace = true
-cloud_object_models.workspace = true
-cloud_objects.workspace = true
+cloud_object_client = { workspace = true, optional = true }
+cloud_object_models = { workspace = true, optional = true }
+cloud_objects = { workspace = true, optional = true }
 command = { workspace = true }
 command-corrections.workspace = true
 command-signatures-v2 = { workspace = true, optional = true }
@@ -470,7 +470,7 @@ embed-resource = "3.0"
 # injects NoOp cloud clients and a no-login path so the app runs fully local.
 # Off by default to keep the existing cloud-backed build unchanged.
 local-only = ["skip_login"]
-cloud = ["dep:cloud_object_persistence", "dep:warp_server_client", "dep:warp_server_auth", "dep:warp_managed_secrets", "dep:warp_graphql", "persistence/cloud"]
+cloud = ["dep:cloud_object_persistence", "dep:cloud_objects", "dep:cloud_object_client", "dep:cloud_object_models", "dep:warp_server_client", "dep:warp_server_auth", "dep:warp_managed_secrets", "dep:warp_graphql", "persistence/cloud"]
 aws-bedrock = ["dep:aws-config", "dep:aws-credential-types", "dep:aws-sdk-sts", "dep:aws-types"]
 otel = ["dep:opentelemetry", "dep:opentelemetry-http", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk", "dep:tracing-opentelemetry"]
 ai_resume_button = []
