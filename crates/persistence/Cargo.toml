@@ -7,6 +7,7 @@ license.workspace = true
 
 [features]
 local_fs = []
+cloud = []
 
 [dependencies]
 chrono.workspace = true

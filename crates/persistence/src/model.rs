@@ -10,14 +10,18 @@ use warp_multi_agent_api::{self as api};
 
 use super::schema::{
     active_mcp_servers, agent_conversations, agent_tasks, ai_document_panes, ai_memory_panes,
-    ambient_agent_panes, app, blocks, cloud_objects_refreshes, code_pane_tabs, code_panes,
-    code_review_panes, commands, current_user_information, env_var_collection_panes, folders,
-    generic_string_objects, ignored_suggestions, mcp_environment_variables,
-    mcp_server_installations, mcp_server_panes, notebook_panes, notebooks, object_actions,
-    object_metadata, object_permissions, pane_branches, pane_leaves, pane_nodes, panels,
-    project_rules, projects, server_experiments, settings_panes, tab_groups, tabs, team_members,
-    team_settings, teams, terminal_panes, user_profiles, windows, workflow_panes, workflows,
-    workspace_language_server, workspace_metadata, workspace_teams, workspaces,
+    ambient_agent_panes, app, blocks, code_pane_tabs, code_panes, code_review_panes, commands,
+    env_var_collection_panes, generic_string_objects, ignored_suggestions,
+    mcp_environment_variables, mcp_server_installations, mcp_server_panes, notebook_panes,
+    pane_branches, pane_leaves, pane_nodes, panels, project_rules, projects, settings_panes,
+    tab_groups, tabs, terminal_panes, windows, workflow_panes, workflows,
+    workspace_language_server, workspace_metadata,
+};
+#[cfg(feature = "cloud")]
+use super::schema::{
+    cloud_objects_refreshes, current_user_information, folders, notebooks, object_actions,
+    object_metadata, object_permissions, server_experiments, team_members, team_settings, teams,
+    user_profiles, workspace_teams, workspaces,
 };
 
 #[derive(Insertable)]
@@ -71,6 +75,7 @@ pub struct NewWorkflow {
     pub data: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Insertable, Queryable)]
 pub struct Notebook {
     pub id: i32,
@@ -79,6 +84,7 @@ pub struct Notebook {
     pub ai_document_id: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = notebooks)]
 pub struct NewNotebook {
@@ -87,6 +93,7 @@ pub struct NewNotebook {
     pub ai_document_id: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Identifiable, Queryable)]
 pub struct Folder {
     pub id: i32,
@@ -95,6 +102,7 @@ pub struct Folder {
     pub is_warp_pack: bool,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = folders)]
 pub struct NewFolder {
@@ -103,6 +111,7 @@ pub struct NewFolder {
     pub is_warp_pack: bool,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Insertable, Queryable)]
 pub struct Team {
     pub id: i32,
@@ -111,6 +120,7 @@ pub struct Team {
     pub billing_metadata_json: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = teams)]
 pub struct NewTeam {
@@ -119,6 +129,7 @@ pub struct NewTeam {
     pub billing_metadata_json: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Queryable)]
 #[diesel(table_name = team_members)]
 pub struct TeamMemberRow {
@@ -129,6 +140,7 @@ pub struct TeamMemberRow {
     pub role: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = team_members)]
 pub struct NewTeamMember {
@@ -138,6 +150,7 @@ pub struct NewTeamMember {
     pub role: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Insertable, Queryable)]
 pub struct Workspace {
     pub id: i32,
@@ -146,6 +159,7 @@ pub struct Workspace {
     pub is_selected: bool,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = workspaces)]
 pub struct NewWorkspace {
@@ -154,6 +168,7 @@ pub struct NewWorkspace {
     pub is_selected: bool,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Insertable, Queryable)]
 pub struct TeamSetting {
     pub id: i32,
@@ -161,6 +176,7 @@ pub struct TeamSetting {
     pub settings_json: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = team_settings)]
 pub struct NewTeamSettings {
@@ -241,6 +257,7 @@ impl PartialEq for Project {
 
 impl Eq for Project {}
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Insertable, Queryable)]
 pub struct WorkspaceTeam {
     pub id: i32,
@@ -248,6 +265,7 @@ pub struct WorkspaceTeam {
     pub team_server_uid: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = workspace_teams)]
 pub struct NewWorkspaceTeam {
@@ -255,6 +273,7 @@ pub struct NewWorkspaceTeam {
     pub team_server_uid: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Queryable)]
 #[diesel(table_name = object_permissions)]
 pub struct ObjectPermissions {
@@ -269,6 +288,7 @@ pub struct ObjectPermissions {
     pub anyone_with_link_source: Option<Vec<u8>>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Queryable)]
 #[diesel(table_name = object_permissions)]
 pub struct NewObjectPermissions {
@@ -282,6 +302,7 @@ pub struct NewObjectPermissions {
     pub anyone_with_link_source: Option<Vec<u8>>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Queryable)]
 #[diesel(table_name = object_metadata)]
 pub struct ObjectMetadata {
@@ -303,6 +324,7 @@ pub struct ObjectMetadata {
     pub current_editor: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Queryable)]
 #[diesel(table_name = object_metadata)]
 pub struct NewObjectMetadata {
@@ -808,6 +830,7 @@ pub struct Command {
     pub is_agent_executed: Option<bool>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Queryable, Insertable)]
 #[diesel(table_name = user_profiles)]
 #[diesel(primary_key(firebase_uid))]
@@ -818,12 +841,14 @@ pub struct UserProfile {
     pub display_name: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = cloud_objects_refreshes)]
 pub struct NewCloudObjectsRefresh {
     pub time_of_next_refresh: NaiveDateTime,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Queryable)]
 #[diesel(table_name = cloud_objects_refreshes)]
 pub struct CloudObjectsRefresh {
@@ -831,6 +856,7 @@ pub struct CloudObjectsRefresh {
     pub time_of_next_refresh: NaiveDateTime,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = object_actions)]
 pub struct NewPersistedObjectAction {
@@ -845,6 +871,7 @@ pub struct NewPersistedObjectAction {
     pub processed_at_timestamp: Option<NaiveDateTime>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Identifiable, Queryable, Insertable, Debug)]
 #[diesel(table_name = object_actions)]
 pub struct PersistedObjectAction {
@@ -860,17 +887,20 @@ pub struct PersistedObjectAction {
     pub processed_at_timestamp: Option<NaiveDateTime>,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable, Queryable)]
 pub struct ServerExperiment {
     pub experiment: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Insertable)]
 #[diesel(table_name = server_experiments)]
 pub struct NewServerExperiment {
     pub experiment: String,
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Debug, Insertable)]
 #[diesel(table_name = current_user_information)]
 pub struct CurrentUserInformation {

@@ -13,7 +13,7 @@ chrono.workspace = true
 cloud_objects.workspace = true
 diesel = { workspace = true, features = ["sqlite", "chrono"] }
 log.workspace = true
-persistence.workspace = true
+persistence = { workspace = true, features = ["cloud"] }
 serde.workspace = true
 warp_core.workspace = true
 warp_graphql.workspace = true
