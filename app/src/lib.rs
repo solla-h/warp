@@ -9,6 +9,7 @@ mod app_menus;
 mod app_services;
 mod app_state;
 mod auth;
+#[cfg(feature = "cloud")]
 mod autoupdate;
 mod banner;
 mod billing;
