@@ -15663,6 +15663,7 @@ dependencies = [
  "warp_core",
  "warp_graphql",
  "warp_managed_secrets",
+ "warp_types",
  "warpui_core",
  "warpui_extras",
 ]
@@ -15748,6 +15749,7 @@ dependencies = [
  "chrono",
  "cynic",
  "itertools 0.14.0",
+ "lasso",
  "schemars 1.0.4",
  "serde",
  "settings_value",
