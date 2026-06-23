@@ -234,7 +234,7 @@ vec1.workspace = true
 version-compare.workspace = true
 vte.workspace = true
 walkdir.workspace = true
-warp-workflows.workspace = true
+warp-workflows = { workspace = true, optional = true }
 warp_assets.workspace = true
 warp_completer.workspace = true
 warp_core.workspace = true
@@ -471,12 +471,14 @@ embed-resource = "3.0"
 # Off by default to keep the existing cloud-backed build unchanged.
 local-only = ["skip_login"]
 cloud = ["dep:cloud_object_persistence", "dep:cloud_objects", "dep:cloud_object_client", "dep:cloud_object_models", "dep:warp_server_client", "dep:warp_server_auth", "dep:warp_managed_secrets", "dep:warp_graphql", "persistence/cloud"]
+cloud_ui = ["cloud_environments", "cloud_conversations", "ambient_agents_rtc", "cloud_mode", "oz_platform_skills", "oz_identity_federation", "sync_ambient_plans", "conversation_artifacts", "oz_launch_modal", "scheduled_ambient_agents", "oz_handoff", "handoff_local_cloud", "handoff_cloud_cloud", "remote_codebase_indexing"]
 aws-bedrock = ["dep:aws-config", "dep:aws-credential-types", "dep:aws-sdk-sts", "dep:aws-types"]
 otel = ["dep:opentelemetry", "dep:opentelemetry-http", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk", "dep:tracing-opentelemetry"]
 ai_resume_button = []
 autoupdate = []
 figma_detection = []
 bundled_skills = []
+bundled_workflows = ["dep:warp-workflows"]
 supergrok = []
 gemini_enterprise = []
 agent_mode = []
@@ -598,7 +600,7 @@ default = [
     "integration_command",
     "artifact_command",
     "conversation_api",
-    "cloud_environments",
+    "cloud_ui",
     "create_environment_slash_command",
     "code_review_find",
     "shared_session_long_running_commands",
@@ -607,7 +609,6 @@ default = [
     "context_window_usage_v2",
     "ambient_agents_command_line",
     "ambient_agents_image_upload",
-    "scheduled_ambient_agents",
     "warp_managed_secrets",
     "v4a_file_diffs",
     "classic_completions",
@@ -618,26 +619,19 @@ default = [
     "pluggable_notifications",
     "agent_onboarding",
     "global_search",
-    "cloud_conversations",
     "list_skills",
     "ask_user_question",
     "bundled_skills",
-    "ambient_agents_rtc",
-    "cloud_mode",
+    "bundled_workflows",
     "cloud_mode_from_local_session",
     "cloud_mode_image_context",
     "agent_mode_computer_use",
-    "oz_platform_skills",
-    "oz_identity_federation",
-    "sync_ambient_plans",
-    "conversation_artifacts",
     "agent_view",
     "agent_view_block_context",
     "agent_view_conversation_list_view",
     "inline_slash_commands",
     "inline_history_menu",
     "inline_model_selector",
-    "oz_launch_modal",
     "open_warp_launch_modal",
     "orchestration_launch_modal",
     "new_tab_styling",
@@ -685,8 +679,6 @@ default = [
     "settings_file",
     "directory_tab_colors",
     "git_credential_refresh",
-    "oz_handoff",
-    "handoff_local_cloud",
     "run_agents_tool",
     "orchestration_viewer_streamer",
     "owner_orchestration_ancestor_streamer",
@@ -695,8 +687,6 @@ default = [
     "queued_prompts_v2",
     "cloud_mode_input_v2",
     "cloud_mode_setup_v2",
-    "handoff_cloud_cloud",
-    "remote_codebase_indexing",
     "solo_user_byok",
     "custom_inference_endpoints",
     "supergrok",

@@ -9,6 +9,7 @@ use itertools::Itertools;
 use warp_core::ui::builder::UiBuilder;
 use warp_core::ui::theme::color::internal_colors;
 use warp_editor::editor::NavigationKey;
+#[cfg(feature = "bundled_workflows")]
 use warp_workflows::workflows as global_workflows;
 use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
 use warpui::color::ColorU;
@@ -367,16 +368,19 @@ impl CategoriesView {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let mut categorized_workflows = HashMap::new();
-        categorized_workflows.insert(
-            WorkflowSource::Global,
-            Self::categorize_workflows(
-                global_workflows()
-                    .into_iter()
-                    .map(Workflow::from) // convert from the public-facing Workflow type to the warp-internal Workflow type
-                    .map(WorkflowType::Local)
-                    .map(Arc::new),
-            ),
-        );
+        #[cfg(feature = "bundled_workflows")]
+        {
+            categorized_workflows.insert(
+                WorkflowSource::Global,
+                Self::categorize_workflows(
+                    global_workflows()
+                        .into_iter()
+                        .map(Workflow::from)
+                        .map(WorkflowType::Local)
+                        .map(Arc::new),
+                ),
+            );
+        }
         categorized_workflows.insert(
             WorkflowSource::Local,
             Self::categorize_workflows(

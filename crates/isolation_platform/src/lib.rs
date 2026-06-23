@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use warp_core::channel::{Channel, ChannelState};
 
 #[cfg(not(target_family = "wasm"))]
 mod docker;
@@ -64,7 +63,7 @@ pub fn detect() -> Option<IsolationPlatformType> {
 
     *DETECTED_PLATFORM.get_or_init(|| {
         // This never applies to integration tests.
-        if ChannelState::channel() == Channel::Integration {
+        if std::env::var("WARP_CHANNEL").as_deref() == Ok("integration") {
             return None;
         }
 

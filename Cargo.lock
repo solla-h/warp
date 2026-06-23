@@ -15693,7 +15693,6 @@ dependencies = [
  "pathfinder_geometry",
  "schemars 1.0.4",
  "serde",
- "session-sharing-protocol",
  "settings_value",
  "thiserror 2.0.17",
  "url",

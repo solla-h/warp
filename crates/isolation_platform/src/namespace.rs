@@ -4,9 +4,17 @@ use std::{env, fs};
 use base64::prelude::{BASE64_URL_SAFE_NO_PAD, Engine as _};
 use chrono::{DateTime, Utc};
 use command::r#async::Command;
+#[cfg(feature = "warp_core")]
 use warp_core::channel::ChannelState;
 
 use crate::{IsolationPlatformError, WorkloadToken};
+
+fn workload_audience_url() -> String {
+    #[cfg(feature = "warp_core")]
+    { ChannelState::workload_audience_url().into_owned() }
+    #[cfg(not(feature = "warp_core"))]
+    { env::var("WARP_WORKLOAD_AUDIENCE_URL").unwrap_or_else(|_| "https://app.warp.dev".to_owned()) }
+}
 
 /// Detect whether or not we are running in a Namespace instance.
 pub fn is_in_namespace_instance() -> bool {
@@ -24,7 +32,7 @@ pub async fn issue_workload_token(
         .arg("auth")
         .arg("issue-id-token")
         .arg("--audience")
-        .arg(&*ChannelState::workload_audience_url())
+        .arg(&workload_audience_url())
         .arg("--output")
         .arg("json");
 

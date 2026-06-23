@@ -38,7 +38,12 @@ impl LocalWorkflows {
     pub fn new(_ctx: &mut ModelContext<Self>) -> Self {
         Self {
             app_workflows: app_workflows(),
-            global_workflows: global_workflows().into_iter().map(Workflow::from).collect(), // convert from public-facing Workflow type to warp-internal Workflow type
+            global_workflows: {
+                #[cfg(feature = "bundled_workflows")]
+                { global_workflows().into_iter().map(Workflow::from).collect() }
+                #[cfg(not(feature = "bundled_workflows"))]
+                { vec![] }
+            },
             project_workflows: Default::default(),
         }
     }
