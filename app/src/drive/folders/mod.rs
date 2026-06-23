@@ -3,10 +3,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 pub use cloud_object_models::{CloudFolder, CloudFolderModel};
-// Re-exported from warp_server_client.
-pub use warp_server_client::ids::FolderId;
+pub use cloud_objects::ids::FolderId;
 
-// Re-exported from warp_server_client.
 use super::items::folder::WarpDriveFolder;
 use super::items::WarpDriveItem;
 use super::CloudObjectTypeAndId;

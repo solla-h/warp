@@ -1,5 +1,5 @@
 use thiserror::Error;
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 pub use warp_server_client::auth::MockAuthClient;
 pub use warp_server_client::auth::{
     AuthClient, FetchUserResult, MintCustomTokenError, SyncedUserSettings, UserAuthenticationError,

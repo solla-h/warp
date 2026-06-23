@@ -74,6 +74,7 @@ use warp_core::ui::theme::Fill;
 use warp_core::ui::Icon;
 use warp_core::user_preferences::GetUserPreferences as _;
 use warp_editor::editor::NavigationKey;
+#[cfg(not(feature = "local-only"))]
 use warp_server_client::auth::AuthEvent;
 use warp_util::path::{user_friendly_path, LineAndColumnArg};
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
@@ -2557,7 +2558,7 @@ impl Workspace {
         enable_auto_reload_modal
     }
 
-    /// Subscribe to the [`ServerApiProvider`] model to report status changes.
+    #[cfg(not(feature = "local-only"))]
     fn observe_server_api(ctx: &mut ViewContext<Self>) {
         let server_api_events = ServerApiProvider::handle(ctx);
         ctx.subscribe_to_model(&server_api_events, |me, _, event, ctx| {
@@ -3136,6 +3137,7 @@ impl Workspace {
 
         let import_modal = Self::build_import_modal(ctx);
 
+        #[cfg(not(feature = "local-only"))]
         Self::observe_server_api(ctx);
 
         Self::subscribe_to_workspace_toast_stack(toast_stack.clone(), ctx);
