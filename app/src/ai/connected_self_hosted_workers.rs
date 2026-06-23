@@ -75,7 +75,7 @@ impl ConnectedSelfHostedWorkersModel {
     }
 
     pub fn refresh(&mut self, ctx: &mut ModelContext<Self>) {
-        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() {
+        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
             self.clear_workers(ctx);
             return;
         }

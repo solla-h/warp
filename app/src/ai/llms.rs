@@ -1081,7 +1081,7 @@ impl LLMPreferences {
     /// Fetches the latest set of models from the server for the currently logged in user, and updates the model.
     pub fn refresh_authed_models(&self, ctx: &mut ModelContext<Self>) {
         // Don't try to fetch auth'd models if the user is not logged in yet.
-        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() {
+        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
             return;
         }
 
@@ -1123,7 +1123,7 @@ impl LLMPreferences {
         #[cfg(feature = "local-only")]
         let _ = ctx;
         #[cfg(not(feature = "local-only"))]
-        if AuthStateProvider::as_ref(ctx).get().is_logged_in() {
+        if AuthStateProvider::as_ref(ctx).get().is_logged_in() || warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
             self.refresh_authed_models(ctx);
         } else {
             self.refresh_public_models(ctx);

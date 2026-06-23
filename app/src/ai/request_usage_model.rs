@@ -226,7 +226,7 @@ impl AIRequestUsageModel {
 
     /// Spawns a task to refresh the latest AI request usage and bonus grants, fetching from the server.
     pub fn refresh_request_usage_async(&mut self, ctx: &mut ModelContext<Self>) {
-        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() {
+        if !AuthStateProvider::as_ref(ctx).get().is_logged_in() && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
             return;
         }
 

@@ -130,7 +130,7 @@ impl Requests {
         };
 
         if cached_request_limit_info.is_none()
-            && AuthStateProvider::as_ref(ctx).get().is_logged_in()
+            && (AuthStateProvider::as_ref(ctx).get().is_logged_in() || warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss)
         {
             let ai_client = requests.ai_client.clone();
             let _ = ctx.spawn(
