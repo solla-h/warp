@@ -1,7 +1,9 @@
+#[cfg(feature = "warp-cloud")]
 pub mod iap;
 
 use std::future::Future;
 use std::pin::Pin;
+#[cfg(feature = "warp-cloud")]
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fmt, future};
@@ -19,12 +21,18 @@ use reqwest::IntoUrl;
 use reqwest_eventsource::RequestBuilderExt;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
+#[cfg(feature = "warp-cloud")]
 use warp_core::channel::{Channel, ChannelState};
+#[cfg(feature = "warp-cloud")]
 use warp_core::operating_system_info::OperatingSystemInfo;
-use warp_core::{execution_mode, report_error};
+#[cfg(feature = "warp-cloud")]
+use warp_core::execution_mode;
+use warp_core::report_error;
 
+#[cfg(feature = "warp-cloud")]
 use crate::iap::{IapTokenProvider, proxy_auth_header};
 
+#[cfg(feature = "warp-cloud")]
 pub mod headers {
     /// Custom Warp header indicating the version of the Warp app.
     pub const CLIENT_RELEASE_VERSION_HEADER_KEY: &str = "X-Warp-Client-Version";
@@ -47,6 +55,7 @@ pub mod headers {
     pub(crate) const WARP_CLIENT_ID: &str = "X-Warp-Client-ID";
 }
 
+#[cfg(feature = "warp-cloud")]
 /// The environment variable containing extra HTTP headers to attach to requests.
 /// Only read when the channel is `Channel::Integration`. The value is a newline-separated
 /// list of `Name:Value` pairs, where each pair is split on the first colon.
@@ -69,6 +78,7 @@ pub struct Client {
     /// If set, provides IAP bearer tokens to attach as `Proxy-Authorization`
     /// headers on outbound requests to the Warp staging server. Wired in by
     /// the app layer on IAP-enabled builds (staging).
+    #[cfg(feature = "warp-cloud")]
     iap_token_provider: Option<Arc<dyn IapTokenProvider>>,
 }
 
@@ -165,6 +175,7 @@ impl Client {
             wrapped: client,
             before_request_sent: None,
             after_response_received: None,
+            #[cfg(feature = "warp-cloud")]
             iap_token_provider: None,
         })
     }
@@ -177,6 +188,7 @@ impl Client {
         self.after_response_received = Some(hook_fn);
     }
 
+    #[cfg(feature = "warp-cloud")]
     pub fn set_iap_token_provider(&mut self, provider: Arc<dyn IapTokenProvider>) {
         self.iap_token_provider = Some(provider);
     }
@@ -187,6 +199,7 @@ impl Client {
         include_warp_headers: bool,
         iap_token: Option<String>,
     ) -> RequestBuilder<'_> {
+        #[cfg_attr(not(feature = "warp-cloud"), allow(unused_mut))]
         let mut builder = RequestBuilder {
             wrapped,
             client: self,
@@ -194,13 +207,19 @@ impl Client {
             prevent_sleep_reason: None,
         };
 
-        if include_warp_headers {
-            builder = Self::add_warp_http_headers(builder);
-        }
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "warp-cloud")] {
+                if include_warp_headers {
+                    builder = Self::add_warp_http_headers(builder);
+                }
 
-        if let Some(token) = iap_token {
-            let (name, value) = proxy_auth_header(&token);
-            builder = builder.header(name, value);
+                if let Some(token) = iap_token {
+                    let (name, value) = proxy_auth_header(&token);
+                    builder = builder.header(name, value);
+                }
+            } else {
+                let _ = (include_warp_headers, iap_token);
+            }
         }
 
         builder
@@ -236,6 +255,7 @@ impl Client {
         self.builder(self.wrapped.delete(url), include_warp_headers, iap_token)
     }
 
+    #[cfg(feature = "warp-cloud")]
     /// Returns the IAP bearer token to attach to a request targeting
     /// `url`, scoped to the Warp server's origin.
     fn iap_token_for<U: IntoUrl>(&self, url: U) -> Option<String> {
@@ -245,6 +265,11 @@ impl Client {
             return None;
         }
         provider.cached_token()
+    }
+
+    #[cfg(not(feature = "warp-cloud"))]
+    fn iap_token_for<U: IntoUrl>(&self, _url: U) -> Option<String> {
+        None
     }
 
     /// Helper method to determine if the request should include warp-specific headers. The only case
@@ -268,11 +293,17 @@ impl Client {
         })
     }
 
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(all(not(target_family = "wasm"), feature = "warp-cloud"))]
     fn include_warp_http_headers<U: IntoUrl + Clone>(_url: U) -> bool {
         true
     }
 
+    #[cfg(all(not(target_family = "wasm"), not(feature = "warp-cloud")))]
+    fn include_warp_http_headers<U: IntoUrl + Clone>(_url: U) -> bool {
+        false
+    }
+
+    #[cfg(feature = "warp-cloud")]
     fn add_warp_http_headers(mut builder: RequestBuilder) -> RequestBuilder {
         // Include the client ID header.
         if let Some(client_id) = execution_mode::current_client_id() {
@@ -386,6 +417,7 @@ impl Client {
     }
 }
 
+#[cfg(feature = "warp-cloud")]
 fn is_warp_server_origin(url: &reqwest::Url) -> bool {
     [
         ChannelState::server_root_url(),

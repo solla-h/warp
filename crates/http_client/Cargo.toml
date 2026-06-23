@@ -6,6 +6,8 @@ publish.workspace = true
 license.workspace = true
 
 [features]
+default = ["warp-cloud"]
+warp-cloud = []
 test-util = []
 
 [dependencies]
