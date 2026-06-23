@@ -1120,6 +1120,9 @@ impl LLMPreferences {
     }
 
     pub fn refresh_available_models(&self, ctx: &mut ModelContext<Self>) {
+        #[cfg(feature = "local-only")]
+        let _ = ctx;
+        #[cfg(not(feature = "local-only"))]
         if AuthStateProvider::as_ref(ctx).get().is_logged_in() {
             self.refresh_authed_models(ctx);
         } else {

@@ -1566,6 +1566,9 @@ const HAS_COMPLETED_ONBOARDING_KEY: &str = "HasCompletedOnboarding";
 
 /// Returns whether the user has completed the onboarding slides locally (before login).
 pub(crate) fn has_completed_local_onboarding(ctx: &AppContext) -> bool {
+    if cfg!(feature = "local-only") {
+        return true;
+    }
     ctx.private_user_preferences()
         .read_value(HAS_COMPLETED_ONBOARDING_KEY)
         .unwrap_or_default()
@@ -1662,7 +1665,9 @@ impl RootView {
             workspace_setting,
         };
 
-        let auth_onboarding_state = if auth_state.is_logged_in() {
+        let auth_onboarding_state = if auth_state.is_logged_in()
+            || cfg!(feature = "local-only")
+        {
             AuthOnboardingState::Terminal(workspace_args.create_workspace(ctx))
         } else {
             cfg_if! {
