@@ -280,3 +280,45 @@ crates/warp_assets async/ 目录(41MB onboarding PNG)
 ├── T12: 196 文件 warp_graphql import gating (最大工作)
 └── T15: BYOP 集成测试
 ```
+
+---
+
+## 补充审查: Crate #15-#16 结论
+
+### #15: websocket (跨平台 WebSocket 客户端)
+- **状态**: 非 optional，4 个 consumer
+- **结论**: 唯一的 local-first 用途是 `remote_tty`(连接 ws://127.0.0.1:3030)
+- **关键发现**: rustls+hyper+graphql-ws-client 全部仅服务于云路径
+- **可 feature-gate 的组件**:
+  - `proxy` feature → gate hyper + http-body-util (HTTP CONNECT tunnel)
+  - `graphql` feature → gate graphql-ws-client
+  - `tls` feature → gate rustls + tokio-rustls (remote_tty 用 ws:// 不需要 TLS)
+  - `cloud-auth` feature → gate connect_with_headers + IAP helpers
+- **推荐**: 添加 4 个 feature flag，minimal local build 仅需 async-tungstenite(plain)
+- **潜在节省**: 去除 rustls/hyper/graphql-ws-client 约减少 30+ 传递 crate
+
+### #16: prevent_sleep (防止系统休眠)
+- **状态**: 被 http_client + server_api 使用(仅 2 处)
+- **结论**: Linux 上是 zero-cost noop；macOS/Windows 有平台实现
+- **关键发现**: 所有平台 deps 已 cfg-gate，零新增传递依赖
+- **推荐**: **保持现状** — 编译成本极低，功能对长时间 AI 请求有用
+- **优先级**: 无需操作
+
+---
+
+## 已完成任务更新
+
+### 已完成 (commit 06bf0347):
+- [x] T13: strip = "debuginfo" 添加到 [profile.release]
+- [x] T16: 删除 warp_server_client 中未使用的 session-sharing-protocol 依赖
+- [x] T17: warp-workflows 变为 optional (bundled_workflows feature)
+- [x] T18: warp_isolation_platform 中 warp_core 变为 optional (env var 替代)
+- [x] T19: 14 个云 feature 整合为 cloud_ui feature group
+- [x] T20: warp_assets 添加 slim feature (排除 41MB async/ PNGs)
+
+### websocket 瘦身计划 (T21, 中期):
+- [ ] 添加 tls feature (default on) gate rustls/tokio-rustls
+- [ ] 添加 proxy feature (default on) gate hyper/http-body-util  
+- [ ] 添加 graphql feature (default on) gate graphql-ws-client
+- [ ] 添加 cloud-auth feature (default on) gate connect_with_headers
+- [ ] local-only build 可排除以上全部，仅保留 plain ws://
