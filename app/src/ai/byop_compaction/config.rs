@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 压缩配置 — 对齐 opencode `Config.compaction`:
 //!
 //! ```ts

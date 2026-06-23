@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 把刚刚完成的 SummarizeConversation 流的产出写回 conversation.compaction_state —
 //! 对齐 opencode `compaction.ts processCompaction` 末尾的状态变更 + bus.publish(Compacted)。
 //!

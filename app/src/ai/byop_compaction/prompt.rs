@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 摘要 prompt — 字节级拷自 opencode `packages/opencode/src/session/compaction.ts:40-75, 121-132`。
 //!
 //! 不要"优化"模板文字 — 这是与 opencode 互可移植的契约,任何修改都需要双向同步。

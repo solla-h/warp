@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 把 warp `api::Message` 序列适配为 [`MessageRef`] trait,供 [`super::algorithm`] 操作。
 //!
 //! ## 与 opencode `MessageV2.WithParts` 的语义映射

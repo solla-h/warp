@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 主动式 AI(active AI)子链路的 BYOP 适配。
 //!
 //! 涵盖三类:

@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 pub(crate) mod convert_conversation;
 mod convert_from;
 mod convert_to;

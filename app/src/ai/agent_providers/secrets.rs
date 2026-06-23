@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! `AgentProviderSecrets`:把每个自定义 Provider 的 API key 保存到 OS 密钥库。
 //!
 //! 数据形态: `HashMap<provider_id, api_key>`,通过 `serde_json` 序列化后写入

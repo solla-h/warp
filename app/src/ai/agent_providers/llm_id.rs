@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! BYOP (Bring Your Own Provider) 的 `LLMId` 前缀编解码。
 //!
 //! 自定义 Agent 提供商的模型在 `LLMId` 字符串里用前缀 `byop:` 区分,

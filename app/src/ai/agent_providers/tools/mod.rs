@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! BYOP 模式下 OpenAI tool calling 的双向翻译注册表。
 //!
 //! 每个 warp 内置 tool(`api::message::tool_call::Tool` 的 variant)对应一个

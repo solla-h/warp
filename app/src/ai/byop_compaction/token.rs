@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! Token 估算 — 对齐 opencode `packages/opencode/src/util/token.ts`。
 //!
 //! ```ts

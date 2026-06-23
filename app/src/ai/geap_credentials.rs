@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 use std::time::{Duration, SystemTime};
 
 use ai::api_keys::{

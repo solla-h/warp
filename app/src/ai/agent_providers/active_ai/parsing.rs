@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 主动式 AI 模型输出解析。
 //!
 //! 各子链路要求模型按特定格式回复:

@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! Commands to interact with ambient agents on Warp's platform.
 use std::io::Write as _;
 use std::sync::Arc;

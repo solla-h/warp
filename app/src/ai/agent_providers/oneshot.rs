@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! BYOP one-shot 非流式补全适配层。
 //!
 //! 用于"主动式 AI"子链路(prompt suggestions / NLD predict / relevant files /

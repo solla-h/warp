@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 压缩核心算法 — 1:1 移植 opencode `compaction.ts:141-341`(turns / select / splitTurn / prune)。
 //!
 //! 与 warp 的具体消息类型解耦:对外通过 [`MessageRef`] trait 抽象,

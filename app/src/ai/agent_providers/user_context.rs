@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 把单条 `AIAgentInput::UserQuery` 自带的附件类 `AIAgentContext` 渲染为
 //! 发往上游模型的 user message 内容(text 前缀 + binary 多模态部件)。
 //!

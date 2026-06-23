@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! BYOP 模式下按 `api_type` × `model_id` 推断该模型支持哪些 multimodal 附件类型。
 //!
 //! genai 0.6 的 `ContentPart::Binary` 在线协议层全自动适配(参见

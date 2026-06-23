@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports, unused_variables)]
 //! 模型 reasoning(思考链)能力的启发式判定。
 //!
 //! 背景:genai 0.6 各 adapter 内部**不**对模型做 capability gate ——

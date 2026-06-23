@@ -112,6 +112,7 @@ pub fn create_default_from_legacy_settings(app: &AppContext) -> AIExecutionProfi
         ..Default::default()
     }
 }
+#[allow(dead_code)]
 
 pub trait AIExecutionProfileAppExt {
     fn configurable_context_window(&self, app: &AppContext) -> Option<LLMContextWindow>;
