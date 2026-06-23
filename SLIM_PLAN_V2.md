@@ -185,3 +185,98 @@ T15 依赖 T14
 | T12 (no-cloud) | **~2500 lines** | **~250MB / ~130MB*** | **-40%** |
 
 *Linux debug / Windows release
+
+---
+
+## 补充审查: Crate #10-#14 结论
+
+### #10: session-sharing-protocol (git dep, 纯数据类型)
+- **状态**: 非 optional，5 crate 直接依赖 + app 50 文件
+- **结论**: 零网络/IO，仅 serde+uuid+byte-unit 依赖。**编译成本极低**
+- **发现**: warp_server_client 声明了依赖但**零实际 import** — 可立即删除
+- **推荐**: 不优先处理；长期添加 `session_sharing` feature gate
+- **可提取类型**: `SessionId`, `WindowSize`, `Role` 仅 4 处引用
+
+### #11: warp-workflows (git dep, 333 generated workflow files)
+- **状态**: 非 optional，被 app + cloud_object_models 使用
+- **结论**: 269 个社区命令片段静态嵌入(5.5MB rlib)，零网络
+- **关键发现**: `warp-workflows-types` 子 crate(Shell/Argument/Workflow 类型)必须保留
+- **推荐**: 添加 `bundled_workflows` feature，将 5.5MB 静态数据变为可选
+- **节省**: 3-5MB binary size + 330 编译单元
+
+### #12: warp_isolation_platform (云隔离平台检测)
+- **状态**: 非 optional，被 app(8处) + warp_managed_secrets(1处) 使用
+- **结论**: detect() + issue_workload_token() 全部服务于云 agent sandbox
+- **关键发现**: 唯一需要 warp_core 的原因是 1 行 channel 检查！可替换为 env var
+- **推荐**: gate behind cloud_agents feature + 用 env var 替换 warp_core dep
+- **收益**: 移除后 warp_core 不再被此 crate 间接拉入 managed_secrets 链
+
+### #13: command-corrections (git dep, 52 规则引擎)
+- **状态**: 非 optional，被 app + warp_core + warp_terminal 使用
+- **结论**: 100% 本地/无网络，已被运行时设置 gate
+- **关键发现**: warp_core 和 warp_terminal 仅用了 ExitCode 和 Shell 两个类型！
+- **推荐**: 将 ExitCode 和 Shell 移到 warp_core → 去除反向依赖
+- **优先级**: 低（唯一新 dep 是 difflib 270 行；其余已共享）
+
+### #14: warp-command-signatures (JS 补全签名)
+- **状态**: 已 optional (behind completions_v2 feature)
+- **结论**: **无需额外操作** — 已正确 feature gate
+
+---
+
+## 补充发现: app/ 级别剩余瘦身机会
+
+### 未 optional 的云 deps
+| Dep | 可操作性 |
+|-----|---------|
+| cynic | server/ 8 子模块无 cfg gate → 随 T12 解决 |
+| oauth2 | auth_manager.rs 无 cfg gate → 随 T12 解决 |
+| qrcode | drive/ sharing 无 cfg gate → 随 drive gate 解决 |
+
+### default features 中不应存在的(local-only 场景)
+14 个语义上属于云的 feature flags 目前在 default 中:
+cloud_environments, cloud_conversations, ambient_agents_rtc, cloud_mode,
+oz_platform_skills, oz_identity_federation, sync_ambient_plans,
+conversation_artifacts, oz_launch_modal, scheduled_ambient_agents,
+oz_handoff, handoff_local_cloud, handoff_cloud_cloud, remote_codebase_indexing
+
+### 58MB 嵌入资源可按 feature 排除
+crates/warp_assets async/ 目录(41MB onboarding PNG)
+已有 standalone exclude pattern → 复用到 local-only 即可
+
+---
+
+## BYOP 路径最终确认 ✅
+
+所有关键 auth gate 均已正确 bypass:
+- is_any_ai_enabled() → Channel::Oss bypass ✅
+- is_byo_api_key_enabled() → early return true ✅
+- is_custom_inference_enabled() → early return true ✅
+- 8 处 is_logged_in() in ai/ → 全部有 && channel != Oss ✅
+- Settings AI page → 3 处 bypass ✅
+- **零未 bypass 的阻塞性 gate 剩余**
+
+---
+
+## 更新后的完整优先级排序
+
+```
+立即可做 (独立/并行):
+├── T13: strip debuginfo (15 min)
+├── T16: 从 warp_server_client 删除 session-sharing-protocol 依赖 (5 min)
+├── T17: warp-workflows → optional bundled_workflows feature (1h)
+├── T18: warp_isolation_platform → 替换 warp_core 为 env var (30 min)
+├── T19: 14 个云 feature 移出 default (1h)
+├── T20: warp_assets async/ exclude for local-only (15 min)
+└── Windows rebuild (后台)
+
+短期 (1-2 天):
+├── T9: ID types → warp_types
+├── T10: Auth types → warp_types
+├── T11: http_client feature split
+└── T14: Channel::Oss unit tests (20+ tests)
+
+中期 (3-5 天):
+├── T12: 196 文件 warp_graphql import gating (最大工作)
+└── T15: BYOP 集成测试
+```
