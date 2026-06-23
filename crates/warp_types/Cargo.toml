@@ -1,0 +1,16 @@
+[package]
+name = "warp_types"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+publish = false
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+cynic = { workspace = true, optional = true }
+warp_graphql_schema = { workspace = true, optional = true }
+
+[features]
+graphql = ["dep:cynic", "dep:warp_graphql_schema"]

@@ -15492,6 +15492,7 @@ dependencies = [
  "thiserror 2.0.17",
  "warp_core",
  "warp_graphql_schema",
+ "warp_types",
  "websocket",
  "ws_stream_wasm",
 ]
@@ -15736,6 +15737,17 @@ dependencies = [
  "warp_core",
  "warp_util",
  "warpui_core",
+]
+
+[[package]]
+name = "warp_types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "cynic",
+ "serde",
+ "warp_graphql_schema",
 ]
 
 [[package]]
