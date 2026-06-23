@@ -1723,7 +1723,7 @@ impl AISettings {
             .is_anonymous_or_logged_out();
 
         *self.is_any_ai_enabled
-            && !is_anonymous_or_logged_out
+            && !(is_anonymous_or_logged_out && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss)
             && !self.is_ai_disabled_due_to_remote_session_org_policy(app)
     }
 
