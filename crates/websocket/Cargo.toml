@@ -7,6 +7,12 @@ license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["tls", "proxy", "graphql"]
+tls = ["dep:rustls", "dep:rustls-platform-verifier", "dep:tokio-rustls"]
+proxy = ["dep:hyper", "dep:hyper-util", "dep:http-body-util"]
+graphql = ["dep:graphql-ws-client"]
+
 [dependencies]
 anyhow.workspace = true
 base64.workspace = true
@@ -27,17 +33,17 @@ tokio = { workspace = true, features = ["macros", "rt", "time"] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 ws_stream_wasm = "0.7"
-graphql-ws-client = {workspace = true, features = ["ws_stream_wasm"]}
+graphql-ws-client = { workspace = true, features = ["ws_stream_wasm"], optional = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 async-io.workspace = true
 async-net = "2.0.0"
-async-tungstenite = {version = "0.28.2", features = ["tokio-rustls-manual-roots"]}
-http-body-util = "0.1"
-hyper = { workspace = true, features = ["client", "http1"] }
-hyper-util = { version = "0.1", features = ["tokio"] }
+async-tungstenite = { version = "0.28.2", features = ["tokio-rustls-manual-roots"] }
+http-body-util = { version = "0.1", optional = true }
+hyper = { workspace = true, features = ["client", "http1"], optional = true }
+hyper-util = { version = "0.1", features = ["tokio"], optional = true }
 tokio = { workspace = true, features = ["io-util", "net", "time"] }
-tokio-rustls = "0.26.4"
-graphql-ws-client = {workspace = true, features = ["tungstenite"]}
-rustls = "0.23.29"
-rustls-platform-verifier = "0.6.1"
+tokio-rustls = { version = "0.26.4", optional = true }
+graphql-ws-client = { workspace = true, features = ["tungstenite"], optional = true }
+rustls = { version = "0.23.29", optional = true }
+rustls-platform-verifier = { version = "0.6.1", optional = true }

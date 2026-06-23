@@ -23,6 +23,7 @@ settings_value.workspace = true
 session-sharing-protocol.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
+warp_types.workspace = true
 warp_core.workspace = true
 warp_graphql.workspace = true
 warp_server_auth.workspace = true

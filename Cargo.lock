@@ -2906,6 +2906,7 @@ dependencies = [
  "warp_cli",
  "warp_core",
  "warp_graphql",
+ "warp_types",
  "warp_util",
 ]
 
@@ -2947,6 +2948,7 @@ dependencies = [
  "warp_core",
  "warp_graphql",
  "warp_server_auth",
+ "warp_types",
  "warpui_core",
 ]
 
@@ -15745,7 +15747,12 @@ dependencies = [
  "anyhow",
  "chrono",
  "cynic",
+ "itertools 0.14.0",
+ "schemars 1.0.4",
  "serde",
+ "settings_value",
+ "thiserror 2.0.17",
+ "uuid",
  "warp_graphql_schema",
 ]
 

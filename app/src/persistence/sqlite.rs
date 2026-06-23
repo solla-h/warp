@@ -95,7 +95,7 @@ use crate::persistence::model::{
     GET_STARTED_PANE_KIND,
 };
 use crate::server::experiments::ServerExperiment;
-use crate::server::ids::{ClientId, HashableId, ServerId, SyncId};
+use crate::server::ids::{ClientId, HashableId, ServerId, SyncId, SyncIdExt};
 use crate::server::telemetry::TelemetryEvent;
 use crate::settings_view::SettingsSection;
 use crate::suggestions::ignored_suggestions_model::SuggestionType;

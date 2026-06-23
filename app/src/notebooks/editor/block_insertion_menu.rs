@@ -23,7 +23,7 @@ use crate::menu::{self, Menu, MenuItemFields};
 use crate::notebooks::telemetry::EmbeddedObjectInfo;
 use crate::search::notebook_embedding::searcher::EmbeddingSearchItemAction;
 use crate::search::notebook_embedding::view::{EmbeddingSearchEvent, EmbeddingSearchMenu};
-use crate::server::ids::SyncId;
+use crate::server::ids::{SyncId, SyncIdExt};
 use crate::themes::theme::Fill;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;

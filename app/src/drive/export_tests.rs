@@ -16,7 +16,7 @@ use crate::cloud_object::{
 };
 use crate::drive::CloudObjectTypeAndId;
 use crate::notebooks::{CloudNotebook, CloudNotebookModel, NotebookId};
-use crate::server::ids::SyncId;
+use crate::server::ids::{SyncId, SyncIdExt};
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{CloudWorkflow, CloudWorkflowModel, WorkflowId};
 use crate::workspace::ToastStack;

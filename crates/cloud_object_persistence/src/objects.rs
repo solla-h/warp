@@ -6,7 +6,7 @@ use cloud_objects::cloud_object::{
     GENERIC_STRING_OBJECT_PREFIX, GenericStringObjectFormat, NumInFlightRequests, ObjectIdType,
     ObjectType, Owner, Revision, RevisionAndLastEditor, ServerCreationInfo,
 };
-use cloud_objects::ids::{ClientId, FolderId, HashableId, SyncId, ToServerId};
+use cloud_objects::ids::{ClientId, FolderId, HashableId, SyncId, SyncIdExt, ToServerId};
 use diesel::result::Error;
 use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
 use persistence::model::{

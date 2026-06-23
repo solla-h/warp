@@ -29,7 +29,7 @@ use crate::drive::items::WarpDriveItem;
 use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
-use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, ToServerId};
+use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
 use crate::server::server_api::object::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};
 use crate::util::time_format::format_approx_duration_from_now_utc;

@@ -151,6 +151,7 @@ impl WebSocket {
         }
     }
 
+    #[cfg(feature = "graphql")]
     pub async fn into_graphql_client_builder(self) -> graphql_ws_client::ClientBuilder {
         self.0.into_graphql_client_builder().await
     }
@@ -161,7 +162,7 @@ impl WebSocket {
 /// can inspect its status and headers (for example, to detect a GCP IAP
 /// challenge). Native-only: wasm websockets do not surface the handshake
 /// response on error.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), feature = "graphql"))]
 pub fn connect_error_http_response(
     err: &anyhow::Error,
 ) -> Option<&tungstenite::http::Response<Option<Vec<u8>>>> {

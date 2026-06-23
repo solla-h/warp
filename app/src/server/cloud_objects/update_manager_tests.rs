@@ -46,7 +46,8 @@ use crate::server::cloud_objects::update_manager::{
     ServerMetadata, ServerPermissions,
 };
 use crate::server::ids::{
-    ClientId, HashableId, ObjectUid, ServerId, ServerIdAndType, SyncId, ToServerId,
+    ClientId, HashableId, ObjectUid, ServerId, ServerIdAndType, ServerIdExt, SyncId, SyncIdExt,
+    ToServerId,
 };
 use crate::server::sync_queue::SyncQueue;
 use crate::settings::{CloudPreferenceModel, Preference};
