@@ -48,6 +48,7 @@ use crate::ai::ambient_agents::task::HarnessModelConfig;
 use crate::ai::ambient_agents::{
     conversation_output_status_from_conversation, AmbientAgentTaskId, AmbientConversationStatus,
 };
+#[cfg(feature = "aws-bedrock")]
 use crate::ai::bedrock_credentials;
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
 use crate::ai::blocklist::local_agent_task_sync_model::LocalAgentTaskSyncModel;
@@ -131,6 +132,7 @@ where
     }
     .fuse();
 
+    #[cfg(feature = "aws-bedrock")]
     let bedrock_refresh = async move {
         match oidc_strategy {
             Some((task_id, role_arn, region)) => {
@@ -140,6 +142,11 @@ where
         }
     }
     .fuse();
+    #[cfg(not(feature = "aws-bedrock"))]
+    let bedrock_refresh = {
+        let _ = (&oidc_strategy, &foreground);
+        future::pending::<()>().fuse()
+    };
 
     let run_future = run_future.fuse();
     futures::pin_mut!(run_future, git_refresh, bedrock_refresh);

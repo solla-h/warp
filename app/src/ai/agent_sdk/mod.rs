@@ -143,6 +143,9 @@ fn dispatch_command(
     match command {
         CliCommand::Agent(agent_cmd) => run_agent(ctx, global_options, agent_cmd),
         CliCommand::Environment(environment_cmd) => {
+            if warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
+                return Err(anyhow::anyhow!("cloud environments are not available in OSS mode"));
+            }
             if !FeatureFlag::CloudEnvironments.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'environment'"));
             }
@@ -167,6 +170,9 @@ fn dispatch_command(
         }
         #[cfg(not(target_family = "wasm"))]
         CliCommand::Integration(integration_cmd) => {
+            if warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
+                return Err(anyhow::anyhow!("integrations are not available in OSS mode"));
+            }
             if !FeatureFlag::IntegrationCommand.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'integration'"));
             }
@@ -177,6 +183,9 @@ fn dispatch_command(
             return Err(anyhow::anyhow!("invalid value 'integration'"));
         }
         CliCommand::Schedule(schedule_cmd) => {
+            if warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
+                return Err(anyhow::anyhow!("scheduled agents are not available in OSS mode"));
+            }
             if !FeatureFlag::ScheduledAmbientAgents.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'schedule'"));
             }
@@ -207,6 +216,9 @@ fn dispatch_command(
             artifact::run(ctx, global_options, artifact_cmd)
         }
         CliCommand::ApiKey(api_key_cmd) => {
+            if warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
+                return Err(anyhow::anyhow!("API key management is not available in OSS mode"));
+            }
             if !FeatureFlag::APIKeyManagement.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'api-key'"));
             }

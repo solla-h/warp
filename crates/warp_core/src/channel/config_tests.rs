@@ -1,4 +1,5 @@
 use super::*;
+use crate::channel::Channel;
 
 /// Asserts that every URL field points at loopback (never a real Warp host).
 fn assert_all_endpoints_loopback(server_config: &WarpServerConfig, oz_config: &OzConfig) {
@@ -68,4 +69,20 @@ fn production_config_talks_to_cloud_so_local_only_does_not() {
     );
     assert!(prod.session_sharing_server_url.is_some());
     assert!(local.session_sharing_server_url.is_none());
+}
+
+
+#[test]
+fn oss_channel_config_is_local_only() {
+    let config = ChannelConfig::local_only(AppId::new("dev", "warp", "WarpOss"), "test.log");
+    assert_eq!(&*config.server_config.server_root_url, "http://localhost:0");
+    assert!(config.telemetry_config.is_none());
+    assert!(config.autoupdate_config.is_none());
+}
+
+#[test]
+fn oss_channel_detected_correctly() {
+    let channel = Channel::Oss;
+    assert!(matches!(channel, Channel::Oss));
+    assert!(channel != Channel::Stable);
 }

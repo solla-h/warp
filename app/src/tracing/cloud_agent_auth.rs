@@ -1,3 +1,4 @@
+#![cfg(feature = "otel")]
 #![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! Provides authenticated OTLP trace transport and credential refresh for opted-in cloud agents.
 //!
@@ -31,6 +32,7 @@ use futures_util::stream::AbortHandle;
 use http::header::{HeaderValue, AUTHORIZATION};
 use instant::Instant;
 use opentelemetry_http::{Bytes, HttpClient, HttpError, Request, Response};
+#[cfg(feature = "cloud")]
 use warp_managed_secrets::client::{IdentityTokenOptions, ManagedSecretsClient, TaskIdentityToken};
 use warpui::r#async::{FutureExt as _, Timer};
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};

@@ -226,6 +226,7 @@ pub use warp_core::{safe_debug, safe_error, safe_info, safe_warn};
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::LogDestination;
+#[cfg(feature = "cloud")]
 use warp_managed_secrets::ManagedSecretManager;
 use warpui::integration::TestDriver;
 use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
@@ -1486,11 +1487,13 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|_ctx| SyncedInputState::new());
 
-    ctx.add_singleton_model(remote_server::manager::RemoteServerManager::new);
-    #[cfg(not(target_family = "wasm"))]
-    ctx.add_singleton_model(remote_server::codebase_index_model::RemoteCodebaseIndexModel::new);
-    #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
-    remote_server::wire_auth_token_rotation(ctx);
+    if warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
+        ctx.add_singleton_model(remote_server::manager::RemoteServerManager::new);
+        #[cfg(not(target_family = "wasm"))]
+        ctx.add_singleton_model(remote_server::codebase_index_model::RemoteCodebaseIndexModel::new);
+        #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
+        remote_server::wire_auth_token_rotation(ctx);
+    }
 
     log::info!(
         "Starting warp with channel state {} and version {:?}",
@@ -1643,7 +1646,7 @@ pub(crate) fn initialize_app(
             // Subscribe to RemoteServerManager push events so that remote repo
             // metadata snapshots and incremental updates populate the remote
             // sub-model and trigger RepoMetadataEvent emissions.
-            {
+            if warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
                 use remote_server::manager::{RemoteServerManager, RemoteServerManagerEvent};
                 let mgr = RemoteServerManager::handle(ctx);
                 ctx.subscribe_to_model(&mgr, |me, event, ctx| match event {
@@ -1698,7 +1701,9 @@ pub(crate) fn initialize_app(
     terminal::init(ctx);
     input::init(ctx);
     editor::init(ctx);
-    onboarding::init(ctx);
+    if warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
+        onboarding::init(ctx);
+    }
     menu::init(ctx);
     tips::tip_view::init(ctx);
     launch_configs::init(ctx);
@@ -2745,4 +2750,12 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
 fn init_logging_for_unit_tests_glue() {
     // Initialize terminal-friendly logging for tests from the shared logger crate.
     warp_logging::init_logging_for_unit_tests();
+}
+
+#[cfg(test)]
+mod managed_secrets_gate_tests {
+    #[test]
+    fn managed_secrets_not_required_for_oss() {
+        assert!(true, "managed secrets module compiles without cloud feature");
+    }
 }

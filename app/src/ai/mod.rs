@@ -18,7 +18,7 @@ pub(crate) mod attachment_utils;
 pub mod auth_secret_types;
 #[cfg(not(target_family = "wasm"))]
 pub mod aws_credentials;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), feature = "aws-bedrock"))]
 pub(crate) mod bedrock_credentials;
 pub(crate) mod block_context;
 pub(crate) mod blocklist;

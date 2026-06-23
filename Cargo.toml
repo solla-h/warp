@@ -5,10 +5,9 @@ members = [
   "app",
 ]
 exclude = [
-  # serve-wasm is a helper for serving web (wasm) builds, which a local-first
-  # desktop build does not use. Excluding it keeps it out of the workspace so it
-  # isn't scanned or compiled. (The directory is retained in git.)
   "crates/serve-wasm",
+  "crates/managed_secrets_wasm",
+  "crates/integration",
 ]
 resolver = "2"
 

@@ -9,6 +9,7 @@ use warpui::ModelSpawner;
 use super::terminal::TerminalDriver;
 use crate::ai::cloud_environments::ProvidersConfig;
 
+#[cfg(feature = "aws-bedrock")]
 mod aws;
 mod gcp;
 
@@ -60,6 +61,7 @@ pub(crate) fn load_providers(
 ) -> Result<Vec<Box<dyn CloudProvider>>> {
     let mut result: Vec<Box<dyn CloudProvider>> = Vec::new();
 
+    #[cfg(feature = "aws-bedrock")]
     if let Some(aws) = &providers.aws {
         result.push(Box::new(aws::AwsCloudProvider::new(aws, run_id)?));
     }

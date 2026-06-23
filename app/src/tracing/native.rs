@@ -1,3 +1,4 @@
+#![cfg(feature = "otel")]
 //! Configures opt-in OpenTelemetry export for cloud-agent traces on native platforms.
 //!
 //! The global `tracing` subscriber observes the whole application, while

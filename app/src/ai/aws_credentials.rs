@@ -2,14 +2,21 @@ use std::time::{Duration, SystemTime};
 
 pub use ai::api_keys::AwsCredentials;
 use ai::api_keys::{ApiKeyManager, AwsCredentialsRefreshStrategy, AwsCredentialsState};
+#[cfg(feature = "aws-bedrock")]
 use anyhow::Context;
+#[cfg(feature = "aws-bedrock")]
 use aws_credential_types::provider::error::CredentialsError;
+#[cfg(feature = "aws-bedrock")]
 use aws_credential_types::provider::ProvideCredentials;
 use futures::channel::oneshot::channel;
 use futures::future::BoxFuture;
+#[cfg(feature = "aws-bedrock")]
 use tokio::sync::Mutex;
+#[cfg(feature = "aws-bedrock")]
 use vec1::vec1;
+#[cfg(feature = "aws-bedrock")]
 use warp_managed_secrets::client::IdentityTokenOptions;
+#[cfg(feature = "aws-bedrock")]
 use warp_managed_secrets::ManagedSecretManager;
 use warpui::{ModelContext, ModelHandle, SingletonEntity};
 
@@ -42,6 +49,7 @@ impl std::fmt::Display for LoadAwsCredentialsError {
     }
 }
 
+#[cfg(feature = "aws-bedrock")]
 fn aws_profile_reference_for_message(profile: &str, capitalize_first_word: bool) -> String {
     let profile = profile.trim();
     if profile.is_empty() {
@@ -56,6 +64,7 @@ fn aws_profile_reference_for_message(profile: &str, capitalize_first_word: bool)
     }
 }
 
+#[cfg(feature = "aws-bedrock")]
 fn user_facing_aws_credentials_error_message(err: &CredentialsError, profile: &str) -> String {
     match err {
         CredentialsError::CredentialsNotLoaded(_) => format!(
@@ -84,9 +93,12 @@ fn user_facing_aws_credentials_error_message(err: &CredentialsError, profile: &s
 
 impl std::error::Error for LoadAwsCredentialsError {}
 
+#[cfg(feature = "aws-bedrock")]
 pub(crate) const AWS_BEDROCK_STS_AUDIENCE: &str = "sts.amazonaws.com";
+#[cfg(feature = "aws-bedrock")]
 pub(crate) const BEDROCK_IDENTITY_TOKEN_DURATION: Duration = Duration::from_secs(60 * 60);
 
+#[cfg(feature = "aws-bedrock")]
 pub(crate) fn aws_role_session_name(run_id: &str) -> String {
     format!("Oz_Run_{run_id}")
 }
@@ -97,8 +109,10 @@ pub(crate) fn aws_role_session_name(run_id: &str) -> String {
 /// `AssumeRoleWithWebIdentity` is unauthenticated (the web identity token is the
 /// credential), so we skip the default credentials chain via `no_credentials()`
 /// and reuse a single client across refreshes.
+#[cfg(feature = "aws-bedrock")]
 static STS_CLIENT_CACHE: Mutex<Option<(String, aws_sdk_sts::Client)>> = Mutex::const_new(None);
 
+#[cfg(feature = "aws-bedrock")]
 pub(crate) async fn sts_client(region: &str) -> aws_sdk_sts::Client {
     let mut cache = STS_CLIENT_CACHE.lock().await;
     if let Some((cached_region, client)) = cache.as_ref() {
@@ -131,6 +145,7 @@ fn aws_credentials_state_for_error(err: LoadAwsCredentialsError) -> AwsCredentia
 /// # Arguments
 /// * `profile` - AWS profile name. If empty, uses the default AWS SDK behavior
 ///   (checks AWS_PROFILE env var, then uses "default").
+#[cfg(feature = "aws-bedrock")]
 pub async fn load_aws_credentials_from_sdk(
     profile: &str,
 ) -> Result<AwsCredentials, LoadAwsCredentialsError> {
@@ -165,6 +180,13 @@ pub async fn load_aws_credentials_from_sdk(
         creds.session_token().map(|s| s.to_string()),
         creds.expiry(),
     ))
+}
+
+#[cfg(not(feature = "aws-bedrock"))]
+pub async fn load_aws_credentials_from_sdk(
+    _profile: &str,
+) -> Result<AwsCredentials, LoadAwsCredentialsError> {
+    Err(LoadAwsCredentialsError::NotConfigured)
 }
 
 /// Extension trait for `ApiKeyManager` to handle AWS credential refresh.
@@ -246,11 +268,16 @@ pub(crate) fn refresh_aws_credentials(
         AwsCredentialsRefreshStrategy::LocalChain => {
             refresh_aws_credentials_local_chain(manager, ctx)
         }
+        #[cfg(feature = "aws-bedrock")]
         AwsCredentialsRefreshStrategy::OidcManaged {
             task_id,
             role_arn,
             region,
         } => refresh_aws_credentials_oidc(task_id, role_arn, region, manager, ctx),
+        #[cfg(not(feature = "aws-bedrock"))]
+        AwsCredentialsRefreshStrategy::OidcManaged { .. } => {
+            Box::pin(async { Err("AWS Bedrock support not compiled".to_string()) })
+        }
     }
 }
 
@@ -300,6 +327,7 @@ fn refresh_aws_credentials_local_chain(
 }
 
 /// Refreshes credentials via OIDC identity token + STS AssumeRoleWithWebIdentity.
+#[cfg(feature = "aws-bedrock")]
 fn refresh_aws_credentials_oidc(
     task_id: Option<String>,
     role_arn: String,
@@ -410,6 +438,21 @@ fn refresh_aws_credentials_oidc(
     })
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "aws-bedrock"))]
 #[path = "aws_credentials_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+mod aws_bedrock_gate_tests {
+    #[test]
+    fn aws_bedrock_feature_compiles_correctly() {
+        #[cfg(feature = "aws-bedrock")]
+        {
+            assert!(true, "aws-bedrock feature compiled in");
+        }
+        #[cfg(not(feature = "aws-bedrock"))]
+        {
+            assert!(true, "aws-bedrock feature not needed");
+        }
+    }
+}

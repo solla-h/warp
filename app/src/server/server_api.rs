@@ -5,6 +5,7 @@ mod base_client;
 pub mod block;
 pub mod harness_support;
 pub mod integrations;
+#[cfg(feature = "cloud")]
 pub mod managed_secrets;
 pub mod object;
 pub(crate) mod presigned_upload;
@@ -40,6 +41,7 @@ use url::Url;
 use warp_core::context_flag::ContextFlag;
 use warp_core::errors::{register_error, AnyhowErrorExt, ErrorExt};
 use warp_core::telemetry::TelemetryEvent;
+#[cfg(feature = "cloud")]
 use warp_managed_secrets::client::ManagedSecretsClient;
 use warp_server_client::auth::{AuthClientImpl, AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
 use warp_server_client::base_client::BaseClient as _;
@@ -1666,6 +1668,7 @@ impl ServerApiProvider {
         self.server_api.clone()
     }
 
+    #[cfg(feature = "cloud")]
     pub fn get_managed_secrets_client(&self) -> Arc<dyn ManagedSecretsClient> {
         self.server_api.clone()
     }
