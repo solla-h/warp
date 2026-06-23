@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::fmt::Write as _;

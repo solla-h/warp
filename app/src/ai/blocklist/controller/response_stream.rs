@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::ai::api_error::AIApiError;

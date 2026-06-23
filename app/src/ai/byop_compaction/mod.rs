@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! BYOP 本地会话压缩 — 1:1 复刻 opencode `packages/opencode/src/session/{compaction,overflow,summary}.ts`。
 //!
 //! 入口 API:

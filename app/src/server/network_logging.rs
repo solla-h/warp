@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 use std::fmt;
 
 use bounded_vec_deque::BoundedVecDeque;

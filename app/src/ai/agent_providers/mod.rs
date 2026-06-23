@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! 自定义 Agent 提供商支持。
 //!
 //! 这个模块负责:

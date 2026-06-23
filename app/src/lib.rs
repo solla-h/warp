@@ -1,4 +1,5 @@
 #![allow(clippy::doc_lazy_continuation)]
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 
 mod ai;
 mod alloc;

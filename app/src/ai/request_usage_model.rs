@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 use std::sync::Arc;
 
 use ai::api_keys::ApiKeyManager;

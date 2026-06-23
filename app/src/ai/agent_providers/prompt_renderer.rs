@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! BYOP system prompt 模板渲染。
 //!
 //! 把 warp 客户端已经收集好的 `AIAgentContext`(env / git / skills / project_rules / current_time)

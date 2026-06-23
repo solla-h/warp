@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 pub mod ai;
 pub mod auth;
 mod base_client;

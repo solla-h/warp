@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! OpenAI 兼容客户端的最小子集:目前只用来抓 `/models` 列表。
 //!
 //! 等第二阶段做 multi-agent 调用时,这里会扩展为完整的

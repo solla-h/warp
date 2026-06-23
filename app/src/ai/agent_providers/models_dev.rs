@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! models.dev 数据源接入。
 //!
 //! 在用户打开 Providers 设置页时,后台异步拉取 `https://models.dev/api.json`,

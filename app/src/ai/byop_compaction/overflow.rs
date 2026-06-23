@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! Overflow 判断 — 1:1 移植 opencode `packages/opencode/src/session/overflow.ts`。
 //!
 //! ```ts

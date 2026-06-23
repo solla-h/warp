@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! BYOP 请求发送前的工具调用就绪性分类。
 //!
 //! 这个模块只处理已经投影出来的安全元数据,不读取原始 prompt、工具参数或工具输出,

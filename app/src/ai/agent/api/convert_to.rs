@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! Conversions from application types to MAA API types.
 
 use ai::agent::convert::ConvertToAPITypeError;

@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! Provides authenticated OTLP trace transport and credential refresh for opted-in cloud agents.
 //!
 //! Dispatch bootstraps tracing with a bearer token and expiry in the process environment. The

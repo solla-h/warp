@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 //! This module contains core business logic for Agent Mode, primarily sending input to an AI
 //! model and receiving output.
 //!
