@@ -19,6 +19,7 @@ use cloud_object_models::notebook::persistence as notebook_persistence;
 use cloud_object_models::notebook::persistence::upsert_notebooks;
 use cloud_object_models::workflow::persistence as workflow_persistence;
 use cloud_object_models::workflow::persistence::upsert_workflows;
+#[cfg(feature = "cloud")]
 use cloud_object_persistence::{
     delete_cloud_object, delete_generic_string_object, increment_retry_count,
     load_cloud_object_read_context, mark_object_as_synced, read_time_of_next_force_object_refresh,
