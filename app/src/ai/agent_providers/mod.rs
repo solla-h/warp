@@ -58,7 +58,7 @@ use crate::settings::{AISettings, AgentProvider, AgentProviderModel};
 /// 缺 key 时仍然把模型暴露给 picker;运行时仍会发请求,只是不带 `Authorization`。
 /// 不合法的 provider(没填 base_url 或没模型)会整体被忽略,picker 中不展示其下的模型,
 /// 这样用户能直观地看到"哪些 provider 没填全 → 没出现"。
-fn build_byop_llm_infos(app: &AppContext) -> Vec<LLMInfo> {
+pub(crate) fn build_byop_llm_infos(app: &AppContext) -> Vec<LLMInfo> {
     let mut providers = AISettings::as_ref(app).agent_providers.value().clone();
     providers.extend(custom_endpoints_as_providers(app).into_iter().map(|(p, _)| p));
     let mut out = Vec::new();

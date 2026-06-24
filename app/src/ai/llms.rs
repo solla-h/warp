@@ -861,7 +861,9 @@ impl LLMPreferences {
     /// with synthetic `LLMInfo`s. Called on every `ApiKeyManagerEvent::KeysUpdated`, so adds,
     /// edits, and removals all propagate immediately.
     fn rebuild_custom_llms(&mut self, app: &AppContext) {
-        self.custom_llms = build_custom_llm_infos(ApiKeyManager::as_ref(app).keys());
+        let mut llms = build_custom_llm_infos(ApiKeyManager::as_ref(app).keys());
+        llms.extend(crate::ai::agent_providers::build_byop_llm_infos(app));
+        self.custom_llms = llms;
     }
 
     fn sanitize_disabled_custom_model_preferences(&mut self, ctx: &mut ModelContext<Self>) {
