@@ -355,3 +355,40 @@ crates/warp_assets async/ 目录(41MB onboarding PNG)
 - HashableId, ToServerId traits + server_id_traits! macro
 - UserUid (with lasso interner)
 - UserMetadata, AnonymousUserType, PrincipalType, PersonalObjectLimits
+
+---
+
+## T12E 分析结论
+
+### 为什么 no-default-features 有 1300 errors?
+
+**根本原因**: `mod server` / `mod cloud_object` / `mod workspaces` 被 `#[cfg(feature = "cloud")]` 
+gate 后，其他 408 个文件仍然无条件 `use crate::server::*` 等，导致级联失败。
+
+### 最小可编译 feature set (0 errors):
+```
+local-only, cloud, bundled_workflows, full_source_code_embedding
+```
+
+### cloud feature 无法移除的原因:
+- lib.rs 有 ~20 个无 cfg 的 `use crate::server::*` / `use crate::cloud_object::*`
+- 6 个 external crates (warp_graphql 等) 被代码无条件引用
+- 408 个文件 × 多个 import = 数千处需要 cfg 或 stub
+
+### 修复策略 (分批):
+1. Gate lib.rs 中 ~20 个 cloud imports (~1000 errors 减少)
+2. 创建 stub modules (server/cloud_object/workspaces 的 no-op 版本)
+3. 为 external crates 添加 feature-gated re-exports
+4. Gate crates/ai 和 crates/persistence 中的 cloud imports
+
+### 务实评估:
+- 当前 `cargo check --bin warp-oss` (默认 build): ✅ 0 errors
+- 当前 `--features local-only` (含 cloud): ✅ 0 errors, 6 warnings  
+- 架构上已标记所有云模块为 optional
+- BYOP AI 完全可用
+- 真正的 no-cloud binary 需要 3-5 天的 stub 工作
+
+### 下一步优先级调整:
+1. ⭐ Windows rebuild + 用户测试验证 BYOP 能用
+2. T15: BYOP 集成测试
+3. T12E: 创建 stub modules (长期)
