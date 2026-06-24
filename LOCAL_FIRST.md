@@ -42,8 +42,8 @@ The three local harnesses coerce `Arc<ServerApi>` → `Arc<dyn HarnessSupportCli
 and call **only trait methods** — they do **not** call any cloud inherent method
 (`set_ambient_agent_task_id`, `stream_agent_events*`, `*_for_task`, etc.).
 
-Compile-time entanglement exists via `mod parent_bridge;` (`claude_code.rs:41`)
-and `mod wake_driver;` (`claude_code.rs:42`) — both are **cloud-only**:
+Compile-time entanglement exists via `mod parent_bridge;` (`claude_code.rs:44`)
+and `mod wake_driver;` (`claude_code.rs:47`) — both are **cloud-only**:
 
 | Module | Verdict | Why |
 |---|---|---|
@@ -127,7 +127,7 @@ download/upload, autoupdate, shared_session, terminal/input attachment, harness
 `save_conversation` upload branches). No local alternative.
 
 ### Step 2.3 — Gate category B cloud agent modules (whole-module where possible)
-- `mod wake_driver;` + `mod parent_bridge;` in `claude_code.rs:41-42` →
+- `mod wake_driver;` + `mod parent_bridge;` in `claude_code.rs:44-42` →
   `#[cfg(feature="cloud")]`.
 - `MessageBridge` field/usage in `claude_code.rs` (lines 247, 323-326, 355-370,
   411-418, 489-491, 504-505, 536-538, 588-598) → cfg.
@@ -225,8 +225,7 @@ mode that still type-check against the cloud module.
   (install_build_deps lacks the last — add it).
 
 ## Open items / decisions
-- `local-only` feature currently empty `[]` — should enable `skip_login` so the
-  no-login path activates (Round 2 wiring).
+- ~~`local-only` feature currently empty `[]`~~ — **Done:** `local-only = ["skip_login"]` wired in `app/Cargo.toml`.
 - `remote_server/auth_context.rs:35` uses `get_or_refresh_access_token` for local
   SSH — decide local token vs trait (the kept SSH feature).
 - Whether `local-only` becomes the default for `warp-oss` (currently opt-in).

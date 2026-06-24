@@ -47,7 +47,7 @@ mod parent_bridge;
 #[cfg(not(feature = "local-only"))]
 mod wake_driver;
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 use parent_bridge::{
     acknowledge_parent_bridge_hook_output, ensure_parent_bridge_state_dir,
     parent_bridge_char_count, parent_bridge_event_cursor_file, parent_bridge_hook_output_ack_file,
@@ -60,12 +60,12 @@ use parent_bridge::{
 };
 #[cfg(not(feature = "local-only"))]
 use parent_bridge::{MessageBridge, MessageBridgeCleanupDisposition};
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 use shell_words::quote as shell_quote;
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 use wake_driver::{ClaudeWakeRemoteContext, CLAUDE_WAKE_PROMPT_FILE_NAME};
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 use super::super::OZ_MESSAGE_LISTENER_STATE_ROOT_ENV;
 
 pub(crate) struct ClaudeHarness;
@@ -858,6 +858,6 @@ pub(crate) fn serialize_claude_mcp_config(
     serde_json::to_string_pretty(&config).context("Failed to serialize Claude MCP config")
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "local-only")))]
 #[path = "claude_code_tests.rs"]
 mod tests;

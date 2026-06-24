@@ -75,3 +75,7 @@ __pycache__/
 
 # Build verification artifacts
 verify/
+
+# OSS portable build output and build logs.
+portable_warp_oss/
+build_log*.txt

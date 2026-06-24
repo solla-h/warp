@@ -10,6 +10,7 @@ use uuid::Uuid;
 use warp_multi_agent_api::response_event;
 use warpui::{Entity, ModelContext};
 
+use crate::ai::agent::api::generate_multi_agent_output;
 use crate::{
     ai::agent::{
         api::{self, ConvertToAPITypeError},
