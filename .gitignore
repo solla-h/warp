@@ -72,3 +72,6 @@ __pycache__/
 
 # Code-graph index (tool-generated SQLite index, large; not source).
 .codegraph/
+
+# Build verification artifacts
+verify/
