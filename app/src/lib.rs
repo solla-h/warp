@@ -163,9 +163,13 @@ use quit_warning::UnsavedStateSummary;
 use repo_metadata::{
     repositories::DetectedRepositories, watcher::DirectoryWatcher, RepoMetadataModel,
 };
+#[cfg(feature = "cloud")]
 use server::network_log_pane_manager::NetworkLogPaneManager;
+#[cfg(feature = "cloud")]
 use server::network_logging::NetworkLogModel;
+#[cfg(feature = "cloud")]
 use server::telemetry::context_provider::AppTelemetryContextProvider;
+#[cfg(feature = "cloud")]
 use server::voice_transcriber::ServerVoiceTranscriber;
 #[cfg(feature = "local_fs")]
 use settings::import::model::ImportedConfigModel;
@@ -211,6 +215,7 @@ pub use persistence::testing as sqlite_testing;
 #[cfg(feature = "plugin_host")]
 pub use plugin::{run_plugin_host, PLUGIN_HOST_FLAG};
 use referral_theme_status::ReferralThemeStatus;
+#[cfg(feature = "cloud")]
 use server::server_api::ServerApiProvider;
 use settings::{ExtraMetaKeys, PrivacySettings};
 #[cfg(feature = "local_fs")]
@@ -260,8 +265,11 @@ use crate::app_state::AppState;
 #[cfg(not(feature = "local-only"))]
 use crate::autoupdate::{AutoupdateState, RelaunchModel};
 use crate::changelog_model::ChangelogModel;
+#[cfg(feature = "cloud")]
 use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
+#[cfg(feature = "cloud")]
 use crate::cloud_object::model::persistence::CloudModel;
+#[cfg(feature = "cloud")]
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
@@ -270,6 +278,7 @@ use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
 #[cfg(not(feature = "local-only"))]
 use crate::drive::export::ExportManager;
+#[cfg(feature = "cloud")]
 use crate::drive::CloudObjectTypeAndId;
 use crate::env_vars::manager::EnvVarCollectionManager;
 use crate::experiments::ImprovedPaletteSearch;
@@ -278,6 +287,7 @@ use crate::gpu_state::GPUState;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::manager::NotebookManager;
+#[cfg(feature = "cloud")]
 use crate::notebooks::CloudNotebook;
 use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
@@ -287,18 +297,26 @@ use crate::projects::ProjectManagementModel;
 use crate::root_view::{
     quake_mode_window_id, quake_mode_window_is_open, OpenFromRestoredArg, OpenPath,
 };
+#[cfg(feature = "cloud")]
 use crate::server::cloud_objects::listener::Listener;
+#[cfg(feature = "cloud")]
 use crate::server::cloud_objects::update_manager::UpdateManager;
+#[cfg(feature = "cloud")]
 use crate::server::experiments::ServerExperiments;
+#[cfg(feature = "cloud")]
 use crate::server::iap::IapManager;
+#[cfg(feature = "cloud")]
 use crate::server::sync_queue::{QueueItem, SyncQueue};
+#[cfg(feature = "cloud")]
 pub use crate::server::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
 };
 use crate::server::telemetry::{AppStartupInfo, CloseTarget, PaletteSource};
+#[cfg(feature = "cloud")]
 #[cfg(not(feature = "local-only"))]
 use crate::server::telemetry::TelemetryCollector;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
+#[cfg(feature = "cloud")]
 use crate::settings::cloud_preferences_syncer::initialize_cloud_preferences_syncer;
 use crate::settings::manager::SettingsManager;
 use crate::settings::{AISettings, AccessibilitySettings, ScrollSettings, SelectionSettings};
@@ -327,6 +345,7 @@ use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 #[cfg(not(feature = "local-only"))]
 use crate::workspaces::user_profiles::UserProfiles;
+#[cfg(feature = "cloud")]
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
 /// Our embedded application assets.
@@ -1491,10 +1510,10 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|_ctx| SyncedInputState::new());
 
+    ctx.add_singleton_model(remote_server::manager::RemoteServerManager::new);
+    #[cfg(not(target_family = "wasm"))]
+    ctx.add_singleton_model(remote_server::codebase_index_model::RemoteCodebaseIndexModel::new);
     if warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
-        ctx.add_singleton_model(remote_server::manager::RemoteServerManager::new);
-        #[cfg(not(target_family = "wasm"))]
-        ctx.add_singleton_model(remote_server::codebase_index_model::RemoteCodebaseIndexModel::new);
         #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
         remote_server::wire_auth_token_rotation(ctx);
     }
