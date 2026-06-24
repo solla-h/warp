@@ -2,9 +2,9 @@
 pub(crate) mod convert_conversation;
 mod convert_from;
 mod convert_to;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
 mod r#impl;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
 pub use r#impl::generate_multi_agent_output;
 
 pub use ai::agent::convert::ConvertToAPITypeError;

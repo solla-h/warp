@@ -78,7 +78,7 @@ impl AuthState {
         }
     }
 
-    #[cfg(any(test, feature = "integration_tests", feature = "test-util"))]
+    #[cfg(any(test, feature = "integration_tests", feature = "test-util", feature = "skip_login"))]
     pub fn new_for_test() -> Self {
         Self {
             user: RwLock::new(Some(User::test())),

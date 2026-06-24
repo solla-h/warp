@@ -474,6 +474,14 @@ impl ServerApi {
         }
     }
 
+    #[cfg(feature = "skip_login")]
+    pub(crate) fn new_for_local_only() -> Self {
+        let (tx, _) = async_channel::unbounded();
+        let auth_state = std::sync::Arc::new(AuthState::new_for_test());
+        let client = std::sync::Arc::new(http_client::Client::new());
+        Self::new_with_parts(client, auth_state, tx, None, None, TelemetryApi::new())
+    }
+
     #[cfg(test)]
     fn new_for_test() -> Self {
         let (tx, _) = async_channel::unbounded();

@@ -2050,7 +2050,13 @@ pub(crate) fn initialize_app(
         ctx.add_singleton_model(ScheduledAgentManager::new);
     }
 
+    #[cfg(not(feature = "local-only"))]
     AutoupdateState::register(ctx, server_api.clone());
+    #[cfg(feature = "local-only")]
+    ctx.add_singleton_model(|_| {
+        let server_api = std::sync::Arc::new(crate::server::server_api::ServerApi::new_for_local_only());
+        AutoupdateState::new(server_api)
+    });
 
     ctx.add_singleton_model(LocalWorkflows::new);
 
