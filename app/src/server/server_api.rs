@@ -1624,6 +1624,19 @@ impl ServerApiProvider {
         settings_view::handle_experiment_change(ctx);
     }
 
+    #[cfg(feature = "skip_login")]
+    pub fn new_for_local_only() -> Self {
+        let server_api = Arc::new(ServerApi::new_for_local_only());
+        let auth_client = Arc::new(AuthClientImpl::new(
+            server_api.clone(),
+            server_api.auth_session.clone(),
+        ));
+        Self {
+            server_api,
+            auth_client,
+        }
+    }
+
     /// Constructs a new SeverApiProvider for tests.
     #[cfg(test)]
     pub fn new_for_test() -> Self {

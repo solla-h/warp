@@ -1208,8 +1208,9 @@ pub(crate) fn initialize_app(
         let iap_state = iap_state.clone();
         move |ctx| ServerApiProvider::new(auth_state, agent_source, iap_state, ctx)
     });
+    #[cfg(feature = "local-only")]
+    let server_api_provider = ctx.add_singleton_model(|_| ServerApiProvider::new_for_local_only());
 
-    #[cfg(not(feature = "local-only"))]
     let server_api = server_api_provider.as_ref(ctx).get();
     #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     if let Ok(run_id) = std::env::var(warp_cli::OZ_RUN_ID_ENV) {
@@ -2050,13 +2051,7 @@ pub(crate) fn initialize_app(
         ctx.add_singleton_model(ScheduledAgentManager::new);
     }
 
-    #[cfg(not(feature = "local-only"))]
     AutoupdateState::register(ctx, server_api.clone());
-    #[cfg(feature = "local-only")]
-    ctx.add_singleton_model(|_| {
-        let server_api = std::sync::Arc::new(crate::server::server_api::ServerApi::new_for_local_only());
-        AutoupdateState::new(server_api)
-    });
 
     ctx.add_singleton_model(LocalWorkflows::new);
 
