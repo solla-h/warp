@@ -276,7 +276,6 @@ use crate::code::global_buffer_model::GlobalBufferModel;
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
 use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
-#[cfg(not(feature = "local-only"))]
 use crate::drive::export::ExportManager;
 #[cfg(feature = "cloud")]
 use crate::drive::CloudObjectTypeAndId;
@@ -313,7 +312,6 @@ pub use crate::server::telemetry::{
 };
 use crate::server::telemetry::{AppStartupInfo, CloseTarget, PaletteSource};
 #[cfg(feature = "cloud")]
-#[cfg(not(feature = "local-only"))]
 use crate::server::telemetry::TelemetryCollector;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 #[cfg(feature = "cloud")]
@@ -339,11 +337,8 @@ use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::{
     ActiveSession, OneTimeModalModel, PaneViewLocator, ToastStack, Workspace, WorkspaceAction,
 };
-#[cfg(not(feature = "local-only"))]
 use crate::workspaces::team_tester::TeamTesterStatus;
-#[cfg(not(feature = "local-only"))]
 use crate::workspaces::update_manager::TeamUpdateManager;
-#[cfg(not(feature = "local-only"))]
 use crate::workspaces::user_profiles::UserProfiles;
 #[cfg(feature = "cloud")]
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
@@ -1184,7 +1179,6 @@ pub(crate) fn initialize_app(
     let auth_state = Arc::new(AuthState::initialize(ctx, api_key));
     timer.mark_interval_end("AUTH_MANAGER_SET_USER");
 
-    #[cfg(not(feature = "local-only"))]
     let agent_source = determine_agent_source(launch_mode);
 
     // NetworkLogModel must be registered before ServerApiProvider so that
@@ -1219,7 +1213,6 @@ pub(crate) fn initialize_app(
             Err(err) => log::warn!("Ignoring invalid {}: {err}", warp_cli::OZ_RUN_ID_ENV),
         }
     }
-    #[cfg(not(feature = "local-only"))]
     let ai_client = server_api_provider.as_ref(ctx).get_ai_client();
     #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
     // Refresh starts only after the authenticated server client exists; tracing initialization
@@ -1233,7 +1226,6 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         AuthManager::new(
             server_api.clone(),
@@ -1387,10 +1379,8 @@ pub(crate) fn initialize_app(
     // be initialized after it.
     ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
 
-    #[cfg(not(feature = "local-only"))]
-    ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(ai_client, ctx));
+    ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(server_api_provider.as_ref(ctx).get_ai_client(), ctx));
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         UserWorkspaces::new(
             server_api_provider.as_ref(ctx).get_team_client(),
@@ -1478,9 +1468,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| AIFactManager::new());
     ctx.add_singleton_model(|_| ExecutionProfileEditorManager::default());
     ctx.add_singleton_model(|_| NetworkLogPaneManager::default());
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         // Not using the *Provider types isn't ideal, but it's worth it for the ability to move managed secrets to a separate crate.
         ManagedSecretManager::new(
@@ -1702,7 +1690,6 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(CustomSecretRegexUpdater::new);
 
-    #[cfg(not(feature = "local-only"))]
     {
         let server_api_clone = server_api.clone();
         ctx.add_singleton_model(|ctx| {
@@ -1770,7 +1757,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| DisplayCount(display_count));
 
     ctx.add_singleton_model(|_| RelaunchModel::new());
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| ChangelogModel::new(server_api.clone()));
     ctx.add_singleton_model(|_| GitHubAuthNotifier::new());
     ctx.add_singleton_model(|_| NetworkStatus::new());
@@ -1797,7 +1783,6 @@ pub(crate) fn initialize_app(
 
     #[cfg(feature = "voice_input")]
     ctx.add_singleton_model(voice_input::VoiceInput::new);
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| {
         VoiceTranscriber::new(Arc::new(ServerVoiceTranscriber::new(server_api.clone())))
     });
@@ -1811,7 +1796,6 @@ pub(crate) fn initialize_app(
         .cloned()
         .collect::<Vec<_>>();
 
-    #[cfg(not(feature = "local-only"))]
     {
         let mut all_queue_items = Vec::new();
         let objects_with_pending_changes = cloud_objects
@@ -1912,20 +1896,16 @@ pub(crate) fn initialize_app(
         )
     });
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|_| ObjectActions::new(object_actions));
 
     ctx.add_singleton_model(|_| AudibleBell::new());
 
     // This model has to be registered after the user workspaces model because it relies on it,
     // and before the UpdateManager models because they rely on the TeamTester model.
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(TeamTesterStatus::new);
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         TeamUpdateManager::new(
             server_api_provider.as_ref(ctx).get_team_client(),
@@ -1934,7 +1914,6 @@ pub(crate) fn initialize_app(
         )
     });
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         UpdateManager::new(
             persistence_writer.sender(),
@@ -1986,7 +1965,6 @@ pub(crate) fn initialize_app(
 
     // CloudViewModel subscribes to UpdateManager so that it can be notified when objects are
     // created on the server.
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(CloudViewModel::new);
 
     // AIDocumentModel subscribes to UpdateManager so that it can be notified when notebooks are created on the server.
@@ -1998,7 +1976,6 @@ pub(crate) fn initialize_app(
     // ByoLlmAuthBannerSessionState tracks dismissal of the BYO LLM auth banner (e.g., AWS Bedrock login).
     ctx.add_singleton_model(ByoLlmAuthBannerSessionState::new);
 
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(ExportManager::new);
     ctx.add_singleton_model(|ctx| NotebookManager::new(notebooks, ctx));
     ctx.add_singleton_model(|_| CodeManager::default());
@@ -2006,7 +1983,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(NotebookKeybindings::new);
     ctx.add_singleton_model(TerminalKeybindings::new);
     ctx.add_singleton_model(|_| ActiveSession::default());
-    #[cfg(not(feature = "local-only"))]
     ctx.add_singleton_model(|ctx| {
         Listener::new(
             server_api_provider.as_ref(ctx).get_cloud_objects_client(),
