@@ -167,20 +167,45 @@ pub fn build_byop_models_by_feature(app: &AppContext) -> ModelsByFeature {
 /// 给定一个 BYOP `LLMId`,从 `AISettings` 与 secrets 里查出 `(provider, api_key, model_id)`。
 /// 任一信息缺失返回 `None`(controller 调用方应映射为 `InvalidApiKey` 错误)。
 pub fn lookup_byop(app: &AppContext, id: &ai::LLMId) -> Option<(AgentProvider, String, String)> {
-    let (provider_id, model_id) = llm_id::decode(id)?;
-    let providers = AISettings::as_ref(app).agent_providers.value().clone();
-    if let Some(provider) = providers.into_iter().find(|p| p.id == provider_id) {
-        let api_key = AgentProviderSecrets::as_ref(app)
-            .get(&provider_id)
-            .map(str::to_owned)
-            .unwrap_or_default();
-        return Some((provider, api_key, model_id));
+    if let Some((provider_id, model_id)) = llm_id::decode(id) {
+        let providers = AISettings::as_ref(app).agent_providers.value().clone();
+        if let Some(provider) = providers.into_iter().find(|p| p.id == provider_id) {
+            let api_key = AgentProviderSecrets::as_ref(app)
+                .get(&provider_id)
+                .map(str::to_owned)
+                .unwrap_or_default();
+            return Some((provider, api_key, model_id));
+        }
+        // Fallback: check legacy custom endpoints (synthesized as BYOP providers)
+        return custom_endpoints_as_providers(app)
+            .into_iter()
+            .find(|(p, _)| p.id == provider_id)
+            .map(|(p, key)| (p, key, model_id));
     }
-    // Fallback: check legacy custom endpoints (synthesized as BYOP providers)
-    custom_endpoints_as_providers(app)
-        .into_iter()
-        .find(|(p, _)| p.id == provider_id)
-        .map(|(p, key)| (p, key, model_id))
+    // Non-BYOP ID (old config_key UUID) — match against custom endpoint models
+    let id_str = id.as_str();
+    let keys = ApiKeyManager::as_ref(app).keys();
+    for ep in &keys.custom_endpoints {
+        if ep.url.trim().is_empty() { continue; }
+        for m in &ep.models {
+            if m.config_key == id_str {
+                let provider = AgentProvider {
+                    id: format!("legacy-{}", id_str),
+                    name: ep.name.clone(),
+                    base_url: ep.url.clone(),
+                    api_type: Default::default(),
+                    models: ep.models.iter().map(|em| AgentProviderModel {
+                        id: em.name.clone(),
+                        name: em.display_label().to_owned(),
+                        ..Default::default()
+                    }).collect(),
+                    extra_headers: Default::default(),
+                };
+                return Some((provider, ep.api_key.clone(), m.name.clone()));
+            }
+        }
+    }
+    None
 }
 
 /// Stable synthetic provider ID for a legacy `CustomEndpoint`, derived from its index.
