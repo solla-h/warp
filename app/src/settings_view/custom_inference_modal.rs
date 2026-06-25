@@ -5,7 +5,7 @@ use url::Url;
 use warp_editor::editor::NavigationKey;
 use warpui::elements::{
     Border, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty,
-    Expanded, Flex, MainAxisSize, MouseStateHandle, ParentElement, Radius, Text,
+    Expanded, Flex, Hoverable, MainAxisSize, MouseStateHandle, ParentElement, Radius, Text,
 };
 use warpui::fonts::FamilyId;
 use warpui::ui_components::button::ButtonVariant;
@@ -75,6 +75,7 @@ pub struct CustomEndpointModal {
     endpoint_url_editor: ViewHandle<EditorView>,
     api_key_editor: ViewHandle<EditorView>,
     selected_api_type: usize,
+    api_type_mouse_states: Vec<MouseStateHandle>,
     model_rows: Vec<ModelRow>,
     cancel_button_mouse_state: MouseStateHandle,
     save_button_mouse_state: MouseStateHandle,
@@ -237,6 +238,9 @@ impl CustomEndpointModal {
             endpoint_url_editor,
             api_key_editor,
             selected_api_type,
+            api_type_mouse_states: (0..Self::API_TYPE_OPTIONS.len())
+                .map(|_| MouseStateHandle::default())
+                .collect(),
             model_rows,
             cancel_button_mouse_state: Default::default(),
             save_button_mouse_state: Default::default(),
@@ -746,6 +750,66 @@ impl View for CustomEndpointModal {
             .with_margin_bottom(16.)
             .finish(),
         );
+
+        // API type selector (flat chips)
+        column.add_child(
+            Container::new(label("API type"))
+                .with_margin_bottom(4.)
+                .finish(),
+        );
+        {
+            let selected = self.selected_api_type;
+            let mut chips_row = Flex::row().with_spacing(8.);
+            for (i, (display_name, _)) in Self::API_TYPE_OPTIONS.iter().enumerate() {
+                let is_selected = i == selected;
+                let mouse_state = self.api_type_mouse_states[i].clone();
+                let text_color = if is_selected {
+                    theme.active_ui_text_color().into()
+                } else {
+                    theme.nonactive_ui_text_color().into()
+                };
+                let bg = if is_selected {
+                    Some(theme.surface_overlay_1())
+                } else {
+                    None
+                };
+                let chip = Hoverable::new(mouse_state, move |state| {
+                    let hovered = state.is_hovered();
+                    let mut container = Container::new(
+                        Text::new(*display_name, label_font_family, LABEL_FONT_SIZE)
+                            .with_color(text_color)
+                            .finish(),
+                    )
+                    .with_horizontal_padding(10.)
+                    .with_vertical_padding(4.)
+                    .with_border(
+                        Border::all(1.).with_border_fill(if is_selected {
+                            theme.accent()
+                        } else {
+                            theme.outline()
+                        }),
+                    )
+                    .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)));
+                    if let Some(bg) = bg {
+                        container = container.with_background(bg);
+                    } else if hovered {
+                        container = container.with_background(theme.surface_overlay_2());
+                    }
+                    container.finish()
+                })
+                .with_cursor(warpui::platform::Cursor::PointingHand)
+                .on_click(move |ctx, _, _| {
+                    ctx.dispatch_typed_action(CustomEndpointModalAction::SetApiType(i));
+                })
+                .finish();
+                chips_row.add_child(chip);
+            }
+            column.add_child(
+                Container::new(chips_row.finish())
+                    .with_margin_bottom(16.)
+                    .finish(),
+            );
+        }
 
         // Model rows
         let has_remove_model_button = self.model_rows.len() > 1;

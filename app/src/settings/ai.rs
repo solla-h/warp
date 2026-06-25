@@ -737,11 +737,11 @@ pub enum ReasoningEffortSetting {
     Off,
     Minimal,
     Low,
-    #[default]
     Medium,
     High,
     XHigh,
     Max,
+    #[default]
     Auto,
 }
 

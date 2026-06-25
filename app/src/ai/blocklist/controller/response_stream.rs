@@ -654,9 +654,10 @@ async fn byop_required_response_stream(
 ) -> Result<api::ResponseStream, ConvertToAPITypeError> {
     log::debug!("No BYOP provider selected for Marb agent request");
     let error_stream = futures::stream::once(async {
-        Err(Arc::new(AIApiError::Other(anyhow!(
-            "Marb requires a configured BYOP provider in Settings"
-        ))))
+        Err(Arc::new(AIApiError::ErrorStatus(
+            http::StatusCode::BAD_REQUEST,
+            "Marb requires a configured BYOP provider in Settings".to_owned(),
+        )))
     })
     .take_until(cancellation_rx);
     Ok(Box::pin(error_stream))
