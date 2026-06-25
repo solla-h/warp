@@ -2947,6 +2947,7 @@ dependencies = [
  "uuid",
  "warp_core",
  "warp_graphql",
+ "warp_server_auth",
  "warp_types",
  "warpui_core",
 ]
@@ -15191,7 +15192,7 @@ dependencies = [
  "warp_multi_agent_api",
  "warp_ripgrep",
  "warp_search_core",
- "warp_server_client",
+ "warp_server_auth",
  "warp_terminal",
  "warp_util",
  "warp_web_event_bus",
@@ -15645,42 +15646,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "warp_server_client"
+name = "warp_server_auth"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-channel",
- "async-trait",
- "bincode",
  "chrono",
- "cloud_object_client",
- "cloud_object_models",
- "cloud_objects",
  "cynic",
- "derivative",
- "diesel",
- "firebase",
- "futures",
- "http 1.4.0",
- "http_client",
- "instant",
- "itertools 0.14.0",
  "lasso",
  "log",
- "mockall",
- "oauth2",
  "parking_lot",
- "pathfinder_geometry",
- "schemars 1.0.4",
  "serde",
- "settings_value",
+ "serde_json",
  "thiserror 2.0.17",
- "url",
  "uuid",
  "warp_core",
  "warp_graphql",
+ "warp_managed_secrets",
  "warp_types",
  "warpui_core",
+ "warpui_extras",
 ]
 
 [[package]]

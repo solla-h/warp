@@ -2,7 +2,6 @@ use chrono::Utc;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_geometry::vector::vec2f;
 use warp_core::features::FeatureFlag;
-use warp_server_client::auth::AgentIdentity;
 use warpui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     Empty, Expanded, Fill, Flex, FormattedTextElement, HighlightedHyperlink, MainAxisAlignment,
@@ -28,6 +27,8 @@ use crate::util::truncation::truncate_from_end;
 use crate::view_components::dropdown::{DROPDOWN_PADDING, TOP_MENU_BAR_HEIGHT};
 use crate::view_components::{Dropdown as DropdownView, DropdownItem};
 use crate::workspaces::user_workspaces::UserWorkspaces;
+
+use crate::server::server_api::auth::AgentIdentity;
 
 const OZ_AGENTS_URL: &str = "https://oz.warp.dev/agents?new=true";
 const API_KEY_DOCS_URL: &str =

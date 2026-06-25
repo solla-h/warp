@@ -1,7 +1,6 @@
 #![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 pub mod ai;
 pub mod auth;
-mod base_client;
 pub mod block;
 pub mod harness_support;
 pub mod integrations;
@@ -20,10 +19,9 @@ use std::time::Duration;
 use ::http::header::CONTENT_LENGTH;
 use ai::AIClient;
 use anyhow::{anyhow, Context, Result};
-use auth::AuthClient;
+use auth::{AuthClient, AuthClientImpl, AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
 use base64::prelude::BASE64_URL_SAFE;
 use base64::Engine;
-use base_client::{AMBIENT_WORKLOAD_TOKEN_HEADER, CLOUD_AGENT_ID_HEADER};
 use block::BlockClient;
 use channel_versions::ChannelVersions;
 use chrono::{DateTime, FixedOffset};
@@ -43,8 +41,6 @@ use warp_core::errors::{register_error, AnyhowErrorExt, ErrorExt};
 use warp_core::telemetry::TelemetryEvent;
 #[cfg(feature = "cloud")]
 use crate::managed_secrets::client::ManagedSecretsClient;
-use warp_server_client::auth::{AuthClientImpl, AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
-use warp_server_client::base_client::BaseClient as _;
 use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
@@ -84,6 +80,12 @@ const WARP_ERROR_CODE_AT_CAPACITY: &str = "AT_CLOUD_AGENT_CAPACITY";
 
 /// Header used to communicate the source of an agent run (e.g. "CLI", "GITHUB_ACTION").
 pub(crate) const AGENT_SOURCE_HEADER: &str = "X-Oz-Api-Source";
+
+/// Header key for the ambient workload token attached to multi-agent requests.
+pub const AMBIENT_WORKLOAD_TOKEN_HEADER: &str = "X-Warp-Ambient-Workload-Token";
+
+/// Header key for the cloud agent task ID attached to requests from ambient agents.
+pub const CLOUD_AGENT_ID_HEADER: &str = "X-Warp-Cloud-Agent-ID";
 
 #[cfg(feature = "agent_mode_evals")]
 pub const EVAL_USER_ID_HEADER: &str = "X-Eval-User-ID";
@@ -615,6 +617,37 @@ impl ServerApi {
     #[cfg(target_family = "wasm")]
     fn report_ws_iap_challenge(&self, _err: &anyhow::Error) {}
 
+    async fn get_or_create_ambient_workload_token(&self) -> Result<Option<String>> {
+        if cfg!(target_family = "wasm") {
+            return Ok(None);
+        }
+        {
+            let cached = self.ambient_workload_token.lock();
+            if let Some(ref token) = *cached {
+                let is_valid = token.expires_at.is_none_or(|expires_at| {
+                    chrono::Utc::now() + chrono::Duration::minutes(5) < expires_at
+                });
+                if is_valid {
+                    return Ok(Some(token.token.clone()));
+                }
+            }
+        }
+        let workload_token = match warp_isolation_platform::issue_workload_token(Some(
+            Duration::from_secs(3 * 60 * 60),
+        ))
+        .await
+        {
+            Ok(token) => token,
+            Err(warp_isolation_platform::IsolationPlatformError::NoIsolationPlatformDetected) => {
+                return Ok(None);
+            }
+            Err(error) => return Err(error.into()),
+        };
+        let token = workload_token.token.clone();
+        *self.ambient_workload_token.lock() = Some(workload_token);
+        Ok(Some(token))
+    }
+
     /// Returns ambient agent headers to attach to requests.
     async fn ambient_agent_headers(&self) -> Result<Vec<(&'static str, String)>> {
         let workload_token = self
@@ -656,7 +689,22 @@ impl ServerApi {
     where
         QF: 'a,
     {
-        warp_server_client::graphql_helpers::send_graphql_request(self, operation, timeout)
+        Box::pin(async move {
+            let auth_token = self
+                .get_or_refresh_access_token()
+                .await
+                .context("Failed to get access token for GraphQL request")?;
+            let options = warp_graphql::client::RequestOptions {
+                auth_token: auth_token.bearer_token(),
+                timeout,
+                ..crate::server::graphql::default_request_options()
+            };
+            let response = operation
+                .send_request(self.client.clone(), options)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
+            Ok(response)
+        })
     }
 
     /// Sends a GET request to a public API endpoint.

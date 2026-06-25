@@ -74,8 +74,6 @@ use warp_core::ui::theme::Fill;
 use warp_core::ui::Icon;
 use warp_core::user_preferences::GetUserPreferences as _;
 use warp_editor::editor::NavigationKey;
-#[cfg(not(feature = "local-only"))]
-use warp_server_client::auth::AuthEvent;
 use warp_util::path::{user_friendly_path, LineAndColumnArg};
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
 use warp_util::standardized_path::StandardizedPath;
@@ -2559,23 +2557,7 @@ impl Workspace {
     }
 
     #[cfg(not(feature = "local-only"))]
-    fn observe_server_api(ctx: &mut ViewContext<Self>) {
-        let server_api_events = ServerApiProvider::handle(ctx);
-        ctx.subscribe_to_model(&server_api_events, |me, _, event, ctx| {
-            if let AuthEvent::StagingAccessBlocked = event {
-                if ChannelState::uses_staging_server() && me.shown_staging_banner_count < 5 {
-                    me.shown_staging_banner_count += 1;
-                    me.toast_stack.update(ctx, |toast_stack, ctx| {
-                        let toast = DismissibleToast::error(
-                            "Staging API call failed. Did your IP address change?".to_string(),
-                        )
-                        .with_object_id("staging_access_blocked_toast".to_string());
-                        toast_stack.add_ephemeral_toast(toast, ctx);
-                    });
-                }
-            }
-        });
-    }
+    fn observe_server_api(_ctx: &mut ViewContext<Self>) {}
 
     fn subscribe_to_workspace_toast_stack(
         toast_stack: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
