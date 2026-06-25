@@ -19,13 +19,19 @@ Each step must pass all three gates:
 ## Execution Order
 
 ```
-C: Write smoke test (establish verification baseline)
-    ↓
-A: Delete workspace-level dead crates (lowest risk, fastest reward)
-    ↓
-B: Delete pure-cloud app modules (higher risk, needs import cleanup)
-    ↓
-[Future] Phase B2: Architecture clean (redesign ServerApiProvider, telemetry, split god files)
+Wave 0:  [#2: smoke-test]
+              │
+              ▼
+Wave 1:  [#3:A1] [#4:A2] [#5:A3] [#6:A4] [#7:A5] [#8:A6] [#9:A7]     ← 7 parallel
+              │
+              ▼
+Wave 2:  [#10:drive] [#11:workspaces] [#12:graphql] [#13:iap] [#14:sync_queue] [#15:cloud_objects]  ← 6 parallel
+              │
+              ▼
+Wave 3:  [#16:ids→warp_types] [#17:telemetry stub] [#18:server_api→infra]  ← 3 parallel
+              │
+              ▼
+Wave 4:  [#19:delete server/]  ← 1 final
 ```
 
 ---
