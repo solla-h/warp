@@ -22,6 +22,38 @@ Key files to read FIRST:
 - `app/src/server/mod.rs` — what's left in the server module
 - `app/src/lib.rs` — where `mod server` is declared
 
+## Worktree Isolation (Parallel Execution)
+
+**CRITICAL**: This issue is being worked on IN PARALLEL with other issues in the same wave.
+Each agent works in its own git worktree — a physically separate directory with its own branch.
+
+### Before you start — VERIFY your environment:
+
+```
+# 1. Confirm you are in the correct worktree directory:
+pwd
+# Expected: a path ending in `wave4-delete-server` (NOT the main warp repo)
+
+# 2. Confirm you are on the correct branch:
+git branch --show-current
+# Expected: wave4/delete-server
+
+# 3. Confirm the worktree is clean:
+git status
+# Expected: nothing to commit, working tree clean
+```
+
+**If ANY of these checks fail, STOP IMMEDIATELY. Do NOT proceed.** You may be in the wrong
+worktree or the wrong branch. Ask the user to verify your working directory.
+
+### Rules:
+- You are ALREADY in the correct worktree and branch (the user set this up before pasting this prompt)
+- Do all work in THIS directory — do NOT cd to other directories or switch branches
+- You CAN and SHOULD run `cargo check -p warp` — it will pass because you only deleted your module (other modules still exist on your branch)
+- Do NOT run `warp-oss --smoke-test` — that will be run AFTER all wave branches are merged in the main repo
+- After your work is done, commit on your branch and STOP. The user will merge branches sequentially in the main repo.
+- Do NOT run `git worktree` commands — the user manages worktree lifecycle
+
 ## What to do
 
 Delete whatever remains in `app/src/server/` after all prior waves completed.
@@ -54,14 +86,14 @@ rg "use crate::server::" app/src/ | wc -l  # any remaining refs?
 rm -rf app/src/server/
 # remove `mod server` from lib.rs
 cargo check -p warp
-warp-oss --smoke-test
+# NOTE: smoke test will be run after all wave branches are merged
 git add -A && git commit -m "feat(strip): delete server/ module — cloud removal complete"
 ```
 
 ## Verification
 
 - `cargo check -p warp` — 0 errors
-- `warp-oss --smoke-test` — exits 0
+- [ ] Branch committed and ready for merge (smoke test runs post-merge)
 - `app/src/server/` directory completely gone
 - `mod server` removed from lib.rs
 - Zero `use crate::server::` references anywhere in the codebase
