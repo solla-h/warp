@@ -8,6 +8,7 @@
 // code from the persistence modules is imported with fully-qualified paths.
 #![allow(ambiguous_glob_reexports)]
 
+pub mod client_types;
 pub mod ai_execution_profile;
 pub mod ai_fact;
 pub mod cloud_agent_config;
@@ -25,6 +26,7 @@ pub mod workflow;
 pub mod workflow_enum;
 
 pub use ai_execution_profile::*;
+pub use client_types::*;
 pub use ai_fact::*;
 pub use cloud_agent_config::*;
 pub use cloud_environment::*;
