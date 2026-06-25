@@ -50,6 +50,7 @@ use crate::ai::llms::{
     ModelsByFeature,
 };
 use crate::settings::{AISettings, AgentProvider, AgentProviderApiType, AgentProviderModel};
+use ::ai::api_keys::CustomEndpointModel;
 
 /// 合成给定 provider 的所有合法 (provider, model) 对的 LLMInfo 列表。
 ///
@@ -193,7 +194,7 @@ pub fn lookup_byop(app: &AppContext, id: &ai::LLMId) -> Option<(AgentProvider, S
                     id: format!("legacy-{}", id_str),
                     name: ep.name.clone(),
                     base_url: ep.url.clone(),
-                    api_type: parse_api_type(&ep.api_type),
+                    api_type: parse_api_type(&ep.api_type, &ep.models),
                     models: ep.models.iter().map(|em| AgentProviderModel {
                         id: em.name.clone(),
                         name: em.display_label().to_owned(),
@@ -244,12 +245,13 @@ fn custom_endpoints_as_providers(app: &AppContext) -> Vec<(AgentProvider, String
         .collect()
 }
 
-fn parse_api_type(s: &str) -> AgentProviderApiType {
+fn parse_api_type(s: &str, models: &[CustomEndpointModel]) -> AgentProviderApiType {
     match s {
         "anthropic" => AgentProviderApiType::Anthropic,
         "gemini" => AgentProviderApiType::Gemini,
         "ollama" => AgentProviderApiType::Ollama,
         "deep_seek" => AgentProviderApiType::DeepSeek,
+        "" | _ if models.iter().any(|m| m.name.contains("claude")) => AgentProviderApiType::Anthropic,
         _ => AgentProviderApiType::OpenAi,
     }
 }
