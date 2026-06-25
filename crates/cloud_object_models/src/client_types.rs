@@ -4,38 +4,28 @@ use anyhow::Result;
 use async_channel::Sender;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-pub use cloud_object_models::*;
-pub use cloud_objects::cloud_object::*;
+use cloud_objects::cloud_object::*;
 use cloud_objects::drive::sharing::SharingAccessLevel;
 use cloud_objects::ids::{
     FolderId, GenericStringObjectId, HashedSqliteId, ObjectUid, ServerId, SyncId,
 };
-#[cfg(any(test, feature = "test-util"))]
-use mockall::automock;
 use warp_graphql::mcp_gallery_template::MCPGalleryTemplate;
 use warp_graphql::object_permissions::AccessLevel;
 
-/// Identifies a guest to remove from an object.
+use crate::user_profile::UserProfileWithUID;
+use crate::{NotebookId, ServerCloudObject, ServerFolder, ServerNotebook, ServerWorkflow, WorkflowId};
+
 #[derive(Clone, Debug)]
 pub enum GuestIdentifier {
-    /// Remove a user guest by their email address.
     Email(String),
-    /// Remove a team guest by their team UID.
     TeamUid(ServerId),
 }
 
-/// The type of action that occurred on an object, such as an execution, selection, so on
-/// and so forth.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ObjectActionType {
     Execute,
 }
 
-// In order to convert from a graphql type and from a SQLite read, the action type
-// implements to_string().
-//
-// Temporarily suppress clippy warnings about the `ToString` impl until we
-// move `ObjectType` away from using `std::fmt::Display` for serialization.
 #[allow(clippy::to_string_trait_impl)]
 impl ToString for ObjectActionType {
     fn to_string(&self) -> String {
@@ -59,16 +49,11 @@ impl ObjectActionType {
     }
 }
 
-/// We track object actions, both those that have been sent to the server and not, through this
-/// type. A single ObjectAction represents an object_id, action pair and a subtype that contains data
-/// about the action(s). Each ObjectAction either represents one action or a summary of identical actions
-/// that occurred at different times. We summarize old actions in order to save memory footprint on the client.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ObjectAction {
     pub action_type: ObjectActionType,
     pub uid: ObjectUid,
     pub hashed_sqlite_id: HashedSqliteId,
-    // This action either represents one action or a consolidation of multiple actions.
     pub action_subtype: ObjectActionSubtype,
 }
 
@@ -108,7 +93,7 @@ pub enum ObjectActionSubtype {
 #[derive(Default)]
 pub struct InitialLoadResponse {
     pub updated_notebooks: Vec<ServerNotebook>,
-    pub deleted_notebooks: Vec<cloud_object_models::NotebookId>,
+    pub deleted_notebooks: Vec<NotebookId>,
     pub updated_workflows: Vec<ServerWorkflow>,
     pub deleted_workflows: Vec<WorkflowId>,
     pub updated_folders: Vec<ServerFolder>,
@@ -195,18 +180,14 @@ pub enum ObjectDeleteResult {
     Failure,
 }
 
-#[cfg_attr(any(test, feature = "test-util"), automock)]
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 pub trait ObjectClient: 'static + Send + Sync {
-    /// This method saves a workflow for a given owner and returns it on success.
     async fn create_workflow(
         &self,
         request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult>;
 
-    /// Updates a workflow with the new data. The update may be rejected if a revision
-    /// is specified _and_ that revision is not the current revision of the object in storage.
     async fn update_workflow(
         &self,
         workflow_id: WorkflowId,
@@ -214,9 +195,6 @@ pub trait ObjectClient: 'static + Send + Sync {
         revision: Option<Revision>,
     ) -> Result<UpdateCloudObjectResult<ServerWorkflow>>;
 
-    /// Creates n generic string objects in a single graphql request. Use
-    /// this rather than calling create_generic_string_object multiple times
-    /// in a loop.
     async fn bulk_create_generic_string_objects(
         &self,
         owner: Owner,
@@ -230,18 +208,14 @@ pub trait ObjectClient: 'static + Send + Sync {
         request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult>;
 
-    /// Creates a notebook on the server, returning the ID and revision of the object after
-    /// creation.
     async fn create_notebook(
         &self,
         request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult>;
 
-    /// Updates a notebook with the new title and data. The update may be rejected if a revision
-    /// is specified _and_ that revision is not the current revision of the object in storage.
     async fn update_notebook(
         &self,
-        notebook_id: cloud_object_models::NotebookId,
+        notebook_id: NotebookId,
         title: Option<String>,
         data: Option<SerializedModel>,
         revision: Option<Revision>,
@@ -262,19 +236,16 @@ pub trait ObjectClient: 'static + Send + Sync {
         revision: Option<Revision>,
     ) -> Result<UpdateCloudObjectResult<Box<dyn ServerObject>>>;
 
-    /// Sets the current editor of the notebook to be the logged in user
     async fn grab_notebook_edit_access(
         &self,
-        notebook_id: cloud_object_models::NotebookId,
+        notebook_id: NotebookId,
     ) -> Result<ServerMetadata>;
 
-    /// Sets the current editor of the notebook to be null
     async fn give_up_notebook_edit_access(
         &self,
-        notebook_id: cloud_object_models::NotebookId,
+        notebook_id: NotebookId,
     ) -> Result<ServerMetadata>;
 
-    /// Gets updates for all Warp Drive actions.
     async fn get_warp_drive_updates(
         &self,
         message_sender: Sender<ObjectUpdateMessage>,
@@ -289,10 +260,9 @@ pub trait ObjectClient: 'static + Send + Sync {
 
     async fn fetch_single_cloud_object(&self, id: ServerId) -> Result<GetCloudObjectResponse>;
 
-    // Transfers a notebook to the given owner
     async fn transfer_notebook_owner(
         &self,
-        notebook_id: cloud_object_models::NotebookId,
+        notebook_id: NotebookId,
         owner: Owner,
     ) -> Result<bool>;
 
@@ -361,11 +331,6 @@ pub trait ObjectClient: 'static + Send + Sync {
         guest: GuestIdentifier,
     ) -> Result<ServerPermissions>;
 
-    /// Fetches the last-used timestamps for all cloud environments.
-    ///
-    /// This is derived from `CloudEnvironment.lastTaskCreated.createdAt`, not `lastTaskRunTimestamp`, so that "Last used" reflects the most recently created task.
-    ///
-    /// Returns a map from environment UID to timestamp.
     async fn fetch_environment_last_task_run_timestamps(
         &self,
     ) -> Result<HashMap<String, DateTime<Utc>>>;

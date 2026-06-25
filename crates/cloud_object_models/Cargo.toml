@@ -13,6 +13,8 @@ test-util = ["cloud_objects/test-util"]
 [dependencies]
 ai.workspace = true
 anyhow.workspace = true
+async-channel.workspace = true
+async-trait.workspace = true
 chrono.workspace = true
 cfg-if.workspace = true
 cloud_objects.workspace = true

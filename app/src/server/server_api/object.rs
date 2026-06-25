@@ -4,14 +4,12 @@ use anyhow::{anyhow, Context, Result};
 use async_channel::Sender;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-// #[cfg(any(test, feature = "test-util"))]
-// pub use cloud_object_client::MockObjectClient;
-use cloud_object_client::{
+use cloud_object_models::{
     GetCloudObjectResponse, InitialLoadResponse, ObjectActionHistory, ObjectActionType,
     ObjectDeleteResult, ObjectMetadataUpdateResult, ObjectPermissionUpdateResult,
     ObjectPermissionsUpdateData, ObjectUpdateMessage,
 };
-pub use cloud_object_client::{GuestIdentifier, ObjectClient};
+pub use cloud_object_models::{GuestIdentifier, ObjectClient};
 use cloud_object_models::JsonSerializer;
 use cynic::{MutationBuilder, QueryBuilder, SubscriptionBuilder};
 use warp_core::report_error;

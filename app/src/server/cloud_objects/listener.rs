@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;
-pub use cloud_object_client::ObjectUpdateMessage;
+pub use cloud_object_models::ObjectUpdateMessage;
 use futures_util::stream::AbortHandle;
 use instant::Instant;
 use warpui::r#async::Timer;

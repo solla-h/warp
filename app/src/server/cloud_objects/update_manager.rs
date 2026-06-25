@@ -7,8 +7,8 @@ use std::time::Duration;
 
 use chrono::{DateTime, Utc};
 #[cfg(test)]
-pub use cloud_object_client::GetCloudObjectResponse;
-pub use cloud_object_client::InitialLoadResponse;
+pub use cloud_object_models::GetCloudObjectResponse;
+pub use cloud_object_models::InitialLoadResponse;
 use futures::channel::oneshot::{self, Receiver};
 use futures::stream::AbortHandle;
 use itertools::Itertools;
@@ -4085,12 +4085,12 @@ impl UpdateManager {
         if optimistically_grant_access {
             self.set_notebook_current_editor(&notebook_id, Some(user_uid.as_string()), ctx);
         }
-        let cloud_object_client = self.object_client.clone();
+        let cloud_object_models = self.object_client.clone();
         // Make the request.
         let future = ctx.spawn_with_retry_on_error(
             move || {
-                let cloud_object_client = cloud_object_client.clone();
-                async move { cloud_object_client.grab_notebook_edit_access(server_id.into()).await }
+                let cloud_object_models = cloud_object_models.clone();
+                async move { cloud_object_models.grab_notebook_edit_access(server_id.into()).await }
             },
             *ONLINE_ONLY_OPERATION_RETRY_STRATEGY,
             move |me, res, ctx| match res {

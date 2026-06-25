@@ -86,7 +86,6 @@ cfg-if.workspace = true
 channel_versions.workspace = true
 chrono.workspace = true
 clap.workspace = true
-cloud_object_client = { workspace = true, optional = true }
 cloud_object_models = { workspace = true, optional = true }
 cloud_objects = { workspace = true, optional = true }
 command = { workspace = true }
@@ -428,7 +427,6 @@ jsonschema = { workspace = true, default-features = false }
 async-executor = "1.5.1"
 command = { workspace = true, features = ["test-util"] }
 ctor = "0.1.18"
-cloud_object_client = { workspace = true, features = ["test-util"] }
 http_client = { workspace = true, features = ["test-util"] }
 mockall.workspace = true
 mockito.workspace = true
@@ -470,7 +468,7 @@ embed-resource = "3.0"
 # injects NoOp cloud clients and a no-login path so the app runs fully local.
 # Off by default to keep the existing cloud-backed build unchanged.
 local-only = ["skip_login"]
-cloud = ["dep:cloud_object_persistence", "dep:cloud_objects", "dep:cloud_object_client", "dep:cloud_object_models", "dep:warp_server_client", "dep:warp_server_auth", "dep:warp_managed_secrets", "dep:warp_graphql", "persistence/cloud"]
+cloud = ["dep:cloud_object_persistence", "dep:cloud_objects", "dep:cloud_object_models", "dep:warp_server_client", "dep:warp_server_auth", "dep:warp_managed_secrets", "dep:warp_graphql", "persistence/cloud"]
 cloud_ui = ["cloud_environments", "cloud_conversations", "ambient_agents_rtc", "cloud_mode", "oz_platform_skills", "oz_identity_federation", "sync_ambient_plans", "conversation_artifacts", "oz_launch_modal", "scheduled_ambient_agents", "oz_handoff", "handoff_local_cloud", "handoff_cloud_cloud", "remote_codebase_indexing"]
 aws-bedrock = ["dep:aws-config", "dep:aws-credential-types", "dep:aws-sdk-sts", "dep:aws-types"]
 otel = ["dep:opentelemetry", "dep:opentelemetry-http", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk", "dep:tracing-opentelemetry"]
@@ -836,7 +834,7 @@ voice_input = ["dep:voice_input"]
 system_theme = []
 tab_close_button_on_left = []
 team_features_override = []
-test-util = ["cloud_object_client/test-util", "warp_server_auth?/test-util"]
+test-util = ["warp_server_auth?/test-util"]
 team_workflows = ["team_features_override"]
 toggle_bootstrap_block = []
 # Feature enabled only when app is compiled for integration tests.
