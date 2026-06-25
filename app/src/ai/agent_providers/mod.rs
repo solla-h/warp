@@ -193,11 +193,7 @@ pub fn lookup_byop(app: &AppContext, id: &ai::LLMId) -> Option<(AgentProvider, S
                     id: format!("legacy-{}", id_str),
                     name: ep.name.clone(),
                     base_url: ep.url.clone(),
-                    api_type: if ep.models.iter().any(|m| m.name.contains("claude")) {
-                    AgentProviderApiType::Anthropic
-                } else {
-                    Default::default()
-                },
+                    api_type: parse_api_type(&ep.api_type),
                     models: ep.models.iter().map(|em| AgentProviderModel {
                         id: em.name.clone(),
                         name: em.display_label().to_owned(),
@@ -246,4 +242,14 @@ fn custom_endpoints_as_providers(app: &AppContext) -> Vec<(AgentProvider, String
             (provider, ep.api_key.clone())
         })
         .collect()
+}
+
+fn parse_api_type(s: &str) -> AgentProviderApiType {
+    match s {
+        "anthropic" => AgentProviderApiType::Anthropic,
+        "gemini" => AgentProviderApiType::Gemini,
+        "ollama" => AgentProviderApiType::Ollama,
+        "deep_seek" => AgentProviderApiType::DeepSeek,
+        _ => AgentProviderApiType::OpenAi,
+    }
 }

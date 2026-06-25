@@ -46,6 +46,7 @@ pub struct CustomEndpoint {
     pub url: String,
     pub api_key: String,
     pub models: Vec<CustomEndpointModel>,
+    pub api_type: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -245,12 +246,14 @@ impl ApiKeyManager {
         url: String,
         api_key: String,
         models: Vec<(String, Option<String>, Option<String>)>,
+        api_type: String,
         ctx: &mut ModelContext<Self>,
     ) {
         self.keys.custom_endpoints.push(CustomEndpoint {
             name,
             url,
             api_key,
+            api_type,
             models: models
                 .into_iter()
                 .map(|(name, alias, config_key)| CustomEndpointModel {
@@ -273,6 +276,7 @@ impl ApiKeyManager {
         url: String,
         api_key: String,
         models: Vec<(String, Option<String>, Option<String>)>,
+        api_type: String,
         ctx: &mut ModelContext<Self>,
     ) {
         if index >= self.keys.custom_endpoints.len() {
@@ -282,6 +286,7 @@ impl ApiKeyManager {
             name,
             url,
             api_key,
+            api_type,
             models: models
                 .into_iter()
                 .map(|(name, alias, config_key)| CustomEndpointModel {

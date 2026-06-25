@@ -1959,6 +1959,7 @@ impl AISettingsPageView {
                 url,
                 api_key,
                 models,
+                api_type,
             } => {
                 if !Self::can_use_custom_inference_controls(ctx) {
                     self.hide_custom_endpoint_modal(ctx);
@@ -1970,6 +1971,7 @@ impl AISettingsPageView {
                         url.clone(),
                         api_key.clone(),
                         models.clone(),
+                        api_type.clone(),
                         ctx,
                     );
                 });
@@ -1990,6 +1992,7 @@ impl AISettingsPageView {
                 url,
                 api_key,
                 models,
+                api_type,
             } => {
                 if !Self::can_use_custom_inference_controls(ctx) {
                     self.hide_custom_endpoint_modal(ctx);
@@ -2002,6 +2005,7 @@ impl AISettingsPageView {
                         url.clone(),
                         api_key.clone(),
                         models.clone(),
+                        api_type.clone(),
                         ctx,
                     );
                 });

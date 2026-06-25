@@ -38,6 +38,7 @@ pub enum CustomEndpointModalEvent {
         url: String,
         api_key: String,
         models: Vec<(String, Option<String>, Option<String>)>,
+        api_type: String,
     },
     SaveEndpoint {
         index: usize,
@@ -45,6 +46,7 @@ pub enum CustomEndpointModalEvent {
         url: String,
         api_key: String,
         models: Vec<(String, Option<String>, Option<String>)>,
+        api_type: String,
     },
     RemoveEndpoint {
         index: usize,
@@ -58,6 +60,7 @@ pub enum CustomEndpointModalAction {
     AddModel,
     RemoveModel(usize),
     RemoveEndpoint,
+    SetApiType(usize),
 }
 
 struct ModelRow {
@@ -71,6 +74,7 @@ pub struct CustomEndpointModal {
     endpoint_name_editor: ViewHandle<EditorView>,
     endpoint_url_editor: ViewHandle<EditorView>,
     api_key_editor: ViewHandle<EditorView>,
+    selected_api_type: usize,
     model_rows: Vec<ModelRow>,
     cancel_button_mouse_state: MouseStateHandle,
     save_button_mouse_state: MouseStateHandle,
@@ -81,6 +85,14 @@ pub struct CustomEndpointModal {
 }
 
 impl CustomEndpointModal {
+    const API_TYPE_OPTIONS: &'static [(&'static str, &'static str)] = &[
+        ("OpenAI", "open_ai"),
+        ("Anthropic", "anthropic"),
+        ("Gemini", "gemini"),
+        ("Ollama", "ollama"),
+        ("DeepSeek", "deep_seek"),
+    ];
+
     pub fn new(
         endpoint: Option<&CustomEndpoint>,
         editing_index: Option<usize>,
@@ -211,10 +223,20 @@ impl CustomEndpointModal {
                 })
         });
 
+        let selected_api_type = endpoint
+            .map(|ep| {
+                Self::API_TYPE_OPTIONS
+                    .iter()
+                    .position(|(_, v)| *v == ep.api_type)
+                    .unwrap_or(0)
+            })
+            .unwrap_or(0);
+
         Self {
             endpoint_name_editor,
             endpoint_url_editor,
             api_key_editor,
+            selected_api_type,
             model_rows,
             cancel_button_mouse_state: Default::default(),
             save_button_mouse_state: Default::default(),
@@ -415,6 +437,7 @@ impl CustomEndpointModal {
                 url,
                 api_key,
                 models,
+                api_type: Self::API_TYPE_OPTIONS[self.selected_api_type].1.to_owned(),
             });
         } else {
             ctx.emit(CustomEndpointModalEvent::AddEndpoint {
@@ -422,6 +445,7 @@ impl CustomEndpointModal {
                 url,
                 api_key,
                 models,
+                api_type: Self::API_TYPE_OPTIONS[self.selected_api_type].1.to_owned(),
             });
         }
     }
@@ -968,6 +992,10 @@ impl TypedActionView for CustomEndpointModal {
                 if let Some(index) = self.editing_index {
                     ctx.emit(CustomEndpointModalEvent::RemoveEndpoint { index });
                 }
+            }
+            CustomEndpointModalAction::SetApiType(idx) => {
+                self.selected_api_type = *idx;
+                ctx.notify();
             }
         }
     }
