@@ -1,6 +1,3 @@
-#[cfg(not(target_family = "wasm"))]
-pub mod persistence;
-
 use ai::document::AIDocumentId;
 use cloud_objects::cloud_object::{
     GenericCloudObject, GenericServerObject, ObjectType, ServerObjectModel,

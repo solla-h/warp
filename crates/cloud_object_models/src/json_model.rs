@@ -1,6 +1,3 @@
-#[cfg(not(target_family = "wasm"))]
-pub mod persistence;
-
 use std::fmt::Debug;
 
 use anyhow::Result;
