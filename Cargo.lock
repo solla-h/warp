@@ -372,7 +372,6 @@ dependencies = [
  "uuid",
  "virtual-fs",
  "warp_core",
- "warp_graphql",
  "warp_multi_agent_api",
  "warp_terminal",
  "warp_util",
@@ -2874,7 +2873,6 @@ dependencies = [
  "serde_json",
  "uuid",
  "warp_core",
- "warp_graphql",
 ]
 
 [[package]]
@@ -2905,7 +2903,6 @@ dependencies = [
  "warp-workflows",
  "warp_cli",
  "warp_core",
- "warp_graphql",
  "warp_types",
  "warp_util",
 ]
@@ -2925,7 +2922,7 @@ dependencies = [
  "serde",
  "session-sharing-protocol",
  "warp_core",
- "warp_graphql",
+ "warp_types",
 ]
 
 [[package]]
@@ -2946,7 +2943,6 @@ dependencies = [
  "thiserror 2.0.17",
  "uuid",
  "warp_core",
- "warp_graphql",
  "warp_server_auth",
  "warp_types",
  "warpui_core",
@@ -6034,7 +6030,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aa2e818b9e62654f2039d524c92a19495fcc2b0139ffc0354956865b3c7e939"
 dependencies = [
  "async-channel",
- "cynic",
  "futures-lite 2.6.1",
  "futures-sink",
  "futures-timer",
@@ -15184,7 +15179,6 @@ dependencies = [
  "warp_core",
  "warp_editor",
  "warp_files",
- "warp_graphql",
  "warp_isolation_platform",
  "warp_js",
  "warp_logging",
@@ -15195,6 +15189,7 @@ dependencies = [
  "warp_server_auth",
  "warp_server_client",
  "warp_terminal",
+ "warp_types",
  "warp_util",
  "warp_web_event_bus",
  "warpui",
@@ -15473,33 +15468,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "warp_graphql"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "chrono",
- "cynic",
- "cynic-codegen",
- "futures",
- "futures-util",
- "graphql-ws-client",
- "http 1.4.0",
- "http_client",
- "instant",
- "log",
- "persistence",
- "reqwest",
- "serde",
- "thiserror 2.0.17",
- "warp_core",
- "warp_graphql_schema",
- "warp_types",
- "websocket",
- "ws_stream_wasm",
-]
-
-[[package]]
 name = "warp_graphql_schema"
 version = "0.0.0"
 dependencies = [
@@ -15578,8 +15546,8 @@ dependencies = [
  "tink-hybrid",
  "tink-proto",
  "vec1",
+ "warp_cli",
  "warp_core",
- "warp_graphql",
  "warp_isolation_platform",
  "warpui_core",
  "zeroize",
@@ -15661,7 +15629,6 @@ dependencies = [
  "thiserror 2.0.17",
  "uuid",
  "warp_core",
- "warp_graphql",
  "warp_managed_secrets",
  "warp_types",
  "warpui_core",
@@ -15701,7 +15668,6 @@ dependencies = [
  "url",
  "uuid",
  "warp_core",
- "warp_graphql",
  "warp_server_auth",
  "warpui_core",
 ]

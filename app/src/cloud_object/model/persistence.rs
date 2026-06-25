@@ -5,7 +5,7 @@ use chrono::{DateTime, Duration, Utc};
 use itertools::Itertools;
 use rand::Rng;
 use warp_core::features::FeatureFlag;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use super::generic_string_model::GenericStringObjectId;

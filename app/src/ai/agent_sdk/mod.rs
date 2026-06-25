@@ -32,7 +32,6 @@ use warp_cli::share::ShareRequest;
 use warp_cli::task::{MessageCommand, TaskCommand};
 use warp_cli::{CliCommand, GlobalOptions, OZ_HARNESS_ENV};
 use warp_core::features::FeatureFlag;
-use warp_graphql::object_permissions::OwnerType;
 use warp_isolation_platform::IsolationPlatformError;
 #[cfg(not(target_family = "wasm"))]
 use warp_logging::log_file_path;
@@ -89,8 +88,6 @@ mod federate;
 mod harness_support;
 #[cfg(not(target_family = "wasm"))]
 mod integration;
-#[cfg(not(target_family = "wasm"))]
-mod integration_output;
 mod mcp;
 mod mcp_config;
 mod model;
@@ -106,20 +103,6 @@ mod telemetry;
 #[cfg(test)]
 mod test_support;
 mod text_layout;
-
-/// Prints a non-blocking warning to stderr when the CLI is invoked with a team-scoped API key.
-fn maybe_warn_team_api_key(ctx: &AppContext) {
-    let auth_state = AuthStateProvider::handle(ctx).as_ref(ctx).get();
-    let owner_type = auth_state.api_key_owner_type();
-    if !matches!(owner_type, Some(OwnerType::Team)) {
-        return;
-    }
-
-    eprintln!(
-        "\x1b[33mWarning: Free cloud credits apply to personal runs only but this run uses \
-         a team API key. If you want to use free cloud credits, consider using a personal API key instead.\x1b[0m"
-    );
-}
 
 /// Run a Warp CLI command.
 #[tracing::instrument(name = "agent_sdk::run", skip_all, err, fields(tags.cloud_agent = true))]
@@ -215,14 +198,14 @@ fn dispatch_command(
             }
             artifact::run(ctx, global_options, artifact_cmd)
         }
-        CliCommand::ApiKey(api_key_cmd) => {
+        CliCommand::ApiKey(_api_key_cmd) => {
             if warp_core::channel::ChannelState::channel() == warp_core::channel::Channel::Oss {
                 return Err(anyhow::anyhow!("API key management is not available in OSS mode"));
             }
             if !FeatureFlag::APIKeyManagement.is_enabled() {
                 return Err(anyhow::anyhow!("invalid value 'api-key'"));
             }
-            api_key::run(ctx, global_options, api_key_cmd)
+            Err(anyhow::anyhow!("API key management has been removed"))
         }
     }
 }
@@ -1452,8 +1435,6 @@ impl AgentDriverRunner {
         share_requests: Option<Vec<ShareRequest>>,
         task: driver::Task,
     ) {
-        maybe_warn_team_api_key(ctx);
-
         // Initializing the driver will fail if not logged in. Since we check that above, panic here - it's difficult to
         // fallibly instantiate a UI framework model.
         let driver = ctx.add_singleton_model(|ctx| {

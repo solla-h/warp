@@ -158,7 +158,6 @@ impl AuthSession {
             }
             LoginToken::ApiKey(key) => Ok(Credentials::ApiKey {
                 key,
-                owner_type: None,
             }),
             LoginToken::SessionCookie => Ok(Credentials::SessionCookie),
         }

@@ -1,6 +1,5 @@
 use chrono::{DateTime, FixedOffset, Utc};
 use serde::{Deserialize, Serialize};
-use warp_graphql::mutations::share_block::DisplaySetting as GqlDisplaySetting;
 
 use crate::terminal::model::block::{Block as ClientBlock, BlockTime};
 use crate::terminal::model::grid::Dimensions as _;
@@ -25,17 +24,6 @@ pub enum DisplaySetting {
     Output,
     CommandAndOutput,
     Other(String),
-}
-
-impl From<DisplaySetting> for GqlDisplaySetting {
-    fn from(value: DisplaySetting) -> Self {
-        match value {
-            DisplaySetting::Command => GqlDisplaySetting::Command,
-            DisplaySetting::Output => GqlDisplaySetting::Output,
-            DisplaySetting::CommandAndOutput => GqlDisplaySetting::CommandAndOutput,
-            DisplaySetting::Other(s) => GqlDisplaySetting::Other(s),
-        }
-    }
 }
 
 /// A representation of a Block for the server.

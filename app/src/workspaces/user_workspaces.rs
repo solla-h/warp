@@ -4,7 +4,6 @@ use anyhow::Result;
 use regex::Regex;
 use warp_core::features::FeatureFlag;
 use warp_core::settings::{ChangeEventReason, Setting};
-use warp_graphql::workspace::FeatureModelChoice;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity, Tracked};
 
 use super::team::{DiscoverableTeam, MembershipRole, Team};
@@ -101,11 +100,8 @@ pub struct WorkspacesMetadataResponse {
     pub joinable_teams: Vec<DiscoverableTeam>,
     /// The list of experiments applicable to the user.
     pub experiments: Option<Vec<ServerExperiment>>,
-    /// TODO(Tyler): Post-workspaces, move this into the workspace object.
-    /// Feature model choices may change from user to user and while the app is open, so we need to periodically update this list.
-    /// It makes most sense to fetch this in workspaces which is queried every 10 minutes.
-    /// This is list of available LLM models for the user.
-    pub feature_model_choices: Option<FeatureModelChoice>,
+    /// Feature model choices returned from the server.
+    pub feature_model_choices: Option<()>,
 }
 
 // A representation of all data we fetch at a single time via our 10 minute poll.
@@ -113,7 +109,7 @@ pub struct WorkspacesMetadataResponse {
 // independent queries.
 pub struct WorkspacesMetadataWithPricing {
     pub metadata: WorkspacesMetadataResponse,
-    pub pricing_info: Option<warp_graphql::billing::PricingInfo>,
+    pub pricing_info: Option<()>,
 }
 
 pub struct CreateTeamResponse {
@@ -1643,7 +1639,6 @@ impl UserWorkspaces {
             }],
             billing_metadata: BillingMetadata::default(),
             bonus_grants_purchased_this_month: Default::default(),
-            billing_cycle_usage: None,
             has_billing_history: false,
             settings: workspace_settings,
             invite_code: None,

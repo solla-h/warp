@@ -7,7 +7,6 @@ use parking_lot::RwLock;
 use uuid::Uuid;
 use warp_core::channel::{Channel, ChannelState};
 use warp_core::report_error;
-use warp_graphql::object_permissions::OwnerType;
 use warpui_core::{AppContext, Entity, SingletonEntity};
 
 use super::anonymous_id::get_or_create_anonymous_id;
@@ -141,7 +140,6 @@ impl AuthState {
             };
             state.set_credentials(Some(Credentials::ApiKey {
                 key: formatted,
-                owner_type: None,
             }));
             return state;
         }
@@ -546,11 +544,6 @@ impl AuthState {
             .as_ref()
             .map(|user| user.global_skills.clone())
             .unwrap_or_default()
-    }
-
-    /// Returns the owner type of the currently-authenticated API key.
-    pub fn api_key_owner_type(&self) -> Option<OwnerType> {
-        self.credentials.read().as_ref()?.api_key_owner_type()
     }
 }
 

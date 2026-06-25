@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use session_sharing_protocol::common::SessionId;
-use warp_graphql::ai::{AgentTaskState, PlatformErrorCode};
 use warpui::{Entity, EntityId, ModelContext, SingletonEntity};
 
 use super::history_model::{
@@ -10,8 +9,8 @@ use super::history_model::{
 };
 use crate::ai::agent::conversation::{AIConversation, AIConversationId, ConversationStatus};
 use crate::ai::agent::{AIAgentOutputStatus, FinishedAIAgentOutput, RenderableAIError};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::server_api::ai::{AIClient, TaskStatusUpdate};
+use crate::ai::ambient_agents::{AmbientAgentTaskId, AmbientAgentTaskState};
+use crate::server::server_api::ai::{AIClient, PlatformErrorCode, TaskStatusUpdate};
 use crate::server::server_api::ServerApiProvider;
 use crate::terminal::cli_agent_sessions::{
     CLIAgentSessionStatus, CLIAgentSessionsModel, CLIAgentSessionsModelEvent,
@@ -53,7 +52,7 @@ pub enum LocalAgentTaskSyncModelEvent {}
 /// this boundary.
 #[derive(Default)]
 struct LocalTaskUpdate {
-    task_state: Option<AgentTaskState>,
+    task_state: Option<AmbientAgentTaskState>,
     session_id: Option<SessionId>,
     server_conversation_token: Option<String>,
     status_message: Option<TaskStatusUpdate>,
@@ -109,7 +108,7 @@ impl LocalAgentTaskSyncModel {
         self.fire_update(
             task_id,
             LocalTaskUpdate {
-                task_state: Some(AgentTaskState::InProgress),
+                task_state: Some(AmbientAgentTaskState::InProgress),
                 ..LocalTaskUpdate::default()
             },
             ctx,
@@ -250,6 +249,8 @@ impl LocalAgentTaskSyncModel {
             server_conversation_token,
             status_message,
         } = update;
+        let task_state_dbg = format!("{task_state:?}");
+        let session_id_dbg = format!("{session_id:?}");
         ctx.spawn(
             async move {
                 if let Err(err) = ai_client
@@ -264,7 +265,7 @@ impl LocalAgentTaskSyncModel {
                 {
                     log::warn!(
                         "LocalAgentTaskSyncModel: failed to update task {task_id} \
-                         (state={task_state:?}, session_id={session_id:?}, \
+                         (state={task_state_dbg}, session_id={session_id_dbg}, \
                          server_conversation_token={server_conversation_token:?}): {err:#}"
                     );
                 }
@@ -309,20 +310,20 @@ fn with_local_conversation<T>(
     Some((task_id, make_value(conversation)))
 }
 
-/// Maps conversation state to an `AgentTaskState` and optional status message.
+/// Maps conversation state to an `AmbientAgentTaskState` and optional status message.
 /// For errors, extracts the specific error from the last exchange when available.
 fn map_conversation_status(
     conversation: &AIConversation,
-) -> (AgentTaskState, Option<TaskStatusUpdate>) {
+) -> (AmbientAgentTaskState, Option<TaskStatusUpdate>) {
     match conversation.status() {
-        ConversationStatus::InProgress => (AgentTaskState::InProgress, None),
+        ConversationStatus::InProgress => (AmbientAgentTaskState::InProgress, None),
         // Report WaitingForEvents as IN_PROGRESS so the server task state
         // matches the local view.
-        ConversationStatus::WaitingForEvents => (AgentTaskState::InProgress, None),
-        ConversationStatus::Success => (AgentTaskState::Succeeded, None),
+        ConversationStatus::WaitingForEvents => (AmbientAgentTaskState::InProgress, None),
+        ConversationStatus::Success => (AmbientAgentTaskState::Succeeded, None),
         // Recovery pending: stay IN_PROGRESS, no message — `update_agent_task`
         // can't clear it later, so a "reconnecting" note would linger after resume.
-        ConversationStatus::TransientError => (AgentTaskState::InProgress, None),
+        ConversationStatus::TransientError => (AmbientAgentTaskState::InProgress, None),
         ConversationStatus::Error => {
             // Extract the specific RenderableAIError from the last exchange to
             // classify ERROR vs FAILED and provide a PlatformErrorCode.
@@ -342,11 +343,11 @@ fn map_conversation_status(
             task_update_for_conversation_error(renderable_error)
         }
         ConversationStatus::Cancelled => (
-            AgentTaskState::Cancelled,
+            AmbientAgentTaskState::Cancelled,
             Some(TaskStatusUpdate::message("Cancelled by user")),
         ),
         ConversationStatus::Blocked { blocked_action } => (
-            AgentTaskState::Blocked,
+            AmbientAgentTaskState::Blocked,
             Some(TaskStatusUpdate::message(format!(
                 "The agent got stuck waiting for user confirmation on the action: {blocked_action}"
             ))),
@@ -359,26 +360,26 @@ fn map_conversation_status(
 /// `will_attempt_resume` rendering hint is deliberately ignored.
 fn task_update_for_conversation_error(
     error: Option<&RenderableAIError>,
-) -> (AgentTaskState, Option<TaskStatusUpdate>) {
+) -> (AmbientAgentTaskState, Option<TaskStatusUpdate>) {
     match error {
         Some(error) => classify_renderable_error(error),
         None => (
-            AgentTaskState::Error,
+            AmbientAgentTaskState::Error,
             Some(TaskStatusUpdate::message("Agent encountered an error")),
         ),
     }
 }
 
-/// Classifies a `RenderableAIError` into an `AgentTaskState` (ERROR vs FAILED)
+/// Classifies a `RenderableAIError` into an `AmbientAgentTaskState` (ERROR vs FAILED)
 /// and a `TaskStatusUpdate` with a `PlatformErrorCode` where applicable.
 pub(crate) fn classify_renderable_error(
     error: &RenderableAIError,
-) -> (AgentTaskState, Option<TaskStatusUpdate>) {
+) -> (AmbientAgentTaskState, Option<TaskStatusUpdate>) {
     match error {
         RenderableAIError::QuotaLimit {
             user_display_message,
         } => (
-            AgentTaskState::Failed,
+            AmbientAgentTaskState::Failed,
             Some(TaskStatusUpdate::with_error_code(
                 user_display_message.as_deref().unwrap_or(
                     "Your team has run out of credits. Purchase more credits to continue.",
@@ -387,49 +388,49 @@ pub(crate) fn classify_renderable_error(
             )),
         ),
         RenderableAIError::ServerOverloaded => (
-            AgentTaskState::Error,
+            AmbientAgentTaskState::Error,
             Some(TaskStatusUpdate::with_error_code(
                 "Warp is temporarily overloaded. Please try again shortly.",
                 PlatformErrorCode::ResourceUnavailable,
             )),
         ),
         RenderableAIError::InternalWarpError => (
-            AgentTaskState::Error,
+            AmbientAgentTaskState::Error,
             Some(TaskStatusUpdate::with_error_code(
                 "An internal error occurred during the conversation. Please try again.",
                 PlatformErrorCode::InternalError,
             )),
         ),
         RenderableAIError::ContextWindowExceeded(msg) => (
-            AgentTaskState::Failed,
+            AmbientAgentTaskState::Failed,
             Some(TaskStatusUpdate::with_error_code(
                 format!("Context window exceeded: {msg}"),
                 PlatformErrorCode::InternalError,
             )),
         ),
         RenderableAIError::InvalidApiKey { provider, .. } => (
-            AgentTaskState::Failed,
+            AmbientAgentTaskState::Failed,
             Some(TaskStatusUpdate::with_error_code(
                 format!("Invalid API key for {provider}. Update your API key in settings."),
                 PlatformErrorCode::AuthenticationRequired,
             )),
         ),
         RenderableAIError::AwsBedrockCredentialsExpiredOrInvalid { model_name } => (
-            AgentTaskState::Failed,
+            AmbientAgentTaskState::Failed,
             Some(TaskStatusUpdate::with_error_code(
                 format!("AWS Bedrock credentials expired or invalid for {model_name}."),
                 PlatformErrorCode::AuthenticationRequired,
             )),
         ),
         RenderableAIError::TransientNetworkError { .. } => (
-            AgentTaskState::Error,
+            AmbientAgentTaskState::Error,
             Some(TaskStatusUpdate::with_error_code(
                 error.to_string(),
                 PlatformErrorCode::InternalError,
             )),
         ),
         RenderableAIError::Other { error_message, .. } => (
-            AgentTaskState::Error,
+            AmbientAgentTaskState::Error,
             Some(TaskStatusUpdate::with_error_code(
                 error_message,
                 PlatformErrorCode::InternalError,
@@ -438,15 +439,15 @@ pub(crate) fn classify_renderable_error(
     }
 }
 
-/// Maps a `CLIAgentSessionStatus` to an `AgentTaskState` and optional status message.
+/// Maps a `CLIAgentSessionStatus` to an `AmbientAgentTaskState` and optional status message.
 fn map_cli_session_status(
     status: &CLIAgentSessionStatus,
-) -> (AgentTaskState, Option<TaskStatusUpdate>) {
+) -> (AmbientAgentTaskState, Option<TaskStatusUpdate>) {
     match status {
-        CLIAgentSessionStatus::InProgress => (AgentTaskState::InProgress, None),
-        CLIAgentSessionStatus::Success => (AgentTaskState::Succeeded, None),
+        CLIAgentSessionStatus::InProgress => (AmbientAgentTaskState::InProgress, None),
+        CLIAgentSessionStatus::Success => (AmbientAgentTaskState::Succeeded, None),
         CLIAgentSessionStatus::Blocked { message } => (
-            AgentTaskState::Blocked,
+            AmbientAgentTaskState::Blocked,
             message.as_ref().map(TaskStatusUpdate::message),
         ),
     }

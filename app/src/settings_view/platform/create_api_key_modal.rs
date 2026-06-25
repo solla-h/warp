@@ -1,4 +1,3 @@
-use chrono::Utc;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_geometry::vector::vec2f;
 use warp_core::features::FeatureFlag;
@@ -128,9 +127,6 @@ pub enum CreateApiKeyModalAction {
 
 pub enum CreateApiKeyModalEvent {
     Close,
-    Created {
-        api_key: warp_graphql::queries::api_keys::ApiKeyProperties,
-    },
     Error {
         message: String,
     },
@@ -276,32 +272,8 @@ impl CreateApiKeyModal {
         }
     }
 
-    fn fetch_agents(&mut self, ctx: &mut ViewContext<Self>) {
-        self.is_loading_agents = true;
-        ctx.notify();
-
-        let auth_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_auth_client();
-        ctx.spawn(
-            async move { auth_client.list_agent_identities().await },
-            |me, res, ctx| {
-                me.is_loading_agents = false;
-                match res {
-                    Ok(agents) => {
-                        me.agents = agents;
-                        me.populate_agent_dropdown(ctx);
-                    }
-                    Err(err) => {
-                        log::error!("Failed to load agent identities: {err}");
-                        ctx.emit(CreateApiKeyModalEvent::Error {
-                            message: "Failed to load agents. Please close and try again."
-                                .to_string(),
-                        });
-                    }
-                }
-                ctx.notify();
-            },
-        );
+    fn fetch_agents(&mut self, _ctx: &mut ViewContext<Self>) {
+        todo!()
     }
 
     fn populate_agent_dropdown(&mut self, ctx: &mut ViewContext<Self>) {
@@ -321,93 +293,7 @@ impl CreateApiKeyModal {
         });
     }
 
-    fn create(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.request_state == RequestState::Pending {
-            return;
-        }
-        let name = self.name_editor.as_ref(ctx).buffer_text(ctx);
-
-        let final_name = if name.trim().is_empty() {
-            "Warp API Key".to_string()
-        } else {
-            name.trim().to_string()
-        };
-
-        self.request_state = RequestState::Pending;
-        ctx.notify();
-
-        let expires_at = match self.expiration.days() {
-            Some(days) => {
-                let t = Utc::now() + chrono::Duration::days(days);
-                Some(warp_graphql::scalars::Time::from(t))
-            }
-            None => None,
-        };
-
-        let selected_type = self.api_key_type_control.as_ref(ctx).selected_option();
-
-        let agent_uid = if selected_type == ApiKeyType::Agent {
-            match &self.selected_agent_uid {
-                Some(uid) => Some(cynic::Id::new(uid.clone())),
-                None => {
-                    self.request_state = RequestState::Idle;
-                    ctx.emit(CreateApiKeyModalEvent::Error {
-                        message: "Please select an agent.".to_string(),
-                    });
-                    ctx.notify();
-                    return;
-                }
-            }
-        } else {
-            None
-        };
-
-        let team_id = if selected_type == ApiKeyType::Team {
-            let workspaces = UserWorkspaces::as_ref(ctx);
-            match workspaces.current_team_uid() {
-                Some(uid) => Some(cynic::Id::new(uid.uid())),
-                None => {
-                    self.request_state = RequestState::Idle;
-                    ctx.emit(CreateApiKeyModalEvent::Error {
-                        message:
-                            "Unable to create a team API key because there is no current team."
-                                .to_string(),
-                    });
-                    ctx.notify();
-                    return;
-                }
-            }
-        } else {
-            None
-        };
-
-        let auth_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_auth_client();
-        ctx.spawn(
-            async move { auth_client.create_api_key(final_name, team_id, agent_uid, expires_at).await },
-            |me, res, ctx| {
-                match res {
-                    Ok(warp_graphql::mutations::generate_api_key::GenerateApiKeyResult::GenerateApiKeyOutput(output)) => {
-                        ctx.emit(CreateApiKeyModalEvent::Created { api_key: output.api_key });
-                        me.request_state = RequestState::Succeeded;
-                        me.raw_key_copied = false;
-                        me.raw_key = Some(output.raw_api_key);
-                        ctx.notify();
-                    }
-                    Ok(warp_graphql::mutations::generate_api_key::GenerateApiKeyResult::UserFacingError(e)) => {
-                        let msg = warp_graphql::client::get_user_facing_error_message(e);
-                        me.request_state = RequestState::Idle;
-                        ctx.emit(CreateApiKeyModalEvent::Error { message: msg });
-                        ctx.notify();
-                    }
-                    Ok(warp_graphql::mutations::generate_api_key::GenerateApiKeyResult::Unknown) | Err(_) => {
-                        me.request_state = RequestState::Idle;
-                        ctx.emit(CreateApiKeyModalEvent::Error { message: "Failed to create API key. Please try again.".to_string() });
-                        ctx.notify();
-                    }
-                }
-            },
-        );
+    fn create(&mut self, _ctx: &mut ViewContext<Self>) {
     }
 
     fn cancel(&mut self, ctx: &mut ViewContext<Self>) {

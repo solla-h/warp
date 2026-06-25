@@ -12,7 +12,7 @@ use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::server::ids::ServerId;
-use crate::server::server_api::object::GuestIdentifier;
+use cloud_object_client::GuestIdentifier;
 use crate::terminal::shared_session::join_link;
 use crate::terminal::TerminalView;
 use crate::ui_components::avatar::{Avatar, AvatarContent};

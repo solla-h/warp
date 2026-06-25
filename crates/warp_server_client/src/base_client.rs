@@ -3,7 +3,6 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use instant::Duration;
-use warp_graphql::client::RequestOptions;
 
 use crate::auth::AgentIdentity;
 
@@ -18,18 +17,6 @@ pub trait BaseClient: Send + Sync {
     fn http_client(&self) -> Arc<http_client::Client>;
 
     fn anonymous_id(&self) -> String;
-
-    /// Returns GraphQL request options for a request that does not use the logged-in credentials.
-    ///
-    /// API clients may extend these options with request-specific headers or tokens, such
-    /// as the explicit token supplied while fetching a newly authenticated user.
-    fn unauthenticated_graphql_request_options(&self) -> RequestOptions;
-
-    /// Returns GraphQL request options for an authenticated operation.
-    ///
-    /// API clients should use this method through the shared request helper so timeouts
-    /// and application-owned headers remain centralized.
-    async fn graphql_request_options(&self, timeout: Option<Duration>) -> Result<RequestOptions>;
 
     /// Lists public agent identities available to API-key creation flows.
     ///

@@ -7,7 +7,6 @@ pub use cloud_object_models::{
 use futures::channel::oneshot;
 use futures::FutureExt;
 use serde_json::{Map, Value};
-use warp_graphql::queries::get_scheduled_agent_history::ScheduledAgentHistory;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::cloud_object::model::generic_string_model::StringModel;
@@ -22,6 +21,7 @@ use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::server::ids::{ClientId, SyncId};
+use crate::server::server_api::ai::ScheduledAgentHistory;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::QueueItem;
 

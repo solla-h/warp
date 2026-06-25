@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::time::Duration;
 
 #[cfg(feature = "full_source_code_embedding")]
 use ai::index::full_source_code_embedding::store_client::{IntermediateNode, StoreClient};
@@ -9,111 +8,12 @@ use ai::index::full_source_code_embedding::{
 };
 use anyhow::anyhow;
 use async_trait::async_trait;
-use base64::Engine;
 use chrono::{DateTime, Utc};
-use cynic::{MutationBuilder, QueryBuilder};
-use itertools::Itertools;
 #[cfg(test)]
 use mockall::automock;
-use prost::Message;
 use warp_core::channel::ChannelState;
 use warp_core::features::FeatureFlag;
 use warp_core::report_error;
-use warp_graphql::ai::{AgentTaskState, PlatformErrorCode};
-use warp_graphql::client::Operation;
-use warp_graphql::mutations::confirm_file_artifact_upload::{
-    ConfirmFileArtifactUpload, ConfirmFileArtifactUploadInput, ConfirmFileArtifactUploadResult,
-    ConfirmFileArtifactUploadVariables,
-};
-use warp_graphql::mutations::create_agent_task::{
-    CreateAgentTask, CreateAgentTaskInput, CreateAgentTaskResult, CreateAgentTaskVariables,
-};
-use warp_graphql::mutations::create_file_artifact_upload_target::{
-    CreateFileArtifactUploadTarget, CreateFileArtifactUploadTargetInput,
-    CreateFileArtifactUploadTargetResult, CreateFileArtifactUploadTargetVariables,
-};
-use warp_graphql::mutations::delete_ai_conversation::{
-    DeleteAIConversation, DeleteAIConversationVariables, DeleteConversationInput,
-    DeleteConversationResult,
-};
-#[cfg(feature = "full_source_code_embedding")]
-use warp_graphql::mutations::generate_code_embeddings::{
-    GenerateCodeEmbeddings, GenerateCodeEmbeddingsInput, GenerateCodeEmbeddingsResult,
-    GenerateCodeEmbeddingsVariables,
-};
-use warp_graphql::mutations::generate_commands::{
-    GenerateCommands, GenerateCommandsInput, GenerateCommandsResult, GenerateCommandsStatus,
-    GenerateCommandsVariables,
-};
-use warp_graphql::mutations::generate_dialogue::{
-    GenerateDialogue, GenerateDialogueInput,
-    GenerateDialogueResult as GenerateDialogueResultGraphql, GenerateDialogueStatus,
-    GenerateDialogueVariables, TranscriptPart as TranscriptPartGraphql,
-};
-use warp_graphql::mutations::generate_metadata_for_command::{
-    GenerateMetadataForCommand, GenerateMetadataForCommandInput, GenerateMetadataForCommandResult,
-    GenerateMetadataForCommandStatus, GenerateMetadataForCommandVariables,
-};
-use warp_graphql::mutations::populate_merkle_tree_cache::{
-    PopulateMerkleTreeCache, PopulateMerkleTreeCacheResult, PopulateMerkleTreeCacheVariables,
-};
-use warp_graphql::mutations::request_bonus::{
-    ProvideNegativeFeedbackResponseForAiConversation,
-    ProvideNegativeFeedbackResponseForAiConversationInput,
-    ProvideNegativeFeedbackResponseForAiConversationVariables, RequestsRefundedResult,
-};
-use warp_graphql::mutations::update_agent_task::{
-    AgentTaskStatusMessageInput, UpdateAgentTask, UpdateAgentTaskInput, UpdateAgentTaskResult,
-    UpdateAgentTaskVariables,
-};
-#[cfg(feature = "full_source_code_embedding")]
-use warp_graphql::mutations::update_merkle_tree::{
-    MerkleTreeNode, UpdateMerkleTree, UpdateMerkleTreeInput, UpdateMerkleTreeResult,
-    UpdateMerkleTreeVariables,
-};
-#[cfg(feature = "full_source_code_embedding")]
-use warp_graphql::queries::codebase_context_config::{
-    CodebaseContextConfigQuery, CodebaseContextConfigResult, CodebaseContextConfigVariables,
-};
-use warp_graphql::queries::free_available_models::{
-    FreeAvailableModels, FreeAvailableModelsInput, FreeAvailableModelsResult,
-    FreeAvailableModelsVariables,
-};
-use warp_graphql::queries::get_available_harnesses::{
-    GetAvailableHarnesses, GetAvailableHarnessesVariables,
-};
-use warp_graphql::queries::get_conversation_usage::{
-    ConversationUsage, GetConversationUsage, GetConversationUsageVariables, UserResult,
-};
-use warp_graphql::queries::get_feature_model_choices::{
-    GetFeatureModelChoices, GetFeatureModelChoicesVariables,
-};
-use warp_graphql::queries::get_relevant_fragments::{
-    GetRelevantFragmentsQuery, GetRelevantFragmentsResult, GetRelevantFragmentsVariables,
-};
-#[cfg(not(feature = "agent_mode_evals"))]
-use warp_graphql::queries::get_request_limit_info::{
-    GetRequestLimitInfo, GetRequestLimitInfoVariables,
-};
-use warp_graphql::queries::get_scheduled_agent_history::{
-    GetScheduledAgentHistory, GetScheduledAgentHistoryVariables, ScheduledAgentHistory,
-    ScheduledAgentHistoryInput, ScheduledAgentHistoryResult,
-};
-#[cfg(feature = "full_source_code_embedding")]
-use warp_graphql::queries::rerank_fragments::{
-    RerankFragments, RerankFragmentsResult, RerankFragmentsVariables,
-};
-#[cfg(feature = "full_source_code_embedding")]
-use warp_graphql::queries::sync_merkle_tree::{
-    SyncMerkleTree, SyncMerkleTreeInput, SyncMerkleTreeResult, SyncMerkleTreeVariables,
-};
-use warp_graphql::queries::task_attachments::{
-    Task as TaskAttachmentsQuery, TaskInput, TaskResult, TaskVariables,
-};
-use warp_graphql::queries::task_git_credentials::{
-    TaskGitCredentials, TaskGitCredentialsInput, TaskGitCredentialsResult,
-    TaskGitCredentialsVariables,
-};
 use warp_multi_agent_api::ConversationData;
 
 use super::harness_support::{UploadField, UploadFieldValue, UploadTarget};
@@ -150,9 +50,6 @@ use crate::ai_assistant::utils::TranscriptPart;
 use crate::ai_assistant::{AIGeneratedCommand, GenerateCommandsFromNaturalLanguageError};
 use crate::drive::workflows::ai_assist::{GeneratedCommandMetadata, GeneratedCommandMetadataError};
 use crate::persistence::model::ConversationUsageMetadata;
-use crate::server::graphql::{
-    default_request_options, get_request_context, get_user_facing_error_message,
-};
 use crate::terminal::model::block::SerializedBlock;
 #[cfg(not(feature = "agent_mode_evals"))]
 use crate::{
@@ -161,7 +58,32 @@ use crate::{
     workspaces::{gql_convert::PLACEHOLDER_WORKSPACE_UID, workspace::WorkspaceUid},
 };
 
-const AI_ASSISTANT_REQUEST_TIMEOUT_SECONDS: u64 = 30;
+/// Execution history for a scheduled ambient agent.
+#[derive(Debug, Clone)]
+pub struct ScheduledAgentHistory {
+    pub last_ran: Option<warp_types::ServerTimestamp>,
+    pub next_run: Option<warp_types::ServerTimestamp>,
+}
+
+/// Platform error codes for task status reporting.
+/// Previously a GraphQL-generated enum; now defined locally as a placeholder.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PlatformErrorCode {
+    InternalError,
+    InsufficientCredits,
+    ResourceUnavailable,
+    AuthenticationRequired,
+    FeatureNotAvailable,
+    EnvironmentSetupFailed,
+    ResourceNotFound,
+}
+
+/// Placeholder for the former GraphQL-generated conversation usage type.
+#[derive(Debug, Clone)]
+pub struct ConversationUsage {
+    pub conversation_id: String,
+}
 
 /// A status update for a task, optionally including a platform error code.
 pub struct TaskStatusUpdate {
@@ -1049,7 +971,7 @@ pub trait AIClient: 'static + Send + Sync {
         &self,
         days: Option<i32>,
         limit: Option<i32>,
-        last_updated_end_timestamp: Option<warp_graphql::scalars::Time>,
+        last_updated_end_timestamp: Option<warp_types::ServerTimestamp>,
     ) -> Result<Vec<ConversationUsage>, anyhow::Error>;
 
     async fn get_feature_model_choices(&self) -> Result<ModelsByFeature, anyhow::Error>;
@@ -1100,7 +1022,7 @@ pub trait AIClient: 'static + Send + Sync {
     async fn update_agent_task(
         &self,
         task_id: AmbientAgentTaskId,
-        task_state: Option<AgentTaskState>,
+        task_state: Option<AmbientAgentTaskState>,
         session_id: Option<session_sharing_protocol::common::SessionId>,
         conversation_id: Option<String>,
         status_message: Option<TaskStatusUpdate>,
@@ -1340,18 +1262,6 @@ pub trait AIClient: 'static + Send + Sync {
     ) -> Result<GenerateCodeReviewContentResponse, anyhow::Error>;
 }
 
-fn into_file_artifact_record(
-    artifact: warp_graphql::mutations::create_file_artifact_upload_target::FileArtifact,
-) -> FileArtifactRecord {
-    FileArtifactRecord {
-        artifact_uid: artifact.artifact_uid.into_inner(),
-        filepath: artifact.filepath,
-        description: artifact.description,
-        mime_type: artifact.mime_type,
-        size_bytes: artifact.size_bytes,
-    }
-}
-
 impl ServerApi {
     pub(crate) async fn send_agent_message_for_task(
         &self,
@@ -1419,165 +1329,31 @@ impl ServerApi {
     }
 }
 
-/// Convert a cynic `FileArtifactUploadField` into the shared [`UploadField`]
-/// domain type. Unknown variants bubble as an error rather than being silently
-/// dropped, because a server-provided field we can't represent will almost certainly
-/// cause the upload to fail.
-fn convert_upload_field(
-    field: warp_graphql::mutations::create_file_artifact_upload_target::FileArtifactUploadField,
-) -> anyhow::Result<UploadField> {
-    use warp_graphql::mutations::create_file_artifact_upload_target::FileArtifactUploadFieldValue;
-
-    let value = match field.value {
-        FileArtifactUploadFieldValue::StaticUploadFieldValue(v) => {
-            UploadFieldValue::Static { value: v.value }
-        }
-        FileArtifactUploadFieldValue::ContentCRC32CFieldValue(_) => UploadFieldValue::ContentCrc32C,
-        FileArtifactUploadFieldValue::ContentDataFieldValue(_) => UploadFieldValue::ContentData,
-        FileArtifactUploadFieldValue::Unknown => {
-            return Err(anyhow!(
-                "Unknown UploadFieldValue variant for field '{}'; update client GraphQL types",
-                field.name
-            ));
-        }
-    };
-    Ok(UploadField {
-        name: field.name,
-        value,
-    })
-}
-
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl AIClient for ServerApi {
     async fn generate_commands_from_natural_language(
         &self,
-        prompt: String,
-        // TODO: use relevant context from RequestContext and deprecate usage of ai_execution_context
+        _prompt: String,
         _ai_execution_context: Option<WarpAiExecutionContext>,
     ) -> Result<Vec<AIGeneratedCommand>, GenerateCommandsFromNaturalLanguageError> {
-        let default_err = GenerateCommandsFromNaturalLanguageError::Other;
-
-        let variables = GenerateCommandsVariables {
-            input: GenerateCommandsInput { prompt },
-            request_context: get_request_context(),
-        };
-
-        let operation = GenerateCommands::build(variables);
-        let response = self
-            .send_graphql_request(
-                operation,
-                Some(Duration::from_secs(AI_ASSISTANT_REQUEST_TIMEOUT_SECONDS)),
-            )
-            .await
-            .map_err(|_| default_err)?;
-
-        match response.generate_commands {
-            GenerateCommandsResult::GenerateCommandsOutput(output) => match output.status {
-                GenerateCommandsStatus::GenerateCommandsSuccess(success) => {
-                    Ok(success.commands.into_iter().map(Into::into).collect_vec())
-                }
-                GenerateCommandsStatus::GenerateCommandsFailure(failure) => {
-                    Err(failure.type_.into())
-                }
-                GenerateCommandsStatus::Unknown => {
-                    Err(GenerateCommandsFromNaturalLanguageError::Other)
-                }
-            },
-            _ => Err(GenerateCommandsFromNaturalLanguageError::Other),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn generate_dialogue_answer(
         &self,
-        transcript: Vec<TranscriptPart>,
-        prompt: String,
-        // TODO: use relevant context from RequestContext and deprecate usage of ai_execution_context
+        _transcript: Vec<TranscriptPart>,
+        _prompt: String,
         _ai_execution_context: Option<WarpAiExecutionContext>,
     ) -> anyhow::Result<GenerateDialogueResult> {
-        let graphql_transcript: Vec<TranscriptPartGraphql> = transcript
-            .into_iter()
-            .map(|part| TranscriptPartGraphql {
-                user: part.raw_user_prompt().to_string(),
-                assistant: part.raw_assistant_answer().to_string(),
-            })
-            .collect();
-        let variables = GenerateDialogueVariables {
-            input: GenerateDialogueInput {
-                transcript: graphql_transcript,
-                prompt,
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = GenerateDialogue::build(variables);
-        let response = self
-            .send_graphql_request(
-                operation,
-                Some(Duration::from_secs(AI_ASSISTANT_REQUEST_TIMEOUT_SECONDS)),
-            )
-            .await?;
-        match response.generate_dialogue {
-            GenerateDialogueResultGraphql::GenerateDialogueOutput(output) => match output.status {
-                GenerateDialogueStatus::GenerateDialogueSuccess(success) => {
-                    Ok(GenerateDialogueResult::Success {
-                        answer: success.answer,
-                        truncated: success.truncated,
-                        request_limit_info: success.request_limit_info.into(),
-                        transcript_summarized: success.transcript_summarized,
-                    })
-                }
-                GenerateDialogueStatus::GenerateDialogueFailure(failure) => {
-                    Ok(GenerateDialogueResult::Failure {
-                        request_limit_info: failure.request_limit_info.into(),
-                    })
-                }
-                GenerateDialogueStatus::Unknown => Err(anyhow!("failed to generate AI dialogue")),
-            },
-            GenerateDialogueResultGraphql::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            GenerateDialogueResultGraphql::Unknown => {
-                Err(anyhow!("failed to generate AI dialogue"))
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn generate_metadata_for_command(
         &self,
-        command: String,
+        _command: String,
     ) -> Result<GeneratedCommandMetadata, GeneratedCommandMetadataError> {
-        let default_err = GeneratedCommandMetadataError::Other;
-        let variables = GenerateMetadataForCommandVariables {
-            input: GenerateMetadataForCommandInput { command },
-            request_context: get_request_context(),
-        };
-
-        let operation = GenerateMetadataForCommand::build(variables);
-        let response = self
-            .send_graphql_request(
-                operation,
-                Some(Duration::from_secs(AI_ASSISTANT_REQUEST_TIMEOUT_SECONDS)),
-            )
-            .await
-            .map_err(|_| default_err)?;
-
-        match response.generate_metadata_for_command {
-            GenerateMetadataForCommandResult::GenerateMetadataForCommandOutput(output) => {
-                match output.status {
-                    GenerateMetadataForCommandStatus::GenerateMetadataForCommandSuccess(
-                        success,
-                    ) => Ok(success.into()),
-                    GenerateMetadataForCommandStatus::GenerateMetadataForCommandFailure(
-                        failure,
-                    ) => Err(failure.type_.into()),
-                    GenerateMetadataForCommandStatus::Unknown => {
-                        Err(GeneratedCommandMetadataError::Other)
-                    }
-                }
-            }
-            _ => Err(GeneratedCommandMetadataError::Other),
-        }
+        todo!("GraphQL backend removed")
     }
 
     #[cfg(feature = "agent_mode_evals")]
@@ -1590,279 +1366,59 @@ impl AIClient for ServerApi {
 
     #[cfg(not(feature = "agent_mode_evals"))]
     async fn get_request_limit_info(&self) -> Result<RequestUsageInfo, anyhow::Error> {
-        let variables = GetRequestLimitInfoVariables {
-            request_context: get_request_context(),
-        };
-        let operation = GetRequestLimitInfo::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.user {
-            warp_graphql::queries::get_request_limit_info::UserResult::UserOutput(user_output) => {
-                let request_limit_info = user_output.user.request_limit_info.into();
-
-                let workspace_bonus_grants = user_output
-                    .user
-                    .workspaces
-                    .into_iter()
-                    .filter(|workspace| workspace.uid != PLACEHOLDER_WORKSPACE_UID.into())
-                    .flat_map(|workspace| {
-                        let workspace_uid =
-                            WorkspaceUid::from(ServerId::from_string_lossy(workspace.uid.inner()));
-                        workspace
-                            .bonus_grants_info
-                            .grants
-                            .into_iter()
-                            .map(move |grant| {
-                                BonusGrant::from_gql_bonus_grant(
-                                    grant,
-                                    BonusGrantScope::Workspace(workspace_uid),
-                                )
-                            })
-                    });
-
-                let bonus_grants: Vec<BonusGrant> = user_output
-                    .user
-                    .bonus_grants
-                    .into_iter()
-                    .map(|grant| BonusGrant::from_gql_bonus_grant(grant, BonusGrantScope::User))
-                    .chain(workspace_bonus_grants)
-                    .collect();
-
-                Ok(RequestUsageInfo {
-                    request_limit_info,
-                    bonus_grants,
-                })
-            }
-            warp_graphql::queries::get_request_limit_info::UserResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            warp_graphql::queries::get_request_limit_info::UserResult::Unknown => {
-                Err(anyhow!("failed to get request limit info"))
-            }
-        }
+        Err(anyhow!("GraphQL request limit info has been removed"))
     }
 
     async fn get_conversation_usage_history(
         &self,
-        days: Option<i32>,
-        limit: Option<i32>,
-        last_updated_end_timestamp: Option<warp_graphql::scalars::Time>,
+        _days: Option<i32>,
+        _limit: Option<i32>,
+        _last_updated_end_timestamp: Option<warp_types::ServerTimestamp>,
     ) -> Result<Vec<ConversationUsage>, anyhow::Error> {
-        let operation = GetConversationUsage::build(GetConversationUsageVariables {
-            request_context: get_request_context(),
-            days,
-            limit,
-            last_updated_end_timestamp,
-        });
-        let response = self.send_graphql_request(operation, None).await?;
-        match response.user {
-            UserResult::UserOutput(output) => Ok(output.user.conversation_usage),
-            UserResult::Unknown => Err(anyhow!("Unable to fetch conversation usage")),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn get_feature_model_choices(&self) -> Result<ModelsByFeature, anyhow::Error> {
-        let variables = GetFeatureModelChoicesVariables {
-            request_context: get_request_context(),
-        };
-        let operation = GetFeatureModelChoices::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.user {
-            warp_graphql::queries::get_feature_model_choices::UserResult::UserOutput(
-                warp_graphql::queries::get_feature_model_choices::UserOutput {
-                    user: warp_graphql::queries::get_feature_model_choices::User { mut workspaces },
-                },
-            ) if !workspaces.is_empty() => {
-                // This is safe (`remove()` can panic) because we ensure workspaces is non-empty
-                // above.
-                workspaces.remove(0).feature_model_choice.try_into()
-            }
-            _ => Err(anyhow!("Failed to get available feature model choices")),
-        }
+        Err(anyhow!("GraphQL feature model choices has been removed"))
     }
 
     async fn get_available_harnesses(&self) -> Result<Vec<HarnessAvailability>, anyhow::Error> {
-        let variables = GetAvailableHarnessesVariables {
-            request_context: get_request_context(),
-        };
-        let operation = GetAvailableHarnesses::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.user {
-            warp_graphql::queries::get_available_harnesses::UserResult::UserOutput(output) => {
-                Ok(output
-                    .user
-                    .available_harnesses
-                    .harnesses
-                    .into_iter()
-                    .map(|h| HarnessAvailability {
-                        harness: convert_harness(h.harness).into(),
-                        display_name: h.display_name,
-                        enabled: h.enabled,
-                        available_models: h
-                            .available_models
-                            .into_iter()
-                            .map(|m| crate::ai::harness_availability::HarnessModelInfo {
-                                id: m.id.into_inner(),
-                                display_name: m.display_name,
-                                reasoning_level: m.reasoning_level,
-                            })
-                            .collect(),
-                    })
-                    .collect())
-            }
-            warp_graphql::queries::get_available_harnesses::UserResult::Unknown => {
-                Err(anyhow!("Failed to get available harnesses"))
-            }
-        }
+        Err(anyhow!("GraphQL available harnesses has been removed"))
     }
 
     async fn get_free_available_models(
         &self,
-        referrer: Option<String>,
+        _referrer: Option<String>,
     ) -> Result<ModelsByFeature, anyhow::Error> {
-        // This resolver is public; it does not require an auth token. We must NOT go through
-        // `send_graphql_request`, which awaits `get_or_refresh_access_token()`
-        let variables = FreeAvailableModelsVariables {
-            input: FreeAvailableModelsInput { referrer },
-            request_context: get_request_context(),
-        };
-        let operation = FreeAvailableModels::build(variables);
-
-        // Best-effort: if the user has a valid token (e.g. anonymous Firebase), include it;
-        // otherwise send unauthenticated. Either is acceptable for this resolver.
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .ok()
-            .and_then(|token| token.bearer_token());
-
-        let response = operation
-            .send_request(
-                self.client.clone(),
-                warp_graphql::client::RequestOptions {
-                    auth_token,
-                    ..default_request_options()
-                },
-            )
-            .await?
-            .data
-            .ok_or_else(|| anyhow!("Missing data in freeAvailableModels response"))?;
-
-        match response.free_available_models {
-            FreeAvailableModelsResult::FreeAvailableModelsOutput(output) => {
-                output.feature_model_choice.try_into()
-            }
-            FreeAvailableModelsResult::Unknown => {
-                Err(anyhow!("Unexpected freeAvailableModels response variant"))
-            }
-        }
+        Err(anyhow!("GraphQL free available models has been removed"))
     }
 
     #[cfg(feature = "full_source_code_embedding")]
     async fn update_merkle_tree(
         &self,
-        embedding_config: EmbeddingConfig,
-        nodes: Vec<IntermediateNode>,
+        _embedding_config: EmbeddingConfig,
+        _nodes: Vec<IntermediateNode>,
     ) -> anyhow::Result<HashMap<NodeHash, bool>> {
-        let nodes = nodes
-            .into_iter()
-            .map(|node| MerkleTreeNode {
-                hash: node.hash.into(),
-                children: node.children.into_iter().map(Into::into).collect(),
-            })
-            .collect_vec();
-        let variables = UpdateMerkleTreeVariables {
-            input: UpdateMerkleTreeInput {
-                embedding_config: embedding_config.into(),
-                nodes,
-            },
-            request_context: get_request_context(),
-        };
-        let operation = UpdateMerkleTree::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.update_merkle_tree {
-            UpdateMerkleTreeResult::UpdateMerkleTreeOutput(output) => {
-                let mut node_results = HashMap::with_capacity(output.results.len());
-                for result in output.results {
-                    node_results.insert(result.hash.try_into()?, result.success);
-                }
-                Ok(node_results)
-            }
-            UpdateMerkleTreeResult::UpdateMerkleTreeError(e) => Err(anyhow!(e.error)),
-            UpdateMerkleTreeResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            UpdateMerkleTreeResult::Unknown => Err(anyhow!("failed to update merkle tree")),
-        }
+        todo!("GraphQL backend removed")
     }
 
     #[cfg(feature = "full_source_code_embedding")]
     async fn generate_code_embeddings(
         &self,
-        embedding_config: EmbeddingConfig,
-        fragments: Vec<full_source_code_embedding::Fragment>,
-        root_hash: NodeHash,
-        repo_metadata: RepoMetadata,
+        _embedding_config: EmbeddingConfig,
+        _fragments: Vec<full_source_code_embedding::Fragment>,
+        _root_hash: NodeHash,
+        _repo_metadata: RepoMetadata,
     ) -> anyhow::Result<HashMap<ContentHash, bool>> {
-        let variables = GenerateCodeEmbeddingsVariables {
-            input: GenerateCodeEmbeddingsInput {
-                embedding_config: embedding_config.into(),
-                fragments: fragments.into_iter().map(Into::into).collect(),
-                repo_metadata: repo_metadata.into(),
-                root_hash: root_hash.into(),
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = GenerateCodeEmbeddings::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.generate_code_embeddings {
-            GenerateCodeEmbeddingsResult::GenerateCodeEmbeddingsOutput(output) => {
-                let mut results = HashMap::with_capacity(output.embedding_results.len());
-                for result in output.embedding_results {
-                    results.insert(result.hash.try_into()?, result.success);
-                }
-                Ok(results)
-            }
-            GenerateCodeEmbeddingsResult::GenerateCodeEmbeddingsError(e) => Err(anyhow!(e.error)),
-            GenerateCodeEmbeddingsResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            GenerateCodeEmbeddingsResult::Unknown => {
-                Err(anyhow!("failed to generate code embeddings"))
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn provide_negative_feedback_response_for_ai_conversation(
         &self,
-        conversation_id: String,
-        request_ids: Vec<String>,
+        _conversation_id: String,
+        _request_ids: Vec<String>,
     ) -> anyhow::Result<i32, anyhow::Error> {
-        let variables = ProvideNegativeFeedbackResponseForAiConversationVariables {
-            input: ProvideNegativeFeedbackResponseForAiConversationInput {
-                conversation_id: conversation_id.into(),
-                request_ids: request_ids.into_iter().map(Into::into).collect(),
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = ProvideNegativeFeedbackResponseForAiConversation::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.provide_negative_feedback_response_for_ai_conversation {
-            RequestsRefundedResult::RequestsRefundedOutput(output) => Ok(output.requests_refunded),
-            RequestsRefundedResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            RequestsRefundedResult::Unknown => Err(anyhow!(
-                "failed to provide negative feedback response for ai conversation"
-            )),
-        }
+        todo!("GraphQL backend removed")
     }
 
     #[tracing::instrument(skip_all, err, fields(
@@ -1872,89 +1428,25 @@ impl AIClient for ServerApi {
     ))]
     async fn create_agent_task(
         &self,
-        prompt: String,
-        environment_uid: Option<String>,
-        parent_run_id: Option<String>,
-        config: Option<AgentConfigSnapshot>,
+        _prompt: String,
+        _environment_uid: Option<String>,
+        _parent_run_id: Option<String>,
+        _config: Option<AgentConfigSnapshot>,
     ) -> anyhow::Result<AmbientAgentTaskId, anyhow::Error> {
-        if let Some(config) = &config {
-            if let Some(worker_host) = &config.worker_host {
-                tracing::Span::current().record("config.worker_host", worker_host);
-            }
-            if let Some(harness) = &config.harness {
-                let harness: Option<serde_json::Value> =
-                    serde_json::to_value(harness.harness_type).ok();
-                if let Some(serde_json::Value::String(harness)) = harness {
-                    tracing::Span::current().record("config.harness", harness);
-                }
-            }
-        }
-
-        // Serialize the config to JSON if provided
-        let agent_config_snapshot = config
-            .map(|c| serde_json::to_string(&c))
-            .transpose()
-            .map_err(|e| anyhow!("Failed to serialize agent config: {e}"))?;
-
-        let variables = CreateAgentTaskVariables {
-            input: CreateAgentTaskInput {
-                prompt,
-                environment_uid: environment_uid.map(|uid| uid.into()),
-                parent_run_id: parent_run_id.map(|run_id| run_id.into()),
-                agent_config_snapshot,
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = CreateAgentTask::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.create_agent_task {
-            CreateAgentTaskResult::CreateAgentTaskOutput(output) => output
-                .task_id
-                .into_inner()
-                .parse()
-                .map_err(|e| anyhow!("Failed to parse task ID from server: {e}")),
-            CreateAgentTaskResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            CreateAgentTaskResult::Unknown => Err(anyhow!("failed to create agent task")),
-        }
+        todo!("GraphQL backend removed")
     }
 
     #[tracing::instrument(skip_all, err, fields(tags.cloud_agent = true, ?task_state))]
     async fn update_agent_task(
         &self,
-        task_id: AmbientAgentTaskId,
-        task_state: Option<AgentTaskState>,
-        session_id: Option<session_sharing_protocol::common::SessionId>,
-        conversation_id: Option<String>,
-        status_message: Option<TaskStatusUpdate>,
+        _task_id: AmbientAgentTaskId,
+        task_state: Option<AmbientAgentTaskState>,
+        _session_id: Option<session_sharing_protocol::common::SessionId>,
+        _conversation_id: Option<String>,
+        _status_message: Option<TaskStatusUpdate>,
     ) -> anyhow::Result<(), anyhow::Error> {
-        let variables = UpdateAgentTaskVariables {
-            input: UpdateAgentTaskInput {
-                task_id: task_id.into(),
-                task_state,
-                session_id: session_id.map(|id| id.to_string().into()),
-                conversation_id: conversation_id.map(|id| id.into()),
-                status_message: status_message.map(|update| AgentTaskStatusMessageInput {
-                    message: update.message,
-                    error_code: update.error_code,
-                }),
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = UpdateAgentTask::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.update_agent_task {
-            UpdateAgentTaskResult::UpdateAgentTaskOutput(_) => Ok(()),
-            UpdateAgentTaskResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            UpdateAgentTaskResult::Unknown => Err(anyhow!("failed to update agent task")),
-        }
+        let _ = task_state;
+        todo!("GraphQL backend removed")
     }
 
     async fn spawn_agent(
@@ -2057,153 +1549,31 @@ impl AIClient for ServerApi {
 
     async fn get_scheduled_agent_history(
         &self,
-        schedule_id: &str,
+        _schedule_id: &str,
     ) -> anyhow::Result<ScheduledAgentHistory, anyhow::Error> {
-        let variables = GetScheduledAgentHistoryVariables {
-            request_context: get_request_context(),
-            input: ScheduledAgentHistoryInput {
-                schedule_id: schedule_id.to_string().into(),
-            },
-        };
-
-        let operation = GetScheduledAgentHistory::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.scheduled_agent_history {
-            ScheduledAgentHistoryResult::ScheduledAgentHistoryOutput(output) => Ok(output.history),
-            ScheduledAgentHistoryResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            ScheduledAgentHistoryResult::Unknown => {
-                Err(anyhow!("failed to get scheduled agent history"))
-            }
-        }
+        Err(anyhow!("GraphQL scheduled agent history has been removed"))
     }
 
     #[tracing::instrument(skip_all, err, fields(tags.cloud_agent = true))]
     async fn get_ai_conversation(
         &self,
-        server_conversation_token: ServerConversationToken,
+        _server_conversation_token: ServerConversationToken,
     ) -> anyhow::Result<(ConversationData, ServerAIConversationMetadata), anyhow::Error> {
-        use warp_graphql::queries::list_ai_conversations::{
-            ListAIConversations, ListAIConversationsInput, ListAIConversationsResult,
-            ListAIConversationsVariables,
-        };
-
-        let conversation_id = server_conversation_token.as_str().to_string();
-        let operation = ListAIConversations::build(ListAIConversationsVariables {
-            input: ListAIConversationsInput {
-                conversation_ids: Some(vec![cynic::Id::new(conversation_id)]),
-            },
-            request_context: get_request_context(),
-        });
-        let response = self.send_graphql_request(operation, None).await?;
-
-        let gql_conversation = match response.list_ai_conversations {
-            ListAIConversationsResult::ListAIConversationsOutput(output) => output
-                .conversations
-                .into_iter()
-                .next()
-                .ok_or_else(|| anyhow!("Conversation not found"))?,
-            ListAIConversationsResult::UserFacingError(e) => {
-                return Err(anyhow!(get_user_facing_error_message(e)));
-            }
-            ListAIConversationsResult::Unknown => {
-                return Err(anyhow!("Failed to get AI conversation"));
-            }
-        };
-
-        let conversation_data_bytes = base64::engine::general_purpose::STANDARD
-            .decode(&gql_conversation.final_task_list)
-            .map_err(|e| anyhow!("Failed to decode base64 conversation data: {e}"))?;
-
-        let conversation_data = ConversationData::decode(conversation_data_bytes.as_slice())
-            .map_err(|e| anyhow!("Failed to decode proto ConversationData: {e}"))?;
-
-        // Build AIConversationMetadata from GraphQL response
-        let metadata = gql_conversation.try_into()?;
-
-        Ok((conversation_data, metadata))
+        Err(anyhow!("GraphQL AI conversation has been removed"))
     }
 
     async fn list_ai_conversation_metadata(
         &self,
-        conversation_ids: Option<Vec<String>>,
+        _conversation_ids: Option<Vec<String>>,
     ) -> anyhow::Result<Vec<ServerAIConversationMetadata>> {
-        if !FeatureFlag::CloudConversations.is_enabled() {
-            return Ok(vec![]);
-        }
-        use warp_graphql::queries::list_ai_conversations::{
-            ListAIConversationMetadata, ListAIConversationMetadataResult,
-            ListAIConversationMetadataVariables, ListAIConversationsInput,
-        };
-
-        let input = ListAIConversationsInput {
-            conversation_ids: conversation_ids
-                .map(|ids| ids.into_iter().map(cynic::Id::new).collect()),
-        };
-
-        let variables = ListAIConversationMetadataVariables {
-            input,
-            request_context: get_request_context(),
-        };
-
-        let operation = ListAIConversationMetadata::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.list_ai_conversations {
-            ListAIConversationMetadataResult::ListAIConversationsOutput(output) => {
-                let metadata_vec: Result<Vec<_>, _> = output
-                    .conversations
-                    .into_iter()
-                    .map(|conv| conv.try_into())
-                    .collect();
-                metadata_vec
-            }
-            ListAIConversationMetadataResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            ListAIConversationMetadataResult::Unknown => {
-                Err(anyhow!("Failed to list AI conversations metadata"))
-            }
-        }
+        Err(anyhow!("GraphQL AI conversation metadata has been removed"))
     }
 
     async fn get_ai_conversation_format(
         &self,
-        server_conversation_token: ServerConversationToken,
+        _server_conversation_token: ServerConversationToken,
     ) -> anyhow::Result<AIAgentConversationFormat, anyhow::Error> {
-        use warp_graphql::queries::get_ai_conversation_format::{
-            GetAIConversationFormat, GetAIConversationFormatResult,
-            GetAIConversationFormatVariables,
-        };
-        use warp_graphql::queries::list_ai_conversations::ListAIConversationsInput;
-
-        let conversation_id = server_conversation_token.as_str().to_string();
-        let operation = GetAIConversationFormat::build(GetAIConversationFormatVariables {
-            input: ListAIConversationsInput {
-                conversation_ids: Some(vec![cynic::Id::new(conversation_id)]),
-            },
-            request_context: get_request_context(),
-        });
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.list_ai_conversations {
-            GetAIConversationFormatResult::ListAIConversationsOutput(output) => {
-                let conversation = output
-                    .conversations
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| anyhow!("Conversation not found"))?;
-                Ok(convert_conversation_format(conversation.format))
-            }
-            GetAIConversationFormatResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            GetAIConversationFormatResult::Unknown => {
-                Err(anyhow!("Failed to get AI conversation format"))
-            }
-        }
+        Err(anyhow!("GraphQL AI conversation format has been removed"))
     }
 
     async fn get_block_snapshot(
@@ -2227,25 +1597,9 @@ impl AIClient for ServerApi {
 
     async fn delete_ai_conversation(
         &self,
-        server_conversation_token: String,
+        _server_conversation_token: String,
     ) -> anyhow::Result<(), anyhow::Error> {
-        let variables = DeleteAIConversationVariables {
-            input: DeleteConversationInput {
-                conversation_id: server_conversation_token.into(),
-            },
-            request_context: get_request_context(),
-        };
-
-        let operation = DeleteAIConversation::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.delete_conversation {
-            DeleteConversationResult::DeleteConversationOutput(_) => Ok(()),
-            DeleteConversationResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)))
-            }
-            DeleteConversationResult::Unknown => Err(anyhow!("Failed to delete AI conversation")),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn list_skills(
@@ -2323,157 +1677,32 @@ impl AIClient for ServerApi {
 
     async fn get_task_git_credentials(
         &self,
-        task_id: String,
-        workload_token: String,
+        _task_id: String,
+        _workload_token: String,
     ) -> anyhow::Result<Vec<GitCredential>, anyhow::Error> {
-        let variables = TaskGitCredentialsVariables {
-            input: TaskGitCredentialsInput {
-                task_id: cynic::Id::new(task_id),
-                workload_token,
-            },
-            request_context: get_request_context(),
-        };
-        let operation = TaskGitCredentials::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.task_git_credentials {
-            TaskGitCredentialsResult::TaskGitCredentialsOutput(output) => {
-                let credentials = output
-                    .credentials
-                    .into_iter()
-                    .map(|c| GitCredential {
-                        token: c.token,
-                        username: c.username,
-                        email: c.email,
-                        host: c.host,
-                    })
-                    .collect();
-                Ok(credentials)
-            }
-            TaskGitCredentialsResult::UserFacingError(error) => {
-                Err(anyhow!(get_user_facing_error_message(error)))
-            }
-            TaskGitCredentialsResult::Unknown => {
-                Err(anyhow!("Failed to fetch task git credentials"))
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn get_task_attachments(
         &self,
-        task_id: String,
+        _task_id: String,
     ) -> anyhow::Result<Vec<TaskAttachment>, anyhow::Error> {
-        let variables = TaskVariables {
-            input: TaskInput {
-                task_id: cynic::Id::new(task_id),
-            },
-            request_context: get_request_context(),
-        };
-        let operation = TaskAttachmentsQuery::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.task {
-            TaskResult::TaskOutput(output) => {
-                let attachments = output
-                    .task
-                    .attachments
-                    .into_iter()
-                    .map(|att| TaskAttachment {
-                        file_id: att.file_id.into_inner(),
-                        filename: att.filename,
-                        download_url: att.download_url,
-                        mime_type: att.mime_type,
-                    })
-                    .collect();
-                Ok(attachments)
-            }
-            TaskResult::UserFacingError(error) => {
-                Err(anyhow!(get_user_facing_error_message(error)))
-            }
-            TaskResult::Unknown => Err(anyhow!("Failed to fetch task attachments")),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn create_file_artifact_upload_target(
         &self,
-        request: CreateFileArtifactUploadRequest,
+        _request: CreateFileArtifactUploadRequest,
     ) -> anyhow::Result<CreateFileArtifactUploadResponse, anyhow::Error> {
-        let variables = CreateFileArtifactUploadTargetVariables {
-            input: CreateFileArtifactUploadTargetInput {
-                conversation_id: request.conversation_id.map(cynic::Id::new),
-                run_id: request.run_id.map(cynic::Id::new),
-                filepath: request.filepath,
-                description: request.description,
-                mime_type: request.mime_type,
-                size_bytes: request.size_bytes,
-            },
-            request_context: get_request_context(),
-        };
-        let operation = CreateFileArtifactUploadTarget::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.create_file_artifact_upload_target {
-            CreateFileArtifactUploadTargetResult::CreateFileArtifactUploadTargetOutput(output) => {
-                let headers = output
-                    .upload_target
-                    .headers
-                    .into_iter()
-                    .map(|header| FileArtifactUploadHeaderInfo {
-                        name: header.name,
-                        value: header.value,
-                    })
-                    .collect();
-                let fields = output
-                    .upload_target
-                    .fields
-                    .into_iter()
-                    .map(convert_upload_field)
-                    .collect::<anyhow::Result<Vec<_>>>()?;
-                Ok(CreateFileArtifactUploadResponse {
-                    artifact: into_file_artifact_record(output.artifact),
-                    upload_target: FileArtifactUploadTargetInfo {
-                        url: output.upload_target.url,
-                        method: output.upload_target.method,
-                        headers,
-                        fields,
-                    },
-                })
-            }
-            CreateFileArtifactUploadTargetResult::UserFacingError(error) => {
-                Err(anyhow!(get_user_facing_error_message(error)))
-            }
-            CreateFileArtifactUploadTargetResult::Unknown => {
-                Err(anyhow!("Failed to create file artifact upload target"))
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn confirm_file_artifact_upload(
         &self,
-        artifact_uid: String,
-        checksum: String,
+        _artifact_uid: String,
+        _checksum: String,
     ) -> anyhow::Result<FileArtifactRecord, anyhow::Error> {
-        let variables = ConfirmFileArtifactUploadVariables {
-            input: ConfirmFileArtifactUploadInput {
-                artifact_uid: cynic::Id::new(artifact_uid),
-                checksum,
-            },
-            request_context: get_request_context(),
-        };
-        let operation = ConfirmFileArtifactUpload::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.confirm_file_artifact_upload {
-            ConfirmFileArtifactUploadResult::ConfirmFileArtifactUploadOutput(output) => {
-                Ok(into_file_artifact_record(output.artifact))
-            }
-            ConfirmFileArtifactUploadResult::UserFacingError(error) => {
-                Err(anyhow!(get_user_facing_error_message(error)))
-            }
-            ConfirmFileArtifactUploadResult::Unknown => {
-                Err(anyhow!("Failed to confirm file artifact upload"))
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn get_artifact_download(
@@ -2671,450 +1900,6 @@ impl AIClient for ServerApi {
     }
 }
 
-impl TryFrom<warp_graphql::queries::get_feature_model_choices::FeatureModelChoice>
-    for ModelsByFeature
-{
-    type Error = anyhow::Error;
-
-    fn try_from(
-        value: warp_graphql::queries::get_feature_model_choices::FeatureModelChoice,
-    ) -> Result<Self, Self::Error> {
-        Ok(Self {
-            agent_mode: value.agent_mode.try_into()?,
-            coding: value.coding.try_into()?,
-            cli_agent: Some(value.cli_agent.try_into()?),
-            computer_use: Some(value.computer_use_agent.try_into()?),
-        })
-    }
-}
-
-impl TryFrom<warp_graphql::workspace::FeatureModelChoice> for ModelsByFeature {
-    type Error = anyhow::Error;
-
-    fn try_from(value: warp_graphql::workspace::FeatureModelChoice) -> Result<Self, Self::Error> {
-        Ok(Self {
-            agent_mode: value.agent_mode.try_into()?,
-            coding: value.coding.try_into()?,
-            cli_agent: Some(value.cli_agent.try_into()?),
-            computer_use: Some(value.computer_use_agent.try_into()?),
-        })
-    }
-}
-
-impl TryFrom<warp_graphql::queries::get_feature_model_choices::AvailableLlms> for AvailableLLMs {
-    type Error = anyhow::Error;
-
-    fn try_from(
-        value: warp_graphql::queries::get_feature_model_choices::AvailableLlms,
-    ) -> Result<Self, Self::Error> {
-        Self::new(
-            value.default_id.into(),
-            value.choices.into_iter().map(LLMInfo::from),
-            value.preferred_codex_model_id.map(Into::into),
-        )
-    }
-}
-
-impl TryFrom<warp_graphql::workspace::AvailableLlms> for AvailableLLMs {
-    type Error = anyhow::Error;
-
-    fn try_from(value: warp_graphql::workspace::AvailableLlms) -> Result<Self, Self::Error> {
-        Self::new(
-            value.default_id.into(),
-            value.choices.into_iter().map(LLMInfo::from),
-            value.preferred_codex_model_id.map(Into::into),
-        )
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::LlmInfo> for LLMInfo {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::LlmInfo) -> Self {
-        let host_configs = {
-            let mut map = std::collections::HashMap::new();
-            for config in value.host_configs {
-                let config: RoutingHostConfig = config.into();
-                let host = config.model_routing_host.clone();
-                if map.insert(host.clone(), config).is_some() {
-                    log::warn!(
-                        "Duplicate LlmModelHost entry for {:?}, using latest value",
-                        host
-                    );
-                }
-            }
-            map
-        };
-        Self {
-            id: value.id.into(),
-            display_name: value.display_name,
-            base_model_name: value.base_model_name,
-            reasoning_level: value.reasoning_level,
-            usage_metadata: value.usage_metadata.into(),
-            description: value.description,
-            disable_reason: value.disable_reason.map(DisableReason::from),
-            vision_supported: value.vision_supported,
-            spec: value.spec.map(Into::into),
-            provider: value.provider.into(),
-            host_configs,
-            discount_percentage: value.pricing.discount_percentage.map(|v| v as f32),
-            context_window: LLMContextWindow {
-                is_configurable: value.context_window.is_configurable,
-                min: value.context_window.min.into(),
-                max: value.context_window.max.into(),
-                default_max: value.context_window.default.into(),
-            },
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::LlmInfo> for LLMInfo {
-    fn from(value: warp_graphql::workspace::LlmInfo) -> Self {
-        let host_configs = {
-            let mut map = std::collections::HashMap::new();
-            for config in value.host_configs {
-                let config: RoutingHostConfig = config.into();
-                let host = config.model_routing_host.clone();
-                if map.insert(host.clone(), config).is_some() {
-                    log::warn!(
-                        "Duplicate LlmModelHost entry for {:?}, using latest value",
-                        host
-                    );
-                }
-            }
-            map
-        };
-        Self {
-            id: value.id.into(),
-            display_name: value.display_name,
-            base_model_name: value.base_model_name,
-            reasoning_level: value.reasoning_level,
-            usage_metadata: value.usage_metadata.into(),
-            description: value.description,
-            disable_reason: value.disable_reason.map(DisableReason::from),
-            vision_supported: value.vision_supported,
-            spec: value.spec.map(Into::into),
-            provider: value.provider.into(),
-            host_configs,
-            discount_percentage: value.pricing.discount_percentage.map(|v| v as f32),
-            context_window: LLMContextWindow {
-                is_configurable: value.context_window.is_configurable,
-                min: value.context_window.min.into(),
-                max: value.context_window.max.into(),
-                default_max: value.context_window.default.into(),
-            },
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::RoutingHostConfig>
-    for RoutingHostConfig
-{
-    fn from(value: warp_graphql::queries::get_feature_model_choices::RoutingHostConfig) -> Self {
-        Self {
-            enabled: value.enabled,
-            model_routing_host: value.model_routing_host.into(),
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::RoutingHostConfig> for RoutingHostConfig {
-    fn from(value: warp_graphql::workspace::RoutingHostConfig) -> Self {
-        Self {
-            enabled: value.enabled,
-            model_routing_host: value.model_routing_host.into(),
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::LlmModelHost> for LLMModelHost {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::LlmModelHost) -> Self {
-        match value {
-            warp_graphql::queries::get_feature_model_choices::LlmModelHost::DirectApi => {
-                LLMModelHost::DirectApi
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmModelHost::AwsBedrock => {
-                LLMModelHost::AwsBedrock
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmModelHost::CustomEndpoint => {
-                LLMModelHost::CustomEndpoint
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmModelHost::GeminiEnterprise => {
-                LLMModelHost::GeminiEnterprise
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmModelHost::Other(value) => {
-                log::warn!(
-                    "Unknown LlmModelHost '{value}'. Make sure to update client GraphQL types!"
-                );
-                LLMModelHost::Unknown
-            }
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::LlmProvider> for LLMProvider {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::LlmProvider) -> Self {
-        match value {
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Openai => {
-                LLMProvider::OpenAI
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Anthropic => {
-                LLMProvider::Anthropic
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Google => {
-                LLMProvider::Google
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Xai => LLMProvider::Xai,
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Unknown => {
-                LLMProvider::Unknown
-            }
-            warp_graphql::queries::get_feature_model_choices::LlmProvider::Other(value) => {
-                report_error!(
-                    anyhow!(
-                        "Invalid LlmProvider '{value}'. Make sure to update client GraphQL types!"
-                    ),
-                    warp_core::errors::ReportErrorLogMode::OncePerRun
-                );
-                LLMProvider::Unknown
-            }
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::LlmProvider> for LLMProvider {
-    fn from(value: warp_graphql::workspace::LlmProvider) -> Self {
-        match value {
-            warp_graphql::workspace::LlmProvider::Openai => LLMProvider::OpenAI,
-            warp_graphql::workspace::LlmProvider::Anthropic => LLMProvider::Anthropic,
-            warp_graphql::workspace::LlmProvider::Google => LLMProvider::Google,
-            warp_graphql::workspace::LlmProvider::Xai => LLMProvider::Xai,
-            warp_graphql::workspace::LlmProvider::Unknown => LLMProvider::Unknown,
-            warp_graphql::workspace::LlmProvider::Other(value) => {
-                report_error!(
-                    anyhow!(
-                        "Invalid LlmProvider '{value}'. Make sure to update client GraphQL types!"
-                    ),
-                    warp_core::errors::ReportErrorLogMode::OncePerRun
-                );
-                LLMProvider::Unknown
-            }
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::LlmSpec> for LLMSpec {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::LlmSpec) -> Self {
-        Self {
-            cost: value.cost as f32,
-            quality: value.quality as f32,
-            speed: value.speed as f32,
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::LlmSpec> for LLMSpec {
-    fn from(value: warp_graphql::workspace::LlmSpec) -> Self {
-        Self {
-            cost: value.cost as f32,
-            quality: value.quality as f32,
-            speed: value.speed as f32,
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::LlmUsageMetadata> for LLMUsageMetadata {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::LlmUsageMetadata) -> Self {
-        Self {
-            request_multiplier: value.request_multiplier.max(1) as usize,
-            credit_multiplier: value.credit_multiplier.map(|v| v as f32),
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::LlmUsageMetadata> for LLMUsageMetadata {
-    fn from(value: warp_graphql::workspace::LlmUsageMetadata) -> Self {
-        Self {
-            request_multiplier: value.request_multiplier.max(1) as usize,
-            credit_multiplier: value.credit_multiplier.map(|v| v as f32),
-        }
-    }
-}
-
-impl From<warp_graphql::queries::get_feature_model_choices::DisableReason> for DisableReason {
-    fn from(value: warp_graphql::queries::get_feature_model_choices::DisableReason) -> Self {
-        match value {
-            warp_graphql::queries::get_feature_model_choices::DisableReason::AdminDisabled => {
-                DisableReason::AdminDisabled
-            }
-            warp_graphql::queries::get_feature_model_choices::DisableReason::OutOfRequests => {
-                DisableReason::OutOfRequests
-            }
-            warp_graphql::queries::get_feature_model_choices::DisableReason::ProviderOutage => {
-                DisableReason::ProviderOutage
-            }
-            warp_graphql::queries::get_feature_model_choices::DisableReason::RequiresUpgrade => {
-                DisableReason::RequiresUpgrade
-            }
-            warp_graphql::queries::get_feature_model_choices::DisableReason::Other(_) => {
-                DisableReason::Unavailable
-            }
-        }
-    }
-}
-
-impl From<warp_graphql::workspace::DisableReason> for DisableReason {
-    fn from(value: warp_graphql::workspace::DisableReason) -> Self {
-        match value {
-            warp_graphql::workspace::DisableReason::AdminDisabled => DisableReason::AdminDisabled,
-            warp_graphql::workspace::DisableReason::OutOfRequests => DisableReason::OutOfRequests,
-            warp_graphql::workspace::DisableReason::ProviderOutage => DisableReason::ProviderOutage,
-            warp_graphql::workspace::DisableReason::RequiresUpgrade => {
-                DisableReason::RequiresUpgrade
-            }
-            warp_graphql::workspace::DisableReason::Other(_) => DisableReason::Unavailable,
-        }
-    }
-}
-
-// Conversions for AIConversationMetadata from GraphQL types
-
-fn convert_harness(harness: warp_graphql::ai::AgentHarness) -> AIAgentHarness {
-    match harness {
-        warp_graphql::ai::AgentHarness::Oz => AIAgentHarness::Oz,
-        warp_graphql::ai::AgentHarness::ClaudeCode => AIAgentHarness::ClaudeCode,
-        warp_graphql::ai::AgentHarness::Gemini => AIAgentHarness::Gemini,
-        warp_graphql::ai::AgentHarness::Codex => AIAgentHarness::Codex,
-        warp_graphql::ai::AgentHarness::Other(value) => {
-            report_error!(
-                anyhow!(
-                    "Invalid AgentHarness '{value}'. Make sure to update client GraphQL types!"
-                ),
-                warp_core::errors::ReportErrorLogMode::OncePerRun
-            );
-            AIAgentHarness::Unknown
-        }
-    }
-}
-
-fn convert_block_snapshot_format(
-    format: warp_graphql::ai::SerializedBlockFormat,
-) -> AIAgentSerializedBlockFormat {
-    match format {
-        warp_graphql::ai::SerializedBlockFormat::JsonV1 => AIAgentSerializedBlockFormat::JsonV1,
-    }
-}
-
-fn convert_conversation_format(
-    format: warp_graphql::ai::AIConversationFormat,
-) -> AIAgentConversationFormat {
-    AIAgentConversationFormat {
-        has_task_list: format.has_task_list,
-        block_snapshot: format.block_snapshot.map(convert_block_snapshot_format),
-    }
-}
-
-// Helper function
-fn convert_usage_metadata(
-    summarized: bool,
-    context_window_usage: f64,
-    credits_spent: f64,
-    platform_credits_spent: f64,
-) -> ConversationUsageMetadata {
-    ConversationUsageMetadata {
-        was_summarized: summarized,
-        context_window_usage: context_window_usage as f32,
-        credits_spent: credits_spent as f32,
-        platform_credits_spent: platform_credits_spent as f32,
-        credits_spent_for_last_block: None,
-        token_usage: vec![],
-        tool_usage_metadata: Default::default(),
-    }
-}
-
-impl TryFrom<warp_graphql::ai::AIConversation> for ServerAIConversationMetadata {
-    type Error = anyhow::Error;
-
-    fn try_from(value: warp_graphql::ai::AIConversation) -> Result<Self, Self::Error> {
-        let usage = convert_usage_metadata(
-            value.usage.usage_metadata.summarized,
-            value.usage.usage_metadata.context_window_usage,
-            value.usage.usage_metadata.credits_spent,
-            value.usage.usage_metadata.platform_credits_spent,
-        );
-        let metadata = value.metadata.try_into()?;
-        let permissions = value.permissions.try_into()?;
-        let ambient_agent_task_id = value
-            .ambient_agent_task_id
-            .map(|id| id.into_inner().parse())
-            .transpose()?;
-        let server_conversation_token =
-            ServerConversationToken::new(value.conversation_id.into_inner());
-
-        // If we fail to parse any artifacts, don't fail the entire conversion -- just don't include them in the list
-        let artifacts = value
-            .artifacts
-            .unwrap_or_default()
-            .into_iter()
-            .filter_map(|a| Artifact::try_from(a).ok())
-            .collect();
-
-        Ok(Self {
-            title: value.title,
-            working_directory: value.working_directory,
-            harness: convert_harness(value.harness),
-            usage,
-            metadata,
-            creator: value.creator.map(Into::into),
-            permissions,
-            ambient_agent_task_id,
-            server_conversation_token,
-            artifacts,
-        })
-    }
-}
-
-impl TryFrom<warp_graphql::queries::list_ai_conversations::AIConversationMetadata>
-    for ServerAIConversationMetadata
-{
-    type Error = anyhow::Error;
-
-    fn try_from(
-        value: warp_graphql::queries::list_ai_conversations::AIConversationMetadata,
-    ) -> Result<Self, Self::Error> {
-        let usage = convert_usage_metadata(
-            value.usage.usage_metadata.summarized,
-            value.usage.usage_metadata.context_window_usage,
-            value.usage.usage_metadata.credits_spent,
-            value.usage.usage_metadata.platform_credits_spent,
-        );
-        let metadata = value.metadata.try_into()?;
-        let permissions = value.permissions.try_into()?;
-        let ambient_agent_task_id = value
-            .ambient_agent_task_id
-            .map(|id| id.into_inner().parse())
-            .transpose()?;
-        let server_conversation_token =
-            ServerConversationToken::new(value.conversation_id.into_inner());
-
-        let artifacts = value
-            .artifacts
-            .unwrap_or_default()
-            .into_iter()
-            .filter_map(|a| Artifact::try_from(a).ok())
-            .collect();
-
-        Ok(Self {
-            title: value.title,
-            working_directory: value.working_directory,
-            harness: convert_harness(value.harness),
-            usage,
-            metadata,
-            creator: value.creator.map(Into::into),
-            permissions,
-            ambient_agent_task_id,
-            server_conversation_token,
-            artifacts,
-        })
-    }
-}
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
@@ -3144,151 +1929,43 @@ impl StoreClient for ServerApi {
 
     async fn populate_merkle_tree_cache(
         &self,
-        embedding_config: EmbeddingConfig,
-        root_hash: NodeHash,
-        repo_metadata: RepoMetadata,
+        _embedding_config: EmbeddingConfig,
+        _root_hash: NodeHash,
+        _repo_metadata: RepoMetadata,
     ) -> Result<bool, full_source_code_embedding::Error> {
-        let variables = PopulateMerkleTreeCacheVariables {
-            embedding_config: embedding_config.into(),
-            root_hash: root_hash.into(),
-            repo_metadata: repo_metadata.into(),
-            request_context: get_request_context(),
-        };
-        let operation = PopulateMerkleTreeCache::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.populate_merkle_tree_cache {
-            PopulateMerkleTreeCacheResult::PopulateMerkleTreeCacheOutput(output) => {
-                Ok(output.success)
-            }
-            PopulateMerkleTreeCacheResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)).into())
-            }
-            PopulateMerkleTreeCacheResult::Unknown => {
-                Err(anyhow!("failed to populate merkle tree cache").into())
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn sync_merkle_tree(
         &self,
-        nodes: Vec<NodeHash>,
-        embedding_config: EmbeddingConfig,
+        _nodes: Vec<NodeHash>,
+        _embedding_config: EmbeddingConfig,
     ) -> Result<HashSet<NodeHash>, full_source_code_embedding::Error> {
-        let input = SyncMerkleTreeInput {
-            hashed_nodes: nodes.into_iter().map(Into::into).collect(),
-            embedding_config: embedding_config.into(),
-        };
-
-        let variables = SyncMerkleTreeVariables {
-            input,
-            request_context: get_request_context(),
-        };
-
-        let operation = SyncMerkleTree::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.sync_merkle_tree {
-            SyncMerkleTreeResult::SyncMerkleTreeOutput(output) => {
-                let mut node_results = HashSet::with_capacity(output.changed_nodes.len());
-                for hash in output.changed_nodes {
-                    node_results.insert(hash.try_into()?);
-                }
-                Ok(node_results)
-            }
-            SyncMerkleTreeResult::SyncMerkleTreeError(e) => Err(anyhow!(e.error).into()),
-            SyncMerkleTreeResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)).into())
-            }
-            SyncMerkleTreeResult::Unknown => Err(anyhow!("failed to sync merkle tree").into()),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn rerank_fragments(
         &self,
-        query: String,
-        fragments: Vec<full_source_code_embedding::Fragment>,
+        _query: String,
+        _fragments: Vec<full_source_code_embedding::Fragment>,
     ) -> Result<Vec<full_source_code_embedding::Fragment>, full_source_code_embedding::Error> {
-        let variables = RerankFragmentsVariables {
-            query,
-            fragments: fragments.into_iter().map(Into::into).collect(),
-            request_context: get_request_context(),
-        };
-        let operation = RerankFragments::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.rerank_fragments {
-            RerankFragmentsResult::RerankFragmentsOutput(output) => Ok(output
-                .ranked_fragments
-                .into_iter()
-                .map(|fragment| fragment.try_into())
-                .collect::<Result<Vec<_>, _>>()?),
-            RerankFragmentsResult::RerankFragmentsError(e) => Err(anyhow!(e.error).into()),
-            RerankFragmentsResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)).into())
-            }
-            RerankFragmentsResult::Unknown => Err(anyhow!("failed to rerank fragments").into()),
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn get_relevant_fragments(
         &self,
-        embedding_config: EmbeddingConfig,
-        query: String,
-        root_hash: NodeHash,
-        repo_metadata: RepoMetadata,
+        _embedding_config: EmbeddingConfig,
+        _query: String,
+        _root_hash: NodeHash,
+        _repo_metadata: RepoMetadata,
     ) -> Result<Vec<ContentHash>, full_source_code_embedding::Error> {
-        let variables = GetRelevantFragmentsVariables {
-            query,
-            root_hash: root_hash.into(),
-            embedding_config: embedding_config.into(),
-            request_context: get_request_context(),
-            repo_metadata: repo_metadata.into(),
-        };
-        let operation = GetRelevantFragmentsQuery::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.get_relevant_fragments {
-            GetRelevantFragmentsResult::GetRelevantFragmentsOutput(output) => Ok(output
-                .candidate_hashes
-                .into_iter()
-                .map(|hash| hash.try_into())
-                .collect::<Result<Vec<_>, _>>()?),
-            GetRelevantFragmentsResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)).into())
-            }
-            GetRelevantFragmentsResult::GetRelevantFragmentsError(e) => {
-                Err(anyhow!(e.error).into())
-            }
-            GetRelevantFragmentsResult::Unknown => {
-                Err(anyhow!("failed to get relevant fragments").into())
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 
     async fn codebase_context_config(
         &self,
     ) -> Result<CodebaseContextConfig, full_source_code_embedding::Error> {
-        let variables = CodebaseContextConfigVariables {
-            request_context: get_request_context(),
-        };
-        let operation = CodebaseContextConfigQuery::build(variables);
-        let response = self.send_graphql_request(operation, None).await?;
-
-        match response.codebase_context_config {
-            CodebaseContextConfigResult::CodebaseContextConfigOutput(output) => {
-                Ok(CodebaseContextConfig {
-                    embedding_config: output.embedding_config.try_into()?,
-                    embedding_cadence: Duration::from_secs(output.embedding_cadence as u64),
-                })
-            }
-            CodebaseContextConfigResult::UserFacingError(e) => {
-                Err(anyhow!(get_user_facing_error_message(e)).into())
-            }
-            CodebaseContextConfigResult::Unknown => {
-                Err(anyhow!("failed to retrieve codebase context config").into())
-            }
-        }
+        todo!("GraphQL backend removed")
     }
 }
 

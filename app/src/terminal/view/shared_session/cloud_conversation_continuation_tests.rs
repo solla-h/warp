@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use persistence::model::ConversationUsageMetadata;
 use warp_cli::agent::Harness;
-use warp_graphql::object_permissions::AccessLevel;
+use cloud_objects::cloud_object::AccessLevel;
 use warpui::{App, EntityId, SingletonEntity};
 
 use super::*;

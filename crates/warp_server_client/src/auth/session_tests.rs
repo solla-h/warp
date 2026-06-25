@@ -61,7 +61,6 @@ fn api_key_exchange_defers_owner_type_until_user_properties_are_fetched() {
         credentials,
         Credentials::ApiKey {
             key,
-            owner_type: None
         } if key == "api-key"
     ));
 }

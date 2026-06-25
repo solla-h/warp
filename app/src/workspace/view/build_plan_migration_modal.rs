@@ -1,5 +1,4 @@
 use asset_macro::bundled_or_fetched_asset;
-use itertools::Itertools;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
@@ -7,7 +6,6 @@ use settings::Setting as _;
 use thousands::Separable;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::Fill;
-use warp_graphql::billing::{AddonCreditsOption, StripeSubscriptionPlan};
 use warpui::elements::{
     Align, Border, CacheOption, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Flex, FormattedTextElement, HighlightedHyperlink, Image,
@@ -22,10 +20,9 @@ use warpui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
-use crate::pricing::{PricingInfoModel, PricingInfoModelEvent};
 use crate::terminal::general_settings::GeneralSettings;
 use crate::ui_components::blended_colors;
-use crate::view_components::{Dropdown, DropdownEvent, DropdownItem, ToastFlavor};
+use crate::view_components::{Dropdown, DropdownEvent, ToastFlavor};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 use crate::workspaces::workspace::CustomerType;
 
@@ -56,8 +53,6 @@ struct StateHandles {
 
 pub struct BuildPlanMigrationModal {
     state_handles: StateHandles,
-    selected_addon_credits_option: usize,
-    addon_credits_options: Vec<AddonCreditsOption>,
     is_updating: bool,
     is_dropdown_expanded: bool,
     auto_reload_enabled: bool,
@@ -66,16 +61,6 @@ pub struct BuildPlanMigrationModal {
 
 impl BuildPlanMigrationModal {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        ctx.subscribe_to_model(
-            &PricingInfoModel::handle(ctx),
-            |me, _, event, ctx| match event {
-                PricingInfoModelEvent::PricingInfoUpdated => {
-                    me.update_addon_credits_options(ctx);
-                    ctx.notify();
-                }
-            },
-        );
-
         ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |me, _handle, event, ctx| {
             me.handle_workspaces_event(event, ctx);
         });
@@ -103,14 +88,11 @@ impl BuildPlanMigrationModal {
 
         let mut me = BuildPlanMigrationModal {
             state_handles: Default::default(),
-            selected_addon_credits_option: 0,
-            addon_credits_options: Default::default(),
             is_updating: false,
             is_dropdown_expanded: false,
             auto_reload_enabled: false,
             reload_denominations_dropdown,
         };
-        me.update_addon_credits_options(ctx);
         me.refresh_addon_credits_settings(ctx);
         me
     }
@@ -121,54 +103,6 @@ impl BuildPlanMigrationModal {
         };
         let addon_credits_settings = &workspace.settings.addon_credits_settings;
         self.auto_reload_enabled = addon_credits_settings.auto_reload_enabled;
-        self.selected_addon_credits_option = addon_credits_settings
-            .selected_auto_reload_credit_denomination
-            .and_then(|amount| {
-                self.addon_credits_options
-                    .iter()
-                    .find_position(|option| option.credits == amount)
-            })
-            .map_or(0, |pair| pair.0);
-        // Update dropdown to reflect the refreshed selection
-        self.reload_denominations_dropdown
-            .update(ctx, |dropdown, ctx| {
-                dropdown.set_selected_by_index(self.selected_addon_credits_option, ctx);
-            });
-    }
-
-    fn update_addon_credits_options(&mut self, ctx: &mut ViewContext<Self>) {
-        self.addon_credits_options = PricingInfoModel::as_ref(ctx)
-            .addon_credits_options()
-            .map(|opts| opts.to_vec())
-            .unwrap_or_default();
-        // Sync the selected denomination after options are updated
-        self.sync_selected_denomination(ctx);
-        // Populate dropdown after syncing selection so it shows the correct item
-        self.populate_reload_denomination_dropdown(ctx);
-    }
-
-    fn sync_selected_denomination(&mut self, ctx: &ViewContext<Self>) {
-        let Some(workspace) = UserWorkspaces::as_ref(ctx).current_workspace() else {
-            return;
-        };
-
-        let addon_credits_settings = &workspace.settings.addon_credits_settings;
-        // Sync the auto-reload enabled flag
-        self.auto_reload_enabled = addon_credits_settings.auto_reload_enabled;
-
-        if let Some(selected_amount) =
-            addon_credits_settings.selected_auto_reload_credit_denomination
-        {
-            // Find the index of the option that matches the selected amount
-            if let Some((index, _)) = self
-                .addon_credits_options
-                .iter()
-                .enumerate()
-                .find(|(_, option)| option.credits == selected_amount)
-            {
-                self.selected_addon_credits_option = index;
-            }
-        }
     }
 
     fn handle_workspaces_event(
@@ -179,13 +113,10 @@ impl BuildPlanMigrationModal {
         match event {
             UserWorkspacesEvent::UpdateWorkspaceSettingsSuccess => {
                 if self.is_updating {
-                    // Close modal on success when we initiated the update
                     self.is_updating = false;
-                    self.update_addon_credits_options(ctx);
                     Self::mark_modal_dismissed(ctx);
                     ctx.emit(BuildPlanMigrationModalEvent::Close);
                 } else {
-                    // External update - refresh our state to stay in sync
                     self.refresh_addon_credits_settings(ctx);
                     ctx.notify();
                 }
@@ -212,32 +143,6 @@ impl BuildPlanMigrationModal {
                 log::warn!("Failed to set build plan migration modal dismissed setting: {e}");
             }
         });
-    }
-
-    fn populate_reload_denomination_dropdown(&mut self, ctx: &mut ViewContext<Self>) {
-        self.reload_denominations_dropdown
-            .update(ctx, |dropdown, ctx| {
-                dropdown.set_items(
-                    self.addon_credits_options
-                        .iter()
-                        .enumerate()
-                        .map(|(i, option)| {
-                            DropdownItem::new(
-                                format!(
-                                    "${} / {} credits",
-                                    option.price_usd_cents / 100,
-                                    option.credits.separate_with_commas(),
-                                ),
-                                BuildPlanMigrationModalViewAction::SelectReloadDenomination(i),
-                            )
-                        })
-                        .collect(),
-                    ctx,
-                );
-                // Set the selected item to match the current selection
-                dropdown.set_selected_by_index(self.selected_addon_credits_option, ctx);
-            });
-        ctx.notify();
     }
 
     fn render_auto_reload_controls(&self, appearance: &Appearance) -> Box<dyn Element> {
@@ -491,27 +396,13 @@ impl BuildPlanMigrationModal {
         let font_family = appearance.ui_font_family();
         let text_color = blended_colors::text_sub(theme, blended_colors::neutral_2(theme));
 
-        // Check if any service agreement has type Business
         let is_business = UserWorkspaces::as_ref(app)
             .current_workspace()
             .map(|workspace| workspace.billing_metadata.customer_type == CustomerType::Business)
             .unwrap_or(false);
 
-        let plan_pricing = PricingInfoModel::as_ref(app).plan_pricing(if is_business {
-            &StripeSubscriptionPlan::BuildBusiness
-        } else {
-            &StripeSubscriptionPlan::Build
-        });
-        let base_credits_limit = plan_pricing.and_then(|p| p.request_limit).unwrap_or(1500);
-        // (monthly price cents, monthly price cents for annual)
-        let base_plan_prices = plan_pricing
-            .map(|p| {
-                (
-                    p.monthly_plan_price_per_month_usd_cents,
-                    p.yearly_plan_price_per_month_usd_cents,
-                )
-            })
-            .unwrap_or((2000, 1800));
+        let base_credits_limit: i32 = 1500;
+        let base_plan_prices: (i32, i32) = (2000, 1800);
 
         let title_text = if is_business {
             "Welcome to the New Business Plan"
@@ -781,12 +672,10 @@ impl TypedActionView for BuildPlanMigrationModal {
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
-            BuildPlanMigrationModalViewAction::SelectReloadDenomination(index) => {
-                self.selected_addon_credits_option = *index;
+            BuildPlanMigrationModalViewAction::SelectReloadDenomination(_index) => {
                 ctx.notify();
             }
             BuildPlanMigrationModalViewAction::GetStartedClicked => {
-                // Get current team UID and workspace data
                 let workspaces = UserWorkspaces::as_ref(ctx);
                 let Some(team_uid) = workspaces.current_team_uid() else {
                     ctx.emit(BuildPlanMigrationModalEvent::ShowToast {
@@ -797,50 +686,15 @@ impl TypedActionView for BuildPlanMigrationModal {
                     return;
                 };
 
-                // Get current monthly spend limit before any mutable borrows
-                let current_monthly_spend_limit = workspaces
-                    .current_workspace()
-                    .and_then(|ws| ws.settings.addon_credits_settings.max_monthly_spend_cents);
-
-                // Set loading state
                 self.is_updating = true;
                 ctx.notify();
 
-                // Determine selected denomination (only if auto-reload is enabled)
-                let selected_denomination = if self.auto_reload_enabled {
-                    self.addon_credits_options
-                        .get(self.selected_addon_credits_option)
-                        .map(|option| option.credits)
-                } else {
-                    None
-                };
-
-                // Determine if we need to update the monthly spend limit
-                // If the selected denomination price is greater than the current limit, increase the limit
-                let new_monthly_spend_limit = if self.auto_reload_enabled {
-                    self.addon_credits_options
-                        .get(self.selected_addon_credits_option)
-                        .and_then(|option| {
-                            let selected_price = option.price_usd_cents;
-                            match current_monthly_spend_limit {
-                                Some(current_limit) if selected_price > current_limit => {
-                                    Some(selected_price)
-                                }
-                                None => Some(selected_price),
-                                _ => None,
-                            }
-                        })
-                } else {
-                    None
-                };
-
-                // Call API to update auto-reload settings
                 UserWorkspaces::handle(ctx).update(ctx, |user_workspaces, ctx| {
                     user_workspaces.update_addon_credits_settings(
                         team_uid,
                         Some(self.auto_reload_enabled),
-                        new_monthly_spend_limit,
-                        selected_denomination,
+                        None,
+                        None,
                         ctx,
                     );
                 });

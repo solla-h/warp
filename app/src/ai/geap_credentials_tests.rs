@@ -167,7 +167,6 @@ fn workspace_with_geap_host(enabled: bool) -> Workspace {
         teams: vec![team],
         billing_metadata: Default::default(),
         bonus_grants_purchased_this_month: Default::default(),
-        billing_cycle_usage: None,
         has_billing_history: false,
         settings: Default::default(),
         invite_code: None,

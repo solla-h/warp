@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use comfy_table::Cell;
-use cynic::QueryBuilder;
 use inquire::error::InquireError;
 use inquire::{Confirm, Select};
 use serde::Serialize;
@@ -9,11 +8,6 @@ use warp_cli::agent::OutputFormat;
 use warp_cli::environment::{EnvironmentCommand, ImageCommand};
 use warp_cli::scope::ObjectScope;
 use warp_cli::GlobalOptions;
-use warp_graphql::queries::get_oauth_connect_tx_status::OauthConnectTxStatus;
-use warp_graphql::queries::list_warp_dev_images::{
-    ListWarpDevImages, ListWarpDevImagesResult, ListWarpDevImagesVariables,
-};
-use warp_graphql::queries::user_repo_auth_status::UserRepoAuthStatusEnum;
 use warpui::r#async::FutureExt;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
@@ -32,6 +26,7 @@ use crate::server::cloud_objects::update_manager::{
 };
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
+use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::CloudObjectTypeAndId;
@@ -143,45 +138,11 @@ pub fn run(
 struct EnvironmentCommandRunner;
 
 impl EnvironmentCommandRunner {
-    fn list_images(&self, global_options: GlobalOptions, ctx: &mut ModelContext<Self>) {
-        let server_api = ServerApiProvider::as_ref(ctx).get();
-
-        let operation = ListWarpDevImages::build(ListWarpDevImagesVariables {});
-        let fetch_images = async move { server_api.send_graphql_request(operation, None).await };
-
-        ctx.spawn(fetch_images, move |_, result, ctx| match result {
-            Ok(response) => match response.list_warp_dev_images {
-                ListWarpDevImagesResult::ListWarpDevImagesOutput(output) => {
-                    let image_infos: Vec<_> = output
-                        .images
-                        .into_iter()
-                        .map(|img| ImageInfo {
-                            image: img.image,
-                            repository: img.repository,
-                            tag: img.tag,
-                        })
-                        .collect();
-
-                    if matches!(
-                        global_options.output_format,
-                        OutputFormat::Text | OutputFormat::Pretty
-                    ) {
-                        println!(
-                            "All Warp dev images contain Python and Node. For more information, see: {}\n",
-                            WARP_DEV_ENVIRONMENTS_REPO
-                        );
-                    }
-                    output::print_list(image_infos, global_options.output_format);
-                    ctx.terminate_app(warpui::platform::TerminationMode::ForceTerminate, None);
-                }
-                ListWarpDevImagesResult::UserFacingError(_) | ListWarpDevImagesResult::Unknown => {
-                    super::report_fatal_error(anyhow::anyhow!("Failed to fetch images"), ctx);
-                }
-            },
-            Err(err) => {
-                super::report_fatal_error(anyhow::anyhow!("Failed to fetch images: {}", err), ctx);
-            }
-        });
+    fn list_images(&self, _global_options: GlobalOptions, ctx: &mut ModelContext<Self>) {
+        super::report_fatal_error(
+            anyhow::anyhow!("Image listing has been removed"),
+            ctx,
+        );
     }
 
     fn list(&self, global_options: GlobalOptions, ctx: &mut ModelContext<Self>) {
@@ -335,85 +296,22 @@ impl EnvironmentCommandRunner {
         }
     }
 
-    /// Fetch images from server and prompt user to select one. Calls continuation with selected image.
+    /// Prompt user to enter a docker image name directly (image listing has been removed).
     fn prompt_for_docker_image<F>(continuation: F, ctx: &mut ModelContext<Self>)
     where
         F: FnOnce(String, &mut ModelContext<Self>) + Send + 'static,
     {
-        const CUSTOM_IMAGE_OPTION: &str = "Custom Docker image";
-
-        let server_api = ServerApiProvider::as_ref(ctx).get();
-        let operation = ListWarpDevImages::build(ListWarpDevImagesVariables {});
-        let fetch_images = async move { server_api.send_graphql_request(operation, None).await };
-
-        ctx.spawn(fetch_images, move |_, result, ctx| match result {
-            Ok(response) => match response.list_warp_dev_images {
-                ListWarpDevImagesResult::ListWarpDevImagesOutput(output) => {
-                    if output.images.is_empty() {
-                        super::report_fatal_error(
-                            anyhow::anyhow!("No Warp dev images available."),
-                            ctx,
-                        );
-                        return;
-                    }
-
-                    println!(
-                        "No docker image provided, please select a base image.\n"
-                    );
-                    println!(
-                        "All warpdotdev images contain Python and Node, in addition to language-specific tooling. For more info: {}\n",
-                        WARP_DEV_ENVIRONMENTS_REPO
-                    );
-
-                    let mut image_choices: Vec<String> =
-                        output.images.into_iter().map(|img| img.image).collect();
-                    image_choices.push(CUSTOM_IMAGE_OPTION.to_string());
-
-                    let selected_image = match Select::new("Select a base image:", image_choices)
-                        .prompt()
-                    {
-                        Ok(image) => image,
-                        Err(err) => {
-                            if !Self::handle_inquire_error(err, ctx) {
-                                super::report_fatal_error(
-                                    anyhow::anyhow!("Error selecting image"),
-                                    ctx,
-                                );
-                            }
-                            return;
-                        }
-                    };
-
-                    let final_image = if selected_image == CUSTOM_IMAGE_OPTION {
-                        match inquire::Text::new("Enter custom Docker image name:").prompt() {
-                            Ok(custom) => custom,
-                            Err(err) => {
-                                if !Self::handle_inquire_error(err, ctx) {
-                                    super::report_fatal_error(
-                                        anyhow::anyhow!("Error entering custom image"),
-                                        ctx,
-                                    );
-                                }
-                                return;
-                            }
-                        }
-                    } else {
-                        selected_image
-                    };
-
-                    continuation(final_image, ctx);
-                }
-                ListWarpDevImagesResult::UserFacingError(_) | ListWarpDevImagesResult::Unknown => {
+        match inquire::Text::new("Enter Docker image name:").prompt() {
+            Ok(image) => continuation(image, ctx),
+            Err(err) => {
+                if !Self::handle_inquire_error(err, ctx) {
                     super::report_fatal_error(
-                        anyhow::anyhow!("Failed to fetch list of base images"),
+                        anyhow::anyhow!("Error entering image name"),
                         ctx,
                     );
                 }
-            },
-            Err(err) => {
-                super::report_fatal_error(anyhow::anyhow!("Failed to fetch images: {err}"), ctx);
             }
-        });
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -627,7 +525,6 @@ impl EnvironmentCommandRunner {
 
                             let integrations_client = ServerApiProvider::as_ref(ctx)
                                 .get_integrations_client();
-                            let tx_id = tx_id.into_inner();
                             let poll_future = poll_oauth_until_terminal(integrations_client, tx_id);
 
                             let next_attempt = attempt + 1;
@@ -1173,6 +1070,7 @@ impl TableFormat for EnvironmentInfo {
 
 /// Image information that's shown in the `image list` command.
 #[derive(Serialize)]
+#[allow(dead_code)]
 struct ImageInfo {
     image: String,
     repository: String,

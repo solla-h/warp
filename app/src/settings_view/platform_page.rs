@@ -3,8 +3,6 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use warp_core::features::FeatureFlag;
-use warp_graphql::object_permissions::OwnerType;
-use warp_graphql::queries::api_keys::ApiKeyProperties as GqlApiKeyProperties;
 use warpui::elements::{
     resizable_state_handle, Align, Border, ChildView, ConstrainedBox, Container,
     CrossAxisAlignment, DragBarSide, Element, Empty, Expanded, Flex, FormattedTextElement,
@@ -40,6 +38,32 @@ use crate::util::time_format::format_approx_duration_from_now_utc;
 
 const MODAL_WIDTH: f32 = 460.;
 const MODAL_HEIGHT: f32 = 320.;
+
+/// Placeholder for the former GraphQL `OwnerType` enum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OwnerType {
+    User,
+    Team,
+}
+
+/// Agent info on an API key (from former GraphQL type).
+#[derive(Debug, Clone)]
+pub struct GqlApiKeyAgentInfo {
+    pub name: String,
+}
+
+/// Placeholder for the former GraphQL `ApiKeyProperties` type.
+#[derive(Debug, Clone)]
+pub struct GqlApiKeyProperties {
+    pub uid: cynic::Id,
+    pub name: String,
+    pub key_suffix: String,
+    pub owner_type: OwnerType,
+    pub agent_info: Option<GqlApiKeyAgentInfo>,
+    pub created_at: DateTime<Utc>,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
+}
 const API_KEY_DOCS_URL: &str = "https://docs.warp.dev/reference/cli/api-keys";
 const API_KEY_NAME_COLUMN_DEFAULT_WIDTH: f32 = 220.;
 const API_KEY_NAME_COLUMN_MIN_WIDTH: f32 = 120.;
@@ -117,45 +141,8 @@ pub struct PlatformPageView {
 }
 
 impl PlatformPageView {
-    fn fetch_api_keys(&mut self, ctx: &mut ViewContext<PlatformPageView>) {
-        // Set loading state only if we don't have any keys yet
-        if self.api_keys.is_empty() {
-            self.is_loading = true;
-            ctx.notify();
-        }
-
-        // Build and send the GraphQL query
-        let auth_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_auth_client();
-
-        ctx.spawn(
-            async move { auth_client.list_api_keys().await },
-            |me, res, ctx| {
-                me.is_loading = false;
-                match res {
-                    Ok(keys) => {
-                        me.api_keys = keys
-                            .into_iter()
-                            .map(|gql_key| {
-                                let ui_key = APIKeyProperties::from(&gql_key);
-                                me.ensure_expire_button_for_key(ctx, ui_key.uid.clone());
-                                ui_key
-                            })
-                            .collect();
-                        ctx.notify();
-                    }
-                    Err(err) => {
-                        let window_id = ctx.window_id();
-                        crate::ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                            let toast =
-                                crate::view_components::DismissibleToast::error(format!("{err}"));
-                            toast_stack.add_ephemeral_toast(toast, window_id, ctx);
-                        });
-                        ctx.notify();
-                    }
-                }
-            },
-        );
+    fn fetch_api_keys(&mut self, _ctx: &mut ViewContext<PlatformPageView>) {
+        todo!()
     }
     pub fn new(ctx: &mut ViewContext<PlatformPageView>) -> Self {
         let api_key_search_editor = ctx.add_typed_action_view(|ctx| {
@@ -263,14 +250,6 @@ impl PlatformPageView {
         match event {
             CreateApiKeyModalEvent::Close => {
                 self.hide_create_api_key_modal(ctx);
-            }
-            CreateApiKeyModalEvent::Created { api_key } => {
-                self.create_api_key_modal_state
-                    .set_title(Some("Save your key".to_string()), ctx);
-                let ui_key = APIKeyProperties::from(api_key);
-                self.ensure_expire_button_for_key(ctx, ui_key.uid.clone());
-                self.api_keys.push(ui_key);
-                ctx.notify();
             }
             CreateApiKeyModalEvent::Error { message } => {
                 let window_id = ctx.window_id();
@@ -426,9 +405,9 @@ impl From<&GqlApiKeyProperties> for APIKeyProperties {
             key_suffix: gql_key.key_suffix.clone(),
             scope,
             agent_name,
-            created_at: gql_key.created_at.utc(),
-            last_used_at: gql_key.last_used_at.map(|t| t.utc()),
-            expires_at: gql_key.expires_at.map(|t| t.utc()),
+            created_at: gql_key.created_at,
+            last_used_at: gql_key.last_used_at,
+            expires_at: gql_key.expires_at,
         }
     }
 }

@@ -8,7 +8,6 @@ use warp_cli::schedule::{
     ScheduleSubcommand, UnpauseScheduleArgs, UpdateScheduleArgs,
 };
 use warp_cli::GlobalOptions;
-use warp_graphql::queries::get_scheduled_agent_history::ScheduledAgentHistory;
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, SingletonEntity};
 
@@ -20,6 +19,7 @@ use crate::ai::ambient_agents::scheduled::{
 use crate::ai::ambient_agents::AgentConfigSnapshot;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
 use crate::server::ids::{ServerId, SyncId};
+use crate::server::server_api::ai::ScheduledAgentHistory;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 
 /// Run a scheduled agent command.

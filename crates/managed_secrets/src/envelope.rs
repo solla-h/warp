@@ -2,7 +2,6 @@ use std::io;
 use std::sync::Once;
 
 use base64::Engine;
-use warp_graphql::managed_secrets::ManagedSecretType;
 
 use crate::secret_value::ManagedSecretValue;
 
@@ -66,37 +65,15 @@ impl UploadKey {
         secret_name: &str,
         secret: &ManagedSecretValue,
     ) -> Result<String, EnvelopeError> {
-        let context = UploadContext {
-            actor_uid,
-            secret_name,
-            secret_type: secret.secret_type(),
-        };
+        let context_info = format!("1:{}:{}", actor_uid, secret_name);
 
         let secret_plaintext =
             serde_json::to_vec(secret).map_err(EnvelopeError::MarshalSecretValue)?;
 
         let encrypted = self
             .encrypt
-            .encrypt(&secret_plaintext, context.encode().as_bytes())?;
+            .encrypt(&secret_plaintext, context_info.as_bytes())?;
         Ok(base64::prelude::BASE64_STANDARD.encode(encrypted))
-    }
-}
-
-struct UploadContext<'a> {
-    actor_uid: &'a str,
-    secret_name: &'a str,
-    secret_type: ManagedSecretType,
-}
-
-impl<'a> UploadContext<'a> {
-    fn encode(&self) -> String {
-        // This must match the context encoding format used by the server.
-        format!(
-            "1:{}:{}:{}",
-            self.actor_uid,
-            self.secret_name,
-            self.secret_type.envelope_name()
-        )
     }
 }
 

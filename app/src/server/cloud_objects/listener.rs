@@ -14,7 +14,7 @@ use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::report_error;
 use crate::server::retry_strategies::LISTENER_RETRY_STRATEGY;
-use crate::server::server_api::object::ObjectClient;
+use cloud_object_client::ObjectClient;
 use crate::system::{SystemStats, SystemStatsEvent};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 

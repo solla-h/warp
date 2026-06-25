@@ -22,7 +22,7 @@ use async_channel::Sender;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use cloud_object_client::ObjectPermissionUpdateResult;
-use warp_graphql::object_permissions::AccessLevel;
+use cloud_objects::cloud_object::AccessLevel;
 
 use crate::cloud_object::model::actions::{ObjectActionHistory, ObjectActionType};
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
@@ -40,7 +40,7 @@ use crate::notebooks::NotebookId;
 use crate::server::cloud_objects::listener::ObjectUpdateMessage;
 use crate::server::cloud_objects::update_manager::{GetCloudObjectResponse, InitialLoadResponse};
 use crate::server::ids::{ServerId, ServerIdAndType, SyncId};
-use crate::server::server_api::object::{GuestIdentifier, ObjectClient};
+use cloud_object_client::{GuestIdentifier, ObjectClient};
 use crate::server::sync_queue::SerializedModel;
 use crate::settings::cloud_preferences::{CloudPreferenceModel, Platform, Preference};
 use crate::workflows::WorkflowId;

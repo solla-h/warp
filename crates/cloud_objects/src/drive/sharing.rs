@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use session_sharing_protocol::common::{ProfileData as SessionSharingProfileData, Role};
-use warp_graphql::object_permissions::AccessLevel;
 
 use crate::auth::UserUid;
 use crate::cloud_object::Owner;
@@ -75,25 +74,6 @@ impl FromStr for SharingAccessLevel {
     }
 }
 
-impl From<AccessLevel> for SharingAccessLevel {
-    fn from(server_access: AccessLevel) -> Self {
-        match server_access {
-            AccessLevel::Viewer => Self::View,
-            AccessLevel::Editor => Self::Edit,
-            AccessLevel::Full => Self::Full,
-        }
-    }
-}
-
-impl From<SharingAccessLevel> for AccessLevel {
-    fn from(val: SharingAccessLevel) -> Self {
-        match val {
-            SharingAccessLevel::View => AccessLevel::Viewer,
-            SharingAccessLevel::Edit => AccessLevel::Editor,
-            SharingAccessLevel::Full => AccessLevel::Full,
-        }
-    }
-}
 
 impl From<Role> for SharingAccessLevel {
     fn from(role: Role) -> Self {

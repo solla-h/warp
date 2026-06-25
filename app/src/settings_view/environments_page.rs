@@ -5,7 +5,7 @@ use pathfinder_geometry::vector::vec2f;
 use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
 use warp_editor::editor::NavigationKey;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warpui::elements::{
     Align, Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, Element, Empty, Expanded, Flex, Hoverable, MainAxisAlignment, MainAxisSize,
@@ -74,10 +74,7 @@ mod new_environment_button;
 use new_environment_button::NewEnvironmentButtonView;
 #[cfg(not(target_family = "wasm"))]
 #[allow(unused_imports)] // IntegrationsClient trait is used in fetch_github_repos
-use {
-    crate::server::server_api::{integrations::IntegrationsClient, ServerApiProvider},
-    warp_graphql::queries::user_github_info::UserGithubInfoResult,
-};
+use crate::server::server_api::{integrations::IntegrationsClient, ServerApiProvider};
 
 const PAGE_TITLE_TEXT: &str = "Environments";
 const PAGE_DESCRIPTION_TEXT: &str = "Environments define where your ambient agents run. Set one up in minutes via GitHub (recommended), Warp-assisted setup, or manual configuration.";

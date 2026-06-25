@@ -23,7 +23,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 uuid.workspace = true
 warp_core.workspace = true
-warp_graphql.workspace = true
 warp_managed_secrets.workspace = true
 warpui_core.workspace = true
 warpui_extras = { workspace = true, features = ["default"] }

@@ -7,7 +7,6 @@ use warp_server_client::auth::{AgentIdentity, AuthEvent};
 use warp_server_client::base_client::BaseClient;
 
 use super::ServerApi;
-use crate::server::graphql::default_request_options;
 
 /// Header key for the ambient workload token attached to multi-agent requests.
 pub const AMBIENT_WORKLOAD_TOKEN_HEADER: &str = "X-Warp-Ambient-Workload-Token";
@@ -35,37 +34,6 @@ impl BaseClient for ServerApi {
         ServerApi::anonymous_id(self)
     }
 
-    fn unauthenticated_graphql_request_options(&self) -> warp_graphql::client::RequestOptions {
-        default_request_options()
-    }
-
-    async fn graphql_request_options(
-        &self,
-        timeout: Option<Duration>,
-    ) -> Result<warp_graphql::client::RequestOptions> {
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .context("Failed to get access token for GraphQL request")?;
-        let mut headers = std::collections::HashMap::new();
-        #[cfg(feature = "agent_mode_evals")]
-        if let Some(eval_user_id) = self.eval_user_id {
-            headers.insert(
-                super::EVAL_USER_ID_HEADER.to_string(),
-                eval_user_id.to_string(),
-            );
-        }
-        for (name, value) in self.ambient_agent_headers().await? {
-            headers.insert(name.to_string(), value);
-        }
-        Ok(warp_graphql::client::RequestOptions {
-            auth_token: auth_token.bearer_token(),
-            timeout,
-            headers,
-            ..default_request_options()
-        })
-    }
-
     async fn list_agent_identities(&self) -> Result<Vec<AgentIdentity>> {
         let response: AgentIdentitiesResponse = self.get_public_api("agent/identities").await?;
         Ok(response.agents)
@@ -75,8 +43,6 @@ impl BaseClient for ServerApi {
         if cfg!(target_family = "wasm") {
             return Ok(None);
         }
-        // Check whether a cached token remains valid, using a five-minute buffer.
-        // Tokens without an expiration time are always considered valid.
         {
             let cached = self.ambient_workload_token.lock();
             if let Some(ref token) = *cached {
@@ -88,7 +54,6 @@ impl BaseClient for ServerApi {
                 }
             }
         }
-        // Issue a new token.
         let workload_token = match warp_isolation_platform::issue_workload_token(Some(
             AMBIENT_WORKLOAD_TOKEN_DURATION,
         ))

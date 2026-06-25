@@ -8,6 +8,7 @@ use warp_core::features::FeatureFlag;
 use warp_core::user_preferences::GetUserPreferences;
 use warp_managed_secrets::client::SecretOwner;
 use warp_managed_secrets::{ManagedSecretManager, ManagedSecretValue};
+pub use warp_managed_secrets::AuthSecretEntry;
 use warpui::{Entity, ModelContext, RequestState, SingletonEntity};
 
 use crate::ai::harness_display;
@@ -59,12 +60,6 @@ pub enum AuthSecretFetchState {
     Loading,
     Loaded(Vec<AuthSecretEntry>),
     Failed(#[allow(dead_code)] String),
-}
-
-#[derive(Debug, Clone)]
-pub struct AuthSecretEntry {
-    pub name: String,
-    pub owner: SecretOwner,
 }
 
 pub enum HarnessAvailabilityEvent {
@@ -195,10 +190,6 @@ impl HarnessAvailabilityModel {
     }
 
     fn fetch_auth_secrets(&mut self, harness: Harness, ctx: &mut ModelContext<Self>) {
-        let Some(agent_harness) = harness_to_graphql_harness(harness) else {
-            return;
-        };
-
         if !AuthStateProvider::as_ref(ctx).get().is_logged_in() && warp_core::channel::ChannelState::channel() != warp_core::channel::Channel::Oss {
             return;
         }
@@ -211,22 +202,14 @@ impl HarnessAvailabilityModel {
         ctx.spawn_with_retry_on_error_when(
             move || {
                 let api = api.clone();
-                let agent_harness = agent_harness.clone();
-                async move { api.list_harness_auth_secrets(agent_harness).await }
+                async move { api.list_harness_auth_secrets(harness).await }
             },
             OUT_OF_BAND_REQUEST_RETRY_STRATEGY,
             is_transient_graphql_or_http_error,
             move |me,
-                  result: RequestState<Vec<warp_graphql::managed_secrets::ManagedSecret>>,
+                  result: RequestState<Vec<AuthSecretEntry>>,
                   ctx| match result {
-                RequestState::RequestSucceeded(secrets) => {
-                    let entries = secrets
-                        .into_iter()
-                        .map(|s| AuthSecretEntry {
-                            owner: secret_owner_from_space(&s.owner),
-                            name: s.name,
-                        })
-                        .collect();
+                RequestState::RequestSucceeded(entries) => {
                     me.auth_secrets
                         .insert(harness, AuthSecretFetchState::Loaded(entries));
                     me.auth_secret_retry_after.remove(&harness);
@@ -272,12 +255,15 @@ impl HarnessAvailabilityModel {
         ctx: &mut ModelContext<Self>,
     ) {
         let manager = ManagedSecretManager::handle(ctx);
-        let create_future = manager.as_ref(ctx).create_secret(owner, name, value, None);
+        let create_future =
+            manager
+                .as_ref(ctx)
+                .create_secret(owner.clone(), name, value, None);
         ctx.spawn(create_future, move |me, result, ctx| match result {
             Ok(secret) => {
                 let entry = AuthSecretEntry {
                     name: secret.name.clone(),
-                    owner: secret_owner_from_space(&secret.owner),
+                    owner: owner.clone(),
                 };
                 match me.auth_secrets.get_mut(&harness) {
                     Some(AuthSecretFetchState::Loaded(entries)) => {
@@ -387,30 +373,12 @@ fn get_cached(ctx: &ModelContext<HarnessAvailabilityModel>) -> Option<Vec<Harnes
     serde_json::from_str::<Vec<HarnessAvailability>>(&raw).ok()
 }
 
-fn secret_owner_from_space(space: &warp_graphql::object::Space) -> SecretOwner {
-    match space.type_ {
-        warp_graphql::object::SpaceType::Team => SecretOwner::Team {
-            team_uid: space.uid.clone().into_inner(),
-        },
-        warp_graphql::object::SpaceType::User => SecretOwner::CurrentUser,
-    }
-}
-
 fn remove_deleted_auth_secret_entry(
     entries: &mut Vec<AuthSecretEntry>,
     name: &str,
     owner: &SecretOwner,
 ) {
     entries.retain(|entry| entry.name.as_str() != name || &entry.owner != owner);
-}
-fn harness_to_graphql_harness(harness: Harness) -> Option<warp_graphql::ai::AgentHarness> {
-    match harness {
-        Harness::Oz => Some(warp_graphql::ai::AgentHarness::Oz),
-        Harness::Claude => Some(warp_graphql::ai::AgentHarness::ClaudeCode),
-        Harness::Gemini => Some(warp_graphql::ai::AgentHarness::Gemini),
-        Harness::Codex => Some(warp_graphql::ai::AgentHarness::Codex),
-        Harness::OpenCode | Harness::Unknown => None,
-    }
 }
 
 impl Entity for HarnessAvailabilityModel {

@@ -1,7 +1,6 @@
 use std::fmt;
 
 use serde::Serialize;
-use warp_graphql::managed_secrets::ManagedSecretType;
 
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -36,6 +35,16 @@ pub enum ManagedSecretValue {
 }
 
 impl ManagedSecretValue {
+    pub fn secret_type(&self) -> &'static str {
+        match self {
+            Self::RawValue { .. } => "RawValue",
+            Self::AnthropicApiKey { .. } => "AnthropicApiKey",
+            Self::AnthropicBedrockAccessKey { .. } => "AnthropicBedrockAccessKey",
+            Self::AnthropicBedrockApiKey { .. } => "AnthropicBedrockApiKey",
+            Self::OpenaiApiKey { .. } => "OpenaiApiKey",
+        }
+    }
+
     pub fn raw_value(s: impl Into<String>) -> Self {
         Self::RawValue { value: s.into() }
     }
@@ -75,20 +84,6 @@ impl ManagedSecretValue {
         Self::OpenaiApiKey {
             api_key: api_key.into(),
             base_url,
-        }
-    }
-
-    pub fn secret_type(&self) -> ManagedSecretType {
-        match self {
-            ManagedSecretValue::RawValue { .. } => ManagedSecretType::RawValue,
-            ManagedSecretValue::AnthropicApiKey { .. } => ManagedSecretType::AnthropicApiKey,
-            ManagedSecretValue::AnthropicBedrockAccessKey { .. } => {
-                ManagedSecretType::AnthropicBedrockAccessKey
-            }
-            ManagedSecretValue::AnthropicBedrockApiKey { .. } => {
-                ManagedSecretType::AnthropicBedrockApiKey
-            }
-            ManagedSecretValue::OpenaiApiKey { .. } => ManagedSecretType::OpenaiApiKey,
         }
     }
 }

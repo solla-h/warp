@@ -20,7 +20,6 @@ use std::time::Duration;
 use ::http::header::CONTENT_LENGTH;
 use ai::AIClient;
 use anyhow::{anyhow, Context, Result};
-use auth::AuthClient;
 use base64::prelude::BASE64_URL_SAFE;
 use base64::Engine;
 use base_client::{AMBIENT_WORKLOAD_TOKEN_HEADER, CLOUD_AGENT_ID_HEADER};
@@ -29,7 +28,7 @@ use channel_versions::ChannelVersions;
 use chrono::{DateTime, FixedOffset};
 use futures::StreamExt;
 use instant::Instant;
-use object::ObjectClient;
+use cloud_object_client::ObjectClient;
 use parking_lot::{Mutex, RwLock};
 use prost::Message;
 use referral::ReferralsClient;
@@ -43,9 +42,8 @@ use warp_core::errors::{register_error, AnyhowErrorExt, ErrorExt};
 use warp_core::telemetry::TelemetryEvent;
 #[cfg(feature = "cloud")]
 use warp_managed_secrets::client::ManagedSecretsClient;
-use warp_server_client::auth::{AuthClientImpl, AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
+use warp_server_client::auth::{AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
 use warp_server_client::base_client::BaseClient as _;
-use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
 
@@ -646,17 +644,6 @@ impl ServerApi {
         headers.retain(|(name, _)| *name != CLOUD_AGENT_ID_HEADER);
         headers.push((CLOUD_AGENT_ID_HEADER, task_id.to_string()));
         Ok(headers)
-    }
-
-    pub fn send_graphql_request<'a, QF, O: warp_graphql::client::Operation<QF> + Send + 'a>(
-        &'a self,
-        operation: O,
-        timeout: Option<Duration>,
-    ) -> BoxFuture<'a, Result<QF>>
-    where
-        QF: 'a,
-    {
-        warp_server_client::graphql_helpers::send_graphql_request(self, operation, timeout)
     }
 
     /// Sends a GET request to a public API endpoint.
@@ -1546,7 +1533,6 @@ impl ServerApi {
 /// or any of its implemented trait objects.
 pub struct ServerApiProvider {
     server_api: Arc<ServerApi>,
-    auth_client: Arc<dyn AuthClient>,
 }
 
 impl ServerApiProvider {
@@ -1601,13 +1587,8 @@ impl ServerApiProvider {
             |_, _| {},
         );
         let server_api = Arc::new(server_api);
-        let auth_client = Arc::new(AuthClientImpl::new(
-            server_api.clone(),
-            server_api.auth_session.clone(),
-        ));
         Self {
             server_api,
-            auth_client,
         }
     }
 
@@ -1627,13 +1608,8 @@ impl ServerApiProvider {
     #[cfg(feature = "skip_login")]
     pub fn new_for_local_only() -> Self {
         let server_api = Arc::new(ServerApi::new_for_local_only());
-        let auth_client = Arc::new(AuthClientImpl::new(
-            server_api.clone(),
-            server_api.auth_session.clone(),
-        ));
         Self {
             server_api,
-            auth_client,
         }
     }
 
@@ -1641,13 +1617,8 @@ impl ServerApiProvider {
     #[cfg(test)]
     pub fn new_for_test() -> Self {
         let server_api = Arc::new(ServerApi::new_for_test());
-        let auth_client = Arc::new(AuthClientImpl::new(
-            server_api.clone(),
-            server_api.auth_session.clone(),
-        ));
         Self {
             server_api,
-            auth_client,
         }
     }
 
@@ -1655,10 +1626,6 @@ impl ServerApiProvider {
     /// Prefer retrieving a specific trait object related to the methods you're calling.
     pub fn get(&self) -> Arc<ServerApi> {
         self.server_api.clone()
-    }
-
-    pub fn get_auth_client(&self) -> Arc<dyn AuthClient> {
-        self.auth_client.clone()
     }
 
     pub fn get_referrals_client(&self) -> Arc<dyn ReferralsClient> {

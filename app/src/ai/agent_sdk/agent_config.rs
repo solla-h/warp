@@ -1,14 +1,13 @@
 //! Commands to interact with available agents via the public API.
 
 use warp_cli::agent::ListAgentSkillsArgs;
-use warp_graphql::queries::get_oauth_connect_tx_status::OauthConnectTxStatus;
-use warp_graphql::queries::user_repo_auth_status::UserRepoAuthStatusEnum;
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::ai::agent_sdk::oauth_flow::poll_oauth_until_terminal;
 use crate::ai::cloud_environments::GithubRepo;
 use crate::server::server_api::ai::AgentSkillItem;
+use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
 use crate::server::server_api::ServerApiProvider;
 
 const MAX_LINE_WIDTH: usize = 90;
@@ -142,7 +141,7 @@ impl AgentConfigRunner {
                             let integrations_client = ServerApiProvider::handle(ctx)
                                 .as_ref(ctx)
                                 .get_integrations_client();
-                            let tx_id = tx_id.into_inner();
+                            let tx_id = tx_id;
                             let poll_future = poll_oauth_until_terminal(integrations_client, tx_id);
 
                             let next_attempt = attempt + 1;
