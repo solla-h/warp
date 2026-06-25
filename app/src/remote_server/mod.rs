@@ -3,15 +3,11 @@ use remote_server::manager::RemoteServerManager;
 // Re-export everything from the `remote_server` crate so existing
 // `crate::remote_server::*` imports in `app` continue to work.
 pub use remote_server::*;
-#[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]
-use warp_server_client::auth::AuthEvent;
 #[cfg(not(target_family = "wasm"))]
 use warpui::SingletonEntity as _;
 
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::{AIRequestUsageModel, AIRequestUsageModelEvent};
-#[cfg(not(target_family = "wasm"))]
-use crate::server::server_api::ServerApiProvider;
 
 #[cfg(not(target_family = "wasm"))]
 pub mod auth_context;
@@ -77,15 +73,6 @@ pub fn wire_auth_token_rotation(ctx: &mut warpui::AppContext) {
     let codebase_index_limits = current_codebase_index_limits(ctx);
     RemoteServerManager::handle(ctx).update(ctx, |manager, _| {
         manager.update_codebase_index_limits(Some(codebase_index_limits));
-    });
-    let server_api = ServerApiProvider::handle(ctx);
-    let manager = RemoteServerManager::handle(ctx);
-    ctx.subscribe_to_model(&server_api, move |_, event, ctx| {
-        if let AuthEvent::AccessTokenRefreshed { token } = event {
-            manager.update(ctx, |manager, _| {
-                manager.rotate_auth_token(token.clone());
-            });
-        }
     });
 
     // Forward crash reporting preference changes to all connected daemons.
