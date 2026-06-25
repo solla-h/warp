@@ -7,7 +7,7 @@ use chrono::{DateTime, Duration, Utc};
 use cloud_object_client::MockObjectClient;
 use cloud_objects::cloud_object::ServerPermissions;
 #[cfg(feature = "cloud")]
-use firebase::FirebaseError;
+use warp_server_client::auth::FirebaseError;
 use itertools::Itertools;
 use warpui::r#async::Timer;
 use warpui::{App, Entity, ModelHandle, SingletonEntity};

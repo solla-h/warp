@@ -3,7 +3,7 @@ use std::result::Result as StdResult;
 use std::sync::Arc;
 
 use anyhow::{Context as _, Result, bail};
-use firebase::FetchAccessTokenResponse;
+use super::firebase_types::FetchAccessTokenResponse;
 use instant::Duration;
 use oauth2::TokenResponse as _;
 use url::Url;

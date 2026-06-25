@@ -1,3 +1,4 @@
+mod firebase_types;
 mod session;
 
 use std::result::Result as StdResult;
@@ -6,7 +7,7 @@ use std::sync::Arc;
 use anyhow::{Context as _, Result, anyhow};
 use async_trait::async_trait;
 use cynic::{MutationBuilder, QueryBuilder};
-use firebase::FirebaseError;
+pub use firebase_types::FirebaseError;
 use instant::Duration;
 #[cfg(any(test, feature = "test-util"))]
 use mockall::automock;
