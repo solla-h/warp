@@ -14,7 +14,6 @@ pub mod anonymous_id;
 pub mod auth_state;
 pub mod credentials;
 pub mod user;
-pub use warp_types::user_uid;
 #[cfg(target_family = "wasm")]
 pub mod web_handoff;
 
@@ -24,7 +23,7 @@ pub use auth_manager::AuthManager;
 pub use auth_state::AuthStateProvider;
 use itertools::Itertools;
 pub use login_failure_notification::LoginFailureReason;
-pub use user_uid::UserUid;
+pub use cloud_objects::UserUid;
 use warp_core::user_preferences::GetUserPreferences as _;
 use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
 use warpui::{AppContext, SingletonEntity};

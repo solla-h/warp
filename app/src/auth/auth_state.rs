@@ -8,7 +8,7 @@ use uuid::Uuid;
 use warp_core::channel::{Channel, ChannelState};
 use warp_core::report_error;
 use warp_graphql::object_permissions::OwnerType;
-use warp_types::UserUid;
+use cloud_objects::UserUid;
 use warpui_core::{AppContext, Entity, SingletonEntity};
 
 use super::anonymous_id::get_or_create_anonymous_id;

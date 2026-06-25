@@ -156,6 +156,7 @@ impl PasteAuthTokenModalView {
                     | UserAuthenticationError::Unexpected(_) => {
                         LoginFailureReason::FailedUserAuthentication
                     }
+                    _ => LoginFailureReason::FailedUserAuthentication,
                 });
                 me.set_editor_enabled(true, ctx);
                 ctx.notify();

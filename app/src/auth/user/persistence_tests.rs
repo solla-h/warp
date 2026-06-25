@@ -2,7 +2,7 @@ use chrono::DateTime;
 
 use super::PersistedUser;
 use crate::auth::user::{FirebaseAuthTokens, PersonalObjectLimits, UserMetadata};
-use warp_types::UserUid;
+use cloud_objects::UserUid;
 
 /// Verifies that the JSON blob format as of March 6, 2026 can be deserialized correctly.
 ///

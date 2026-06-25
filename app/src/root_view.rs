@@ -3005,6 +3005,7 @@ impl RootView {
                 }
                 UserAuthenticationError::InvalidStateParameter => {}
                 UserAuthenticationError::MissingStateParameter => {}
+                _ => {}
             },
             AuthManagerEvent::SkippedLogin => {
                 if let AuthOnboardingState::Auth(_) | AuthOnboardingState::ConfirmIncomingAuth(_) =

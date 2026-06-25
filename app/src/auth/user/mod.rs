@@ -3,8 +3,8 @@ use chrono::{DateTime, FixedOffset, Local};
 use serde::{Deserialize, Serialize};
 use warp_graphql::queries::get_user::FirebaseProfile;
 use warp_graphql::scalars::time::ServerTimestamp;
-use warp_types::UserUid;
-pub use warp_types::user_uid::{TEST_USER_EMAIL, TEST_USER_UID};
+use cloud_objects::UserUid;
+pub use cloud_objects::auth::user_uid::{TEST_USER_EMAIL, TEST_USER_UID};
 
 pub mod persistence;
 

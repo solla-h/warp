@@ -703,7 +703,9 @@ impl ServerApi {
                 .send_request(self.client.clone(), options)
                 .await
                 .map_err(|e| anyhow::anyhow!("{e}"))?;
-            Ok(response)
+            response
+                .data
+                .ok_or_else(|| anyhow::anyhow!("GraphQL response contained no data"))
         })
     }
 
