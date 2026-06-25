@@ -49,7 +49,7 @@ use crate::ai::llms::{
     AvailableLLMs, DisableReason, LLMContextWindow, LLMInfo, LLMProvider, LLMUsageMetadata,
     ModelsByFeature,
 };
-use crate::settings::{AISettings, AgentProvider, AgentProviderModel};
+use crate::settings::{AISettings, AgentProvider, AgentProviderApiType, AgentProviderModel};
 
 /// 合成给定 provider 的所有合法 (provider, model) 对的 LLMInfo 列表。
 ///
@@ -193,7 +193,11 @@ pub fn lookup_byop(app: &AppContext, id: &ai::LLMId) -> Option<(AgentProvider, S
                     id: format!("legacy-{}", id_str),
                     name: ep.name.clone(),
                     base_url: ep.url.clone(),
-                    api_type: Default::default(),
+                    api_type: if ep.models.iter().any(|m| m.name.contains("claude")) {
+                    AgentProviderApiType::Anthropic
+                } else {
+                    Default::default()
+                },
                     models: ep.models.iter().map(|em| AgentProviderModel {
                         id: em.name.clone(),
                         name: em.display_label().to_owned(),
