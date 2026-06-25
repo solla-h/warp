@@ -8,6 +8,7 @@ use uuid::Uuid;
 use warp_core::channel::{Channel, ChannelState};
 use warp_core::report_error;
 use warp_graphql::object_permissions::OwnerType;
+use warp_types::UserUid;
 use warpui_core::{AppContext, Entity, SingletonEntity};
 
 use super::anonymous_id::get_or_create_anonymous_id;
@@ -18,7 +19,8 @@ use super::user::persistence::PersistedUser;
 use super::user::{
     AnonymousUserType, FirebaseAuthTokens, PersonalObjectLimits, PrincipalType, User,
 };
-use super::{API_KEY_PREFIX, UserUid};
+
+pub const API_KEY_PREFIX: &str = "wk-";
 
 const ANONYMOUS_USER_NOTIFICATION_BLOCK_TIMER: Duration = Duration::days(7);
 

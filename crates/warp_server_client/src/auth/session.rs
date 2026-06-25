@@ -8,16 +8,50 @@ use instant::Duration;
 use oauth2::TokenResponse as _;
 use url::Url;
 use warp_core::channel::ChannelState;
-use warp_server_auth::auth_state::AuthState;
-use warp_server_auth::credentials::{
-    AuthToken, Credentials, FirebaseToken, LoginToken, RefreshToken,
-};
-use warp_server_auth::user::FirebaseAuthTokens;
 use warpui_core::r#async::{BoxFuture, Timer};
 
+use super::credentials::{
+    AuthToken, Credentials, FirebaseAuthTokens, FirebaseToken, LoginToken, RefreshToken,
+};
 use super::UserAuthenticationError;
 
+use parking_lot::RwLock;
+
 const FETCH_ACCESS_TOKEN_TIMEOUT: Duration = Duration::from_secs(5);
+
+pub struct AuthState {
+    credentials: RwLock<Option<Credentials>>,
+}
+
+impl AuthState {
+    pub fn new(credentials: Option<Credentials>) -> Self {
+        Self {
+            credentials: RwLock::new(credentials),
+        }
+    }
+
+    #[cfg(any(test, feature = "test-util"))]
+    pub fn new_logged_out_for_test() -> Self {
+        Self {
+            credentials: RwLock::new(None),
+        }
+    }
+
+    pub fn credentials(&self) -> Option<Credentials> {
+        self.credentials.read().clone()
+    }
+
+    pub fn set_credentials(&self, credentials: Option<Credentials>) {
+        *self.credentials.write() = credentials;
+    }
+
+    pub fn update_firebase_tokens(&self, new_auth_tokens: FirebaseAuthTokens) {
+        let mut write_lock = self.credentials.write();
+        if let Some(Credentials::Firebase(tokens)) = write_lock.as_mut() {
+            *tokens = new_auth_tokens;
+        }
+    }
+}
 
 /// Authentication and authenticated-transport conditions observed by shared client code.
 #[derive(Clone)]
