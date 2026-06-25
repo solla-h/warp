@@ -37,7 +37,6 @@ warp_util.workspace = true
 warp_types.workspace = true
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-cloud_object_persistence.workspace = true
 diesel = { workspace = true, features = ["sqlite", "chrono"] }
 persistence = { workspace = true, features = ["cloud"] }
 

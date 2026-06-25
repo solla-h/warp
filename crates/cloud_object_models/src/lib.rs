@@ -3,9 +3,6 @@
 //!
 //! Each model module should own the model payload for one cloud object family, plus any model-specific
 //! adapters that should move with that model during future verticalization.
-//!
-//! Native SQLite adapters may live under model-local `persistence` modules, while shared persistence
-//! infrastructure should stay in `cloud_object_persistence`.
 
 // Multiple modules contain `persistence` submodules; it is expected that
 // code from the persistence modules is imported with fully-qualified paths.

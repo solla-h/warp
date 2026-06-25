@@ -2885,7 +2885,6 @@ dependencies = [
  "anyhow",
  "cfg-if",
  "chrono",
- "cloud_object_persistence",
  "cloud_objects",
  "diesel",
  "handlebars",
@@ -2908,24 +2907,6 @@ dependencies = [
  "warp_graphql",
  "warp_types",
  "warp_util",
-]
-
-[[package]]
-name = "cloud_object_persistence"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "chrono",
- "cloud_objects",
- "diesel",
- "lazy_static",
- "log",
- "persistence",
- "serde",
- "session-sharing-protocol",
- "warp_core",
- "warp_graphql",
 ]
 
 [[package]]
@@ -14963,7 +14944,6 @@ dependencies = [
  "clap",
  "cloud_object_client",
  "cloud_object_models",
- "cloud_object_persistence",
  "cloud_objects",
  "cocoa 0.26.0",
  "comfy-table",
