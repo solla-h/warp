@@ -15,7 +15,7 @@ use warp_cli::{
     SESSION_SHARING_SERVER_URL_OVERRIDE_ENV, WS_SERVER_URL_OVERRIDE_ENV,
 };
 use warp_core::channel::ChannelState;
-use warp_managed_secrets::ManagedSecretValue;
+use crate::managed_secrets::ManagedSecretValue;
 use warpui::{ModelHandle, ModelSpawner, SingletonEntity};
 
 use super::terminal::{CommandHandle, TerminalDriver};

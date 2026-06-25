@@ -33,8 +33,8 @@ use warp_graphql::queries::managed_secret_config::{
 use warp_graphql::queries::task_secrets::{
     ManagedSecretValue, TaskSecrets, TaskSecretsInput, TaskSecretsResult, TaskSecretsVariables,
 };
-pub use warp_managed_secrets::client::{ManagedSecretConfigs, ManagedSecretsClient};
-use warp_managed_secrets::client::{SecretOwner, TaskIdentityToken};
+pub use crate::managed_secrets::client::{ManagedSecretConfigs, ManagedSecretsClient};
+use crate::managed_secrets::client::{SecretOwner, TaskIdentityToken};
 
 use super::ServerApi;
 use crate::server::graphql::{get_request_context, get_user_facing_error_message};
@@ -282,7 +282,7 @@ impl ManagedSecretsClient for ServerApi {
 
     async fn issue_task_identity_token(
         &self,
-        options: warp_managed_secrets::client::IdentityTokenOptions,
+        options: crate::managed_secrets::client::IdentityTokenOptions,
     ) -> Result<TaskIdentityToken> {
         let requested_duration_seconds = options
             .requested_duration

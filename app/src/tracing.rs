@@ -32,7 +32,7 @@ pub fn init() -> anyhow::Result<Initialization> {
 
 #[cfg(all(not(target_family = "wasm"), feature = "otel", feature = "cloud"))]
 pub fn start_auth_refresh(
-    client: std::sync::Arc<dyn warp_managed_secrets::client::ManagedSecretsClient>,
+    client: std::sync::Arc<dyn crate::managed_secrets::client::ManagedSecretsClient>,
     ctx: &mut warpui::AppContext,
 ) {
     native::start_auth_refresh(client, ctx);
@@ -40,7 +40,7 @@ pub fn start_auth_refresh(
 
 #[cfg(all(not(target_family = "wasm"), not(feature = "otel"), feature = "cloud"))]
 pub fn start_auth_refresh(
-    _client: std::sync::Arc<dyn warp_managed_secrets::client::ManagedSecretsClient>,
+    _client: std::sync::Arc<dyn crate::managed_secrets::client::ManagedSecretsClient>,
     _ctx: &mut warpui::AppContext,
 ) {
 }

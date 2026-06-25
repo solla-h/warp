@@ -13,7 +13,7 @@ use tempfile::NamedTempFile;
 use uuid::Uuid;
 use warp_cli::agent::Harness;
 use warp_core::features::FeatureFlag;
-use warp_managed_secrets::ManagedSecretValue;
+use crate::managed_secrets::ManagedSecretValue;
 use warpui::{ModelHandle, ModelSpawner, SingletonEntity};
 
 use super::super::terminal::{CommandHandle, TerminalDriver};

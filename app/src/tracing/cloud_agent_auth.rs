@@ -33,7 +33,7 @@ use http::header::{HeaderValue, AUTHORIZATION};
 use instant::Instant;
 use opentelemetry_http::{Bytes, HttpClient, HttpError, Request, Response};
 #[cfg(feature = "cloud")]
-use warp_managed_secrets::client::{IdentityTokenOptions, ManagedSecretsClient, TaskIdentityToken};
+use crate::managed_secrets::client::{IdentityTokenOptions, ManagedSecretsClient, TaskIdentityToken};
 use warpui::r#async::{FutureExt as _, Timer};
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
