@@ -15,9 +15,9 @@ use tokio::sync::Mutex;
 #[cfg(feature = "aws-bedrock")]
 use vec1::vec1;
 #[cfg(feature = "aws-bedrock")]
-use warp_managed_secrets::client::IdentityTokenOptions;
+use crate::managed_secrets::client::IdentityTokenOptions;
 #[cfg(feature = "aws-bedrock")]
-use warp_managed_secrets::ManagedSecretManager;
+use crate::managed_secrets::ManagedSecretManager;
 use warpui::{ModelContext, ModelHandle, SingletonEntity};
 
 use crate::settings::{AISettings, AISettingsChangedEvent};

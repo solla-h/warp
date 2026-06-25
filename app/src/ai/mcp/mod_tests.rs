@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use serde_json;
-use warp_managed_secrets::ManagedSecretValue;
+use crate::managed_secrets::ManagedSecretValue;
 
 #[cfg(not(target_family = "wasm"))]
 use crate::ai::mcp::parsing::normalize_codex_toml_to_json;

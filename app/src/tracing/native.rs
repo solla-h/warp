@@ -66,7 +66,7 @@ use tracing::subscriber;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::EnvFilter;
 use url::{Host, Url};
-use warp_managed_secrets::client::ManagedSecretsClient;
+use crate::managed_secrets::client::ManagedSecretsClient;
 use warpui::AppContext;
 
 use super::cloud_agent_auth::{self, AuthContext};

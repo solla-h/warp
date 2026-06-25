@@ -8,7 +8,7 @@ use anyhow::Context;
 use tempfile::{Builder, NamedTempFile};
 use vec1::Vec1;
 use warp_core::safe_info;
-use warp_managed_secrets::ManagedSecretManager;
+use crate::managed_secrets::ManagedSecretManager;
 use warpui::{ModelSpawner, SingletonEntity};
 
 use super::super::terminal::TerminalDriver;
@@ -96,7 +96,7 @@ impl CloudProvider for AwsCloudProvider {
                     ManagedSecretManager::handle(ctx)
                         .as_ref(ctx)
                         .issue_task_identity_token(
-                            warp_managed_secrets::client::IdentityTokenOptions {
+                            crate::managed_secrets::client::IdentityTokenOptions {
                                 audience,
                                 requested_duration: duration,
                                 subject_template,

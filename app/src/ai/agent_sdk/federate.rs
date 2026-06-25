@@ -7,7 +7,7 @@ use warp_cli::federate::{FederateCommand, IssueGcpTokenArgs, IssueTokenArgs};
 use warp_cli::GlobalOptions;
 use warp_core::features::FeatureFlag;
 use warp_core::report_error;
-use warp_managed_secrets::ManagedSecretManager;
+use crate::managed_secrets::ManagedSecretManager;
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, SingletonEntity as _};
 
@@ -46,7 +46,7 @@ fn issue_token(
 
     ManagedSecretManager::handle(ctx).update(ctx, move |manager, ctx| {
         let future =
-            manager.issue_task_identity_token(warp_managed_secrets::client::IdentityTokenOptions {
+            manager.issue_task_identity_token(crate::managed_secrets::client::IdentityTokenOptions {
                 audience,
                 requested_duration: duration,
                 subject_template,

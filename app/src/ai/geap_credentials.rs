@@ -8,8 +8,8 @@ use ai::api_keys::{
 use serde::{Deserialize, Serialize};
 use vec1::vec1;
 use warp_core::features::FeatureFlag;
-use warp_managed_secrets::client::{IdentityTokenOptions, TaskIdentityToken};
-use warp_managed_secrets::ManagedSecretManager;
+use crate::managed_secrets::client::{IdentityTokenOptions, TaskIdentityToken};
+use crate::managed_secrets::ManagedSecretManager;
 use warpui::r#async::Timer;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 

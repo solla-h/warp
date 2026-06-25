@@ -49,6 +49,7 @@ mod linear;
 mod local_control;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod login_item;
+pub mod managed_secrets;
 mod menu;
 mod modal;
 mod network;
@@ -236,7 +237,9 @@ pub use warp_core::{safe_debug, safe_error, safe_info, safe_warn};
 use warp_files::FileModel;
 use warp_logging::LogDestination;
 #[cfg(feature = "cloud")]
-use warp_managed_secrets::ManagedSecretManager;
+use crate::managed_secrets::ManagedSecretManager;
+#[cfg(feature = "cloud")]
+use crate::managed_secrets::ActorProvider;
 use warpui::integration::TestDriver;
 use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
 use warpui::platform::app::ApproveTerminateResult;
@@ -2748,6 +2751,13 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
 fn init_logging_for_unit_tests_glue() {
     // Initialize terminal-friendly logging for tests from the shared logger crate.
     warp_logging::init_logging_for_unit_tests();
+}
+
+#[cfg(feature = "cloud")]
+impl managed_secrets::ActorProvider for AuthState {
+    fn actor_uid(&self) -> Option<String> {
+        self.user_id().map(|uid| uid.as_string())
+    }
 }
 
 #[cfg(test)]

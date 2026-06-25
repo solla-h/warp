@@ -42,7 +42,7 @@ use warp_core::context_flag::ContextFlag;
 use warp_core::errors::{register_error, AnyhowErrorExt, ErrorExt};
 use warp_core::telemetry::TelemetryEvent;
 #[cfg(feature = "cloud")]
-use warp_managed_secrets::client::ManagedSecretsClient;
+use crate::managed_secrets::client::ManagedSecretsClient;
 use warp_server_client::auth::{AuthClientImpl, AuthEvent, AuthSession, EXPERIMENT_ID_HEADER};
 use warp_server_client::base_client::BaseClient as _;
 use warpui::r#async::BoxFuture;
