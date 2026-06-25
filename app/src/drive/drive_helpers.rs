@@ -1,6 +1,6 @@
-use warp_server_auth::auth_state::AuthState;
-use warp_server_auth::user::PersonalObjectLimits;
-use warp_server_auth::AuthStateProvider;
+use crate::auth::auth_state::AuthState;
+use crate::auth::user::PersonalObjectLimits;
+use crate::auth::auth_state::AuthStateProvider;
 use warpui::{AppContext, SingletonEntity};
 
 use crate::auth::auth_manager::AuthManager;

@@ -2947,7 +2947,6 @@ dependencies = [
  "uuid",
  "warp_core",
  "warp_graphql",
- "warp_server_auth",
  "warp_types",
  "warpui_core",
 ]
@@ -15192,7 +15191,6 @@ dependencies = [
  "warp_multi_agent_api",
  "warp_ripgrep",
  "warp_search_core",
- "warp_server_auth",
  "warp_server_client",
  "warp_terminal",
  "warp_util",
@@ -15647,28 +15645,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "warp_server_auth"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "cynic",
- "lasso",
- "log",
- "parking_lot",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "uuid",
- "warp_core",
- "warp_graphql",
- "warp_managed_secrets",
- "warp_types",
- "warpui_core",
- "warpui_extras",
-]
-
-[[package]]
 name = "warp_server_client"
 version = "0.1.0"
 dependencies = [
@@ -15693,6 +15669,7 @@ dependencies = [
  "log",
  "mockall",
  "oauth2",
+ "parking_lot",
  "pathfinder_geometry",
  "schemars 1.0.4",
  "serde",
@@ -15702,7 +15679,7 @@ dependencies = [
  "uuid",
  "warp_core",
  "warp_graphql",
- "warp_server_auth",
+ "warp_types",
  "warpui_core",
 ]
 

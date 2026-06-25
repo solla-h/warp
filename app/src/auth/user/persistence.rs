@@ -4,7 +4,7 @@ use warpui_core::AppContext;
 use warpui_extras::secure_storage::{self, AppContextExt};
 
 use super::{AnonymousUserType, FirebaseAuthTokens, PersonalObjectLimits, UserMetadata};
-use crate::UserUid;
+use warp_types::UserUid;
 
 const USER_STORAGE_KEY: &str = "User";
 

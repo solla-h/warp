@@ -1,3 +1,4 @@
+mod credentials;
 mod session;
 
 use std::result::Result as StdResult;
@@ -37,8 +38,9 @@ use warp_graphql::queries::api_keys::{
 };
 use warp_graphql::queries::get_user::{GetUser, GetUserVariables, UserOutput as GqlUserOutput};
 use warp_graphql::queries::get_user_settings::{GetUserSettings, GetUserSettingsVariables};
-use warp_server_auth::credentials::{AuthToken, Credentials, FirebaseToken, LoginToken};
-pub use warp_server_auth::user_uid;
+
+pub use credentials::{AuthToken, Credentials, FirebaseToken, LoginToken};
+pub use warp_types::user_uid;
 
 use crate::base_client::BaseClient;
 use crate::graphql_helpers::send_graphql_request;

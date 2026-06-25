@@ -2,11 +2,9 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use futures::executor::block_on;
-use warp_server_auth::auth_state::AuthState;
-use warp_server_auth::credentials::{AuthToken, Credentials, LoginToken};
-use warp_server_auth::user::FirebaseAuthTokens;
 
-use super::AuthSession;
+use super::{AuthState, AuthSession};
+use super::credentials::{AuthToken, Credentials, FirebaseAuthTokens, LoginToken};
 
 fn session_with_state(
     auth_state: Arc<AuthState>,

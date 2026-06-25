@@ -13,16 +13,16 @@ use warp_core::features::FeatureFlag;
 use warp_graphql::mutations::create_anonymous_user::{
     AnonymousUserType, CreateAnonymousUserResult,
 };
-use warp_server_auth::user::persistence::PersistedUser;
-use warpui::clipboard::ClipboardContent;
-use warpui::{Entity, ModelContext, SingletonEntity, UpdateModel};
 
 use super::auth_state::{AuthState, PersistAction};
 use super::auth_view_modal::{AuthRedirectPayload, AuthViewVariant};
 use super::credentials::{Credentials, FirebaseToken, LoginToken};
 use super::user::User;
+use super::user::persistence::PersistedUser;
 use super::user_properties::UserProperties;
 use super::{AuthStateProvider, UserUid};
+use warpui::clipboard::ClipboardContent;
+use warpui::{Entity, ModelContext, SingletonEntity, UpdateModel};
 use crate::ai::llms::LLMPreferences;
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::ai::AIRequestUsageModel;

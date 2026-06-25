@@ -18,7 +18,7 @@ use sentry::{ClientInitGuard, IntoDsn, SessionMode};
 #[cfg(linux_or_windows)]
 pub use sentry_minidump::run_server as run_minidump_server;
 use warp_core::channel::Channel;
-use warp_server_auth::anonymous_id::get_or_create_anonymous_id;
+use crate::auth::anonymous_id::get_or_create_anonymous_id;
 use warpui::r#async::block_on;
 use warpui::rendering::GPUDeviceInfo;
 use warpui::windowing::state::ApplicationStage;
