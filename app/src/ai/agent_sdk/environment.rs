@@ -20,10 +20,7 @@ use crate::ai::cloud_environments::{
 };
 use crate::auth::UserUid;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
+use crate::cloud_object::{CloudObject, CloudObjectLookup as _, UpdateManager, UpdateManagerEvent, ObjectOperation, OperationSuccessType};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
@@ -643,7 +640,7 @@ impl EnvironmentCommandRunner {
         };
 
         // Create on the server
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.create_ambient_agent_environment(environment, client_id, owner, ctx);
         });
 
@@ -885,9 +882,9 @@ impl EnvironmentCommandRunner {
 
         // Update the environment via UpdateManager
         let revision = environment.metadata.revision.clone();
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager
-                .update_object::<GenericStringObjectId, CloudAmbientAgentEnvironmentModel>(
+                .update_object::<GenericStringObjectId, CloudAmbientAgentEnvironmentModel, _, _>(
                     CloudAmbientAgentEnvironmentModel::new(updated_env.clone()),
                     environment.sync_id(),
                     revision,
@@ -977,7 +974,7 @@ impl EnvironmentCommandRunner {
     }
 
     fn execute_delete(type_and_id: CloudObjectTypeAndId, ctx: &mut ModelContext<Self>) {
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.delete_object_by_user(type_and_id, ctx);
         });
 

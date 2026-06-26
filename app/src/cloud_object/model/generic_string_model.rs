@@ -13,12 +13,11 @@ use crate::cloud_object::{
     SerializedModel,
     CloudModelType, CloudObject, CloudObjectEventEntrypoint, CreateCloudObjectResult,
     CreateObjectRequest, GenericCloudObject, GenericServerObject, GenericStringObjectFormat,
-    GenericStringObjectUniqueKey, ObjectType, Revision, UpdateCloudObjectResult,
+    GenericStringObjectUniqueKey, InitiatedBy, ObjectType, Revision, UpdateCloudObjectResult,
 };
 use crate::drive::items::WarpDriveItem;
 use crate::drive::CloudObjectTypeAndId;
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
 

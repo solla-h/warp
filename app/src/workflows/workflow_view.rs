@@ -70,7 +70,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
     UpdateManagerEvent,
 };
@@ -673,9 +673,9 @@ impl WorkflowView {
         // If we have a parent folder we are trying to load as a part of this workflow, fetch that instead
         let id_to_fetch = settings.focused_folder_id.unwrap_or(workflow_id);
         let fetch_cloud_object_rx =
-            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 update_manager.fetch_single_cloud_object(
-                    &id_to_fetch,
+                    id_to_fetch,
                     FetchSingleObjectOption::None,
                     ctx,
                 )
@@ -1598,7 +1598,7 @@ impl WorkflowView {
 
         match self.workflow_view_mode {
             WorkflowViewMode::Edit => {
-                UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                     update_manager.update_workflow(
                         workflow.clone(),
                         self.workflow_id,
@@ -1627,7 +1627,7 @@ impl WorkflowView {
                 };
 
                 if let Some(space) = self.owner {
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_workflow(
                             workflow.clone(),
                             space,
@@ -1991,9 +1991,9 @@ impl WorkflowView {
             return;
         }
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.duplicate_object(
-                &CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
+                CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,
             );
         });
@@ -2007,7 +2007,7 @@ impl WorkflowView {
 
         self.close(ctx);
 
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.trash_object(
                 CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,
@@ -2020,7 +2020,7 @@ impl WorkflowView {
             return;
         }
 
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.untrash_object(
                 CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,

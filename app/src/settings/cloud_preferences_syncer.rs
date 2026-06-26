@@ -23,7 +23,7 @@ use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType};
 use crate::drive::CloudObjectTypeAndId;
 use crate::report_if_error;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     GenericStringObjectInput, InitiatedBy, UpdateManager, UpdateManagerEvent,
 };
 use crate::server::ids::{ClientId, SyncId};
@@ -214,7 +214,7 @@ impl CloudPreferencesSyncer {
                     return;
                 }
                 for preference in updated {
-                    syncer.maybe_sync_cloud_pref_to_local(&preference.storage_key, ctx);
+                    syncer.maybe_sync_cloud_pref_to_local(&preference, ctx);
                 }
             }
         });
@@ -341,7 +341,7 @@ impl CloudPreferencesSyncer {
                     log::debug!("Retrying failed preference object with sync_id {sync_id:?}");
                     UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                         update_manager.resync_object(
-                            &CloudObjectTypeAndId::GenericStringObject {
+                            CloudObjectTypeAndId::GenericStringObject {
                                 object_type: GenericStringObjectFormat::Json(
                                     JsonObjectType::Preference,
                                 ),
@@ -734,12 +734,12 @@ impl CloudPreferencesSyncer {
 
         if let Some((model, revision, id)) = model_revision_and_id {
             // Save the update.
-            UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                 log::info!(
                     "Updating cloud preference with storage key {storage_key} to value \
                     {local_value}"
                 );
-                update_manager.update_object(model, id, revision, ctx);
+                update_manager.update_object::<(), _, _, _>(model, id, revision, ctx);
             });
         }
     }
@@ -758,12 +758,12 @@ impl CloudPreferencesSyncer {
                     &preference_to_create.value,
                     preference_to_create.syncing_mode,
                 ) {
-                    Ok(new_pref) => Some(GenericStringObjectInput::<Preference, JsonSerializer> {
-                        id: self.client_id_provider.next_client_id(),
-                        model: CloudPreferenceModel::new(new_pref),
-                        initial_folder_id: None,
-                        entrypoint: CloudObjectEventEntrypoint::Unknown,
-                    }),
+                    Ok(new_pref) => Some(GenericStringObjectInput::<Preference, JsonSerializer>::new(
+                        self.client_id_provider.next_client_id(),
+                        new_pref,
+                        None,
+                        CloudObjectEventEntrypoint::Unknown,
+                    )),
                     Err(e) => {
                         log::warn!("Error {e} creating cloud preference with {storage_key}");
                         None
@@ -787,7 +787,7 @@ impl CloudPreferencesSyncer {
                 inputs.len(),
                 inputs
                     .iter()
-                    .map(|input| input.model.string_model.storage_key.clone())
+                    .map(|input| input.model.storage_key.clone())
                     .collect::<Vec<_>>()
             );
             UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {

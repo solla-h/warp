@@ -34,7 +34,6 @@ use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::CloudObjectLookup as _;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ServerId, SyncId};
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
 use crate::server::server_api::ai::InitialSnapshotToken;
@@ -49,6 +48,7 @@ use crate::terminal::view::ambient_agent::{SetupCommandGroupId, SetupCommandStat
 use crate::terminal::CLIAgent;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::AdminEnablementSetting;
+use crate::cloud_object::UpdateManager;
 
 /// Wire prompt substituted for an empty-prompt handoff against an active source
 /// conversation that also carries uploaded snapshot content.

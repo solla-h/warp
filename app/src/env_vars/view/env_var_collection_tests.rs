@@ -9,7 +9,6 @@ use crate::cloud_object::model::view::CloudViewModel;
 use crate::env_vars::active_env_var_collection_data::SavingStatus;
 use crate::env_vars::view::env_var_collection::EnvVarCollectionView;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::test_util::settings::initialize_settings_for_tests;

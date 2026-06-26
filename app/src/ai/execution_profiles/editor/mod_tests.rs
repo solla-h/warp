@@ -18,7 +18,6 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspaces::team_tester::TeamTesterStatus;

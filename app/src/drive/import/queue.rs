@@ -4,12 +4,9 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 
 use super::nodes::{self, FileId};
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, Owner};
+use crate::cloud_object::{CloudObjectEventEntrypoint, InitiatedBy, Owner, UpdateManagerEvent, UpdateManager};
 use crate::drive::folders::FolderId;
 use crate::notebooks::CloudNotebookModel;
-use crate::server::cloud_objects::update_manager::{
-    InitiatedBy, ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::{ClientId, SyncId};
 use crate::workflows::workflow::Workflow;
 use crate::workflows::workflow_enum::WorkflowEnum;
@@ -260,63 +257,6 @@ impl ImportQueue {
         event: &UpdateManagerEvent,
         ctx: &mut ModelContext<Self>,
     ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if matches!(&result.operation, ObjectOperation::Create { .. }) {
-            let Some(client_id) = result.client_id else {
-                return;
-            };
-
-            let is_successful = matches!(&result.success_type, OperationSuccessType::Success);
-            let server_id = result.server_id;
-            if let Some(file_id) = self.file_completion.request_completed(client_id) {
-                ctx.emit(ImportQueueEvent::FileCompleted {
-                    file_id,
-                    server_id: server_id.map(|server_id| server_id.uid()),
-                });
-                return;
-            }
-
-            // Return early if we are not successfully uploading a folder.
-            if !is_successful {
-                if let Some(node_id) = self.client_to_node_folder_id.get(&client_id) {
-                    ctx.emit(ImportQueueEvent::FolderCompleted {
-                        folder_id: *node_id,
-                        server_id: server_id.map(|server_id| server_id.uid()),
-                    });
-                }
-                return;
-            }
-
-            let cloud_model = CloudModel::as_ref(ctx);
-
-            let Some(folder_id) = cloud_model
-                .get_folder_by_uid(&result.server_id.expect("Expect id").uid())
-                .and_then(|folder| folder.id.into_server())
-            else {
-                return;
-            };
-
-            let replaced = match self.client_to_server_id.get_mut(&client_id) {
-                Some(value) if value.is_none() => {
-                    *value = Some(folder_id.into());
-                    true
-                }
-                _ => false,
-            };
-
-            if replaced {
-                if let Some(node_id) = self.client_to_node_folder_id.get(&client_id) {
-                    ctx.emit(ImportQueueEvent::FolderCompleted {
-                        folder_id: *node_id,
-                        server_id: server_id.map(|server_id| server_id.uid()),
-                    });
-                }
-                self.dequeue(ctx);
-            }
-        }
     }
 }
 

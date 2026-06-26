@@ -16,7 +16,6 @@ use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusState};
 use crate::pane_group::{BackingView as _, PaneId};
 use crate::search::files::model::FileSearchModel;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::keys::TerminalKeybindings;

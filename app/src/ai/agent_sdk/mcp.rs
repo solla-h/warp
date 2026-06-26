@@ -6,8 +6,7 @@ use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::ai::agent_sdk::output::{self, TableFormat};
 use crate::ai::mcp::TemplatableMCPServerManager;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-
+use crate::cloud_object::UpdateManager;
 /// Handle MCP-related CLI commands.
 pub fn run(
     ctx: &mut AppContext,

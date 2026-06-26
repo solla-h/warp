@@ -18,7 +18,6 @@ use crate::drive::CloudObjectTypeAndId;
 use crate::menu::MenuItem;
 use crate::network::NetworkStatus;
 use crate::notebooks::{CloudNotebook, CloudNotebookModel};
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, ServerIdAndType, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;

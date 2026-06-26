@@ -13,7 +13,7 @@ use crate::ai::ambient_agents::github_auth_url::{AuthSource, GithubAuthRedirectT
 use crate::ai::cloud_environments;
 use crate::appearance::Appearance;
 use crate::modal::MODAL_BACKDROP_OPACITY;
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::server::ids::{ClientId, SyncId};
 use crate::settings_view::update_environment_form::{
     EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
@@ -122,7 +122,7 @@ impl HandoffEnvironmentCreationModal {
 
                 let client_id = ClientId::default();
                 let create_future =
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_ambient_agent_environment_online(
                             environment.clone(),
                             client_id,
@@ -131,17 +131,9 @@ impl HandoffEnvironmentCreationModal {
                         )
                     });
 
-                ctx.spawn(create_future, |_me, result, ctx| match result {
-                    Ok(server_id) => {
-                        let env_id = SyncId::ServerId(server_id);
-                        ctx.emit(HandoffEnvironmentCreationModalEvent::Created { env_id });
-                    }
-                    Err(err) => {
-                        log::error!("Failed to create environment for handoff: {err:#}");
-                        ctx.emit(HandoffEnvironmentCreationModalEvent::CreationFailed {
-                            error_message: err.to_string(),
-                        });
-                    }
+                ctx.spawn(create_future, |_me, server_id, ctx| {
+                    let env_id = SyncId::ServerId(server_id);
+                    ctx.emit(HandoffEnvironmentCreationModalEvent::Created { env_id });
                 });
             }
             UpdateEnvironmentFormEvent::Cancelled => {

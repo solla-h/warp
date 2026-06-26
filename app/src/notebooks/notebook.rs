@@ -67,7 +67,7 @@ use crate::notebooks::CloudNotebook;
 use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusEvent};
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::cloud_objects::update_manager::{FetchSingleObjectOption, UpdateManager};
+use crate::cloud_object::{FetchSingleObjectOption, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, NotebookActionEvent, NotebookTelemetryMetadata,
@@ -815,14 +815,14 @@ impl NotebookView {
             // If the notebook has already been committed, then update the local
             // memory and server data via update manager
             ActiveNotebook::CommittedNotebook(id) => UpdateManager::handle(ctx)
-                .update(ctx, move |update_manager, ctx| {
+                .update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                     update_manager.update_notebook_data(content, id, ctx)
                 }),
             // If the notebook hasn't been committed yet, create the notebook through update
             // manager, and update the active notebook
             ActiveNotebook::NewNotebook(notebook) => {
                 if let Some(client_id) = notebook.id.into_client() {
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_notebook(
                             client_id,
                             notebook.permissions.owner,
@@ -896,7 +896,7 @@ impl NotebookView {
     /// are, then sets the current editor to be None both locally and on the server
     fn try_give_up_edit_access(&self, ctx: &mut ViewContext<Self>) {
         let id = self.active_notebook_data.as_ref(ctx).id();
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             if let Some(id) = id {
                 update_manager.give_up_notebook_edit_access(id, ctx);
             }
@@ -1113,7 +1113,7 @@ impl NotebookView {
         }
 
         let id = active_notebook.id();
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             if let Some(id) = id {
                 update_manager.grab_notebook_edit_access(id, optimistically_grant_access, ctx);
             }
@@ -1207,9 +1207,9 @@ impl NotebookView {
 
     fn duplicate_object(&mut self, ctx: &mut ViewContext<Self>) {
         if let Some(notebook_id) = self.notebook_id(ctx) {
-            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 update_manager.duplicate_object(
-                    &CloudObjectTypeAndId::from_id_and_type(notebook_id, ObjectType::Notebook),
+                    CloudObjectTypeAndId::from_id_and_type(notebook_id, ObjectType::Notebook),
                     ctx,
                 );
             });
@@ -1221,7 +1221,7 @@ impl NotebookView {
         if let Some(notebook_id) = self.notebook_id(ctx) {
             self.close(ctx);
 
-            UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                 update_manager.trash_object(
                     CloudObjectTypeAndId::from_id_and_type(notebook_id, ObjectType::Notebook),
                     ctx,
@@ -1236,7 +1236,7 @@ impl NotebookView {
                 return;
             }
 
-            UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                 update_manager.untrash_object(
                     CloudObjectTypeAndId::from_id_and_type(notebook_id, ObjectType::Notebook),
                     ctx,
@@ -1293,11 +1293,11 @@ impl NotebookView {
             return;
         };
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.create_notebook(
                 copy_client_id,
                 personal_drive,
-                None,
+                None::<()>,
                 CloudNotebookModel {
                     title: title.clone(),
                     data: content,
@@ -1544,9 +1544,9 @@ impl NotebookView {
         // If we have a parent folder we are trying to load as a part of this notebook, fetch that instead
         let id_to_fetch = settings.focused_folder_id.unwrap_or(notebook_id);
         let fetch_cloud_object_rx =
-            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 update_manager.fetch_single_cloud_object(
-                    &id_to_fetch,
+                    id_to_fetch,
                     FetchSingleObjectOption::None,
                     ctx,
                 )
@@ -1743,14 +1743,14 @@ impl NotebookView {
             // If the notebook has already been committed, then update the local
             // memory and server data via update manager
             ActiveNotebook::CommittedNotebook(id) => UpdateManager::handle(ctx)
-                .update(ctx, |update_manager, ctx| {
+                .update(ctx, |update_manager: &mut UpdateManager, ctx| {
                     update_manager.update_notebook_title(title.clone(), id, ctx)
                 }),
             // If the notebook hasn't been committed yet, create the notebook through update
             // manager, and update the active notebook
             ActiveNotebook::NewNotebook(notebook) => {
                 if let Some(client_id) = notebook.id.into_client() {
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_notebook(
                             client_id,
                             notebook.permissions.owner,
@@ -1835,8 +1835,8 @@ impl NotebookView {
             return;
         };
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-            update_manager.replace_object_with_conflict(&id.uid(), ctx);
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+            update_manager.replace_object_with_conflict(id.uid(), ctx);
         });
 
         // Load the server's version of the notebook now that the cloud model has been updated.

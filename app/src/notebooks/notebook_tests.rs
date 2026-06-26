@@ -35,7 +35,6 @@ use crate::notebooks::notebook::FocusedComponent;
 use crate::notebooks::{CloudNotebook, CloudNotebookModel, NotebookLocation};
 use crate::pane_group::PaneEvent;
 use crate::search::files::model::FileSearchModel;
-use crate::server::cloud_objects::update_manager::{InitialLoadResponse, UpdateManager};
 use crate::server::ids::ClientId;
 use crate::server::ids::SyncId::ServerId;
 use crate::server::server_api::ServerApiProvider;

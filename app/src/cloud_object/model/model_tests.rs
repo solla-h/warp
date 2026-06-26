@@ -26,8 +26,6 @@ use crate::drive::folders::{CloudFolderModel, FolderId};
 use crate::drive::DriveIndexVariant;
 use crate::features::FeatureFlag;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
-use crate::server::cloud_objects::listener::ObjectUpdateMessage;
-use crate::server::cloud_objects::update_manager::InitialLoadResponse;
 use crate::server::ids::{ServerId, ServerIdAndType};
 use cloud_object_models::ObjectClient;
 use crate::server::server_api::team::MockTeamClient;

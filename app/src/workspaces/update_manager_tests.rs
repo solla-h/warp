@@ -8,7 +8,6 @@ use crate::auth::AuthManager;
 use crate::cloud_object::model::actions::ObjectActions;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions, ServerWorkflow};
-use crate::server::cloud_objects::update_manager::InitialLoadResponse;
 use crate::server::ids::SyncId;
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::{MockWorkspaceClient, WorkspaceClient};

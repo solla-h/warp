@@ -45,7 +45,6 @@ use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
-use crate::server::cloud_objects::update_manager::{UpdateManager, UpdateManagerEvent};
 use crate::server::ids::{ServerId, SyncId};
 use crate::server::retry_strategies::{
     is_transient_http_error, OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL_RETRY_STRATEGY,
@@ -56,6 +55,8 @@ use crate::server::server_api::ServerApiProvider;
 use crate::settings::AISettings;
 use crate::ui_components::icons::Icon;
 use crate::workspace::{RestoreConversationLayout, WorkspaceAction};
+use crate::cloud_object::UpdateManagerEvent;
+use crate::cloud_object::UpdateManager;
 
 const POLLING_INTERVAL: Duration = Duration::from_secs(30);
 const RTC_TASK_REFRESH_THROTTLE: Duration = Duration::from_secs(5);
@@ -721,29 +722,6 @@ impl AgentConversationsModel {
         event: &UpdateManagerEvent,
         ctx: &mut ModelContext<Self>,
     ) {
-        let UpdateManagerEvent::AmbientTaskUpdated { task_id, timestamp } = event else {
-            return;
-        };
-
-        let has_list_consumers = self
-            .active_data_consumers_per_window
-            .values()
-            .any(|views| !views.is_empty());
-        if has_list_consumers {
-            // (a) If management view or conversation list is open, throttled list-fetch.
-            self.handle_rtc_for_list_views(*timestamp, ctx);
-        } else {
-            let has_open_tab = ActiveAgentViewsModel::as_ref(ctx)
-                .get_terminal_view_id_for_ambient_task(*task_id)
-                .is_some();
-            if has_open_tab {
-                // (b) If this task has an open tab (any window), force a re-fetch.
-                self.async_fetch_task(task_id, ctx);
-            } else {
-                // (c) No list surface open: record earliest timestamp for flush on next view open.
-                record_earliest_rtc_task_refresh_timestamp(&mut self.dirty_since, *timestamp);
-            }
-        }
     }
 
     // Handle RTC invalidations for list views, respecting the refresh throttling.

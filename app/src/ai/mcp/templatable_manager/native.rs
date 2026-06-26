@@ -38,13 +38,11 @@ use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{
     CloudObject, CloudObjectLocation, CloudObjectLookup as _, CloudObjectMetadataExt,
-    CloudObjectUuidLookup as _, GenericStringObjectFormat, JsonObjectType, Space,
-};
+    CloudObjectUuidLookup as _, GenericStringObjectFormat, InitiatedBy, JsonObjectType, Space, UpdateManager};
 use crate::drive::CloudObjectTypeAndId;
 use crate::persistence::{
     database_file_path_for_scope, establish_ro_connection, ModelEvent, PersistenceScope,
 };
-use crate::server::cloud_objects::update_manager::{InitiatedBy, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::telemetry::{
     MCPServerModel, MCPServerTelemetryTransportType, MCPTemplateCreationSource, TelemetryEvent,

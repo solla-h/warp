@@ -16,7 +16,6 @@ use crate::ai::cloud_environments::{
 use crate::auth::AuthStateProvider;
 use crate::network::NetworkStatus;
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::settings::PrivacySettings;

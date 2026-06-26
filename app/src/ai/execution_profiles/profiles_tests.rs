@@ -16,7 +16,6 @@ use crate::cloud_object::{
     ServerObjectGuest, ServerPermissions,
 };
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ServerId, SyncId};
 use crate::settings::PrivacySettings;
 use crate::test_util::settings::initialize_settings_for_tests;

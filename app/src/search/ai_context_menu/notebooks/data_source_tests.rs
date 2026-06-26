@@ -14,7 +14,6 @@ use crate::notebooks::CloudNotebookModel;
 use crate::search::ai_context_menu::notebooks::data_source::NotebookDataSource;
 use crate::search::data_source::Query;
 use crate::search::mixer::SyncDataSource;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ServerId, SyncId};
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;

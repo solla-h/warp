@@ -41,7 +41,7 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::search::external_secrets::view::ExternalSecretsMenu;
-use crate::server::cloud_objects::update_manager::{FetchSingleObjectOption, UpdateManager};
+use crate::cloud_object::{FetchSingleObjectOption, UpdateManager};
 use crate::server::ids::{ServerId, SyncId};
 use crate::terminal::model::secrets::SecretLevel;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
@@ -593,7 +593,7 @@ impl EnvVarCollectionView {
         window_id: WindowId,
         ctx: &mut ViewContext<Self>,
     ) {
-        let initial_load_complete = UpdateManager::handle(ctx).update(ctx, |update_manager, _| {
+        let initial_load_complete = UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, _| {
             update_manager.initial_load_complete()
         });
         ctx.spawn(initial_load_complete, move |me, _, ctx| {
@@ -624,9 +624,9 @@ impl EnvVarCollectionView {
         ctx: &mut ViewContext<Self>,
     ) {
         let fetch_cloud_object_rx =
-            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 update_manager.fetch_single_cloud_object(
-                    &env_var_collection_id,
+                    env_var_collection_id,
                     FetchSingleObjectOption::None,
                     ctx,
                 )
@@ -826,7 +826,7 @@ impl EnvVarCollectionView {
             // If the EVC has already been committed, then update the local
             // memory and server data via update manager
             ActiveEnvVarCollection::CommittedEnvVarCollection(id) => UpdateManager::handle(ctx)
-                .update(ctx, |update_manager, ctx| {
+                .update(ctx, |update_manager: &mut UpdateManager, ctx| {
                     update_manager.update_env_var_collection(
                         new_env_var_collection,
                         id,
@@ -839,7 +839,7 @@ impl EnvVarCollectionView {
             // manager, and update the active EVC
             ActiveEnvVarCollection::NewEnvVarCollection(env_var_collection) => {
                 if let Some(client_id) = env_var_collection.id.into_client() {
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_env_var_collection(
                             client_id,
                             env_var_collection.permissions.owner,

@@ -204,7 +204,7 @@ use crate::cloud_object::model::actions::ObjectActionType;
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObject, CloudObjectLookup as _, Space};
+use crate::cloud_object::{CloudObject, CloudObjectLookup as _, Space, UpdateManager};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code_review::diff_state::DiffMode;
@@ -244,7 +244,6 @@ use crate::search::ai_context_menu::search::is_valid_search_query;
 use crate::search::ai_context_menu::view::AIContextMenuAction;
 use crate::search::slash_command_menu::static_commands::commands::{self, COMMAND_REGISTRY};
 use crate::search::QueryFilter;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::SyncId;
 use crate::server::server_api::ai::AttachmentFileInfo;
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
@@ -14090,11 +14089,11 @@ impl Input {
                     ctx
                 );
 
-                UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                     update_manager.record_object_action(
                         workflow.cloud_object_type_and_id(),
                         ObjectActionType::Execute,
-                        None,
+                        None::<()>,
                         ctx,
                     )
                 });

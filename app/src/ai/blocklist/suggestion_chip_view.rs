@@ -14,14 +14,13 @@ use crate::ai::facts::{AIFact, AIMemory, CloudAIFactModel};
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::drive::CloudObjectTypeAndId;
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::{ClientId, SyncId};
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{ActionButton, ActionButtonTheme, SecondaryTheme};
 use crate::TelemetryEvent;
+use crate::cloud_object::UpdateManagerEvent;
+use crate::cloud_object::UpdateManager;
 
 const MAX_CHIP_WIDTH: f32 = 316.;
 
@@ -269,30 +268,6 @@ impl SuggestionChipView {
         event: &UpdateManagerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if let (ObjectOperation::Create { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            if self.sync_id.into_client() == result.client_id {
-                if let Some(server_id) = result.server_id {
-                    self.sync_id = SyncId::ServerId(server_id);
-                    // Reload the rule from the cloud model.
-                    match &mut self.suggestion {
-                        Suggestion::Rule { .. } => {
-                            self.load_suggestion(ctx);
-                        }
-                        Suggestion::AgentModeWorkflow { .. } => {
-                            // Loading agent mode workflows is not supported
-                            // as there is no editing flow for them.
-                        }
-                    }
-                    self.on_add_suggestion(ctx);
-                }
-            }
-        }
     }
 
     fn handle_cloud_model_event(&mut self, event: &CloudModelEvent, ctx: &mut ViewContext<Self>) {

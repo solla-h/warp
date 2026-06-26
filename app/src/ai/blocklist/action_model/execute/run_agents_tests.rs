@@ -24,7 +24,6 @@ use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::SyncId;
 use crate::settings::PrivacySettings;
 use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;

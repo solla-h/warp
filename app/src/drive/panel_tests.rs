@@ -11,7 +11,6 @@ use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::Space;
 use crate::drive::index::DriveIndexSection;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;

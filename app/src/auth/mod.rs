@@ -38,7 +38,6 @@ use crate::code::editor_management::{CodeEditorStatus, CodeEditorSummary};
 use crate::env_vars::manager::EnvVarCollectionManager;
 use crate::notebooks::manager::NotebookManager;
 use crate::palette::PaletteMode;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::telemetry::{PaletteSource, TelemetryEvent};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::{
@@ -50,6 +49,7 @@ use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
 use crate::workflows::manager::WorkflowManager;
 use crate::workspace::{Workspace, WorkspaceAction};
 use crate::workspaces::update_manager::TeamUpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::{
     focus_running_window_and_show_native_modal, persistence, report_if_error,
     send_telemetry_sync_from_app_ctx, GlobalResourceHandlesProvider,
@@ -240,7 +240,7 @@ pub fn log_out(app: &mut AppContext) {
 
 
     // Stop the cloud object and workspace metadata polling loops that were started on login.
-    UpdateManager::handle(app).update(app, |manager, _| {
+    UpdateManager::handle(app).update(app, |manager: &mut UpdateManager, _| {
         manager.stop_polling_for_updated_objects();
     });
     TeamUpdateManager::handle(app).update(app, |manager, _| {
