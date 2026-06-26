@@ -42,7 +42,6 @@ use websocket::{Message, Sink, Stream, WebSocket, WebsocketMessage as _};
 
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::editor::{CrdtOperation, ReplicaId};
-use crate::server::iap::IapManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::shared_session::network::heartbeat::{Event as HeartbeatEvent, Heartbeat};
@@ -793,11 +792,7 @@ impl Network {
 
         let server_api = ServerApiProvider::as_ref(ctx).get();
         let anonymous_id = AuthStateProvider::as_ref(ctx).get().anonymous_id();
-        let iap_headers: Vec<(&str, String)> = IapManager::as_ref(ctx)
-            .iap_state()
-            .and_then(|state| state.proxy_auth_header())
-            .into_iter()
-            .collect();
+        let iap_headers: Vec<(&str, String)> = Vec::new();
         let connect_handle = ctx.spawn(
             async move {
                 let Some(create_endpoint) = connect_endpoint("/sessions/create".to_owned()) else {
@@ -873,9 +868,6 @@ impl Network {
                         return;
                     }
                     network.clear_startup_transport_handle(attempt);
-                    IapManager::handle(ctx).update(ctx, |manager, ctx| {
-                        manager.check_ws_connect_error(&e, ctx);
-                    });
                     let cause = Arc::new(e.context("Failed to create shared session"));
                     network.handle_startup_failure_with_cause(
                         StartupFailure::Transport,
@@ -1062,7 +1054,6 @@ impl Network {
 
         let server_api = ServerApiProvider::as_ref(ctx).get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
-        let iap_state = IapManager::as_ref(ctx).iap_state();
 
         let abort_handle = ctx
             .spawn_with_retry_on_error(
@@ -1073,15 +1064,10 @@ impl Network {
                     let reconnect_endpoint = reconnect_endpoint.clone();
                     let auth_state = auth_state.clone();
                     let server_api = server_api.clone();
-                    let iap_state = iap_state.clone();
                     async move {
                         // Re-read the IAP header each attempt so a refresh that
                         // landed since the last try is picked up (staging only).
-                        let iap_headers: Vec<(&str, String)> = iap_state
-                            .as_ref()
-                            .and_then(|state| state.proxy_auth_header())
-                            .into_iter()
-                            .collect();
+                        let iap_headers: Vec<(&str, String)> = Vec::new();
                         let socket = WebSocket::connect_with_headers(
                             &reconnect_endpoint,
                             None::<&str>,
@@ -1134,9 +1120,6 @@ impl Network {
                         network.on_websocket_connected(None, ws_proxy_rx, sink, stream, ctx);
                     }
                     RequestState::RequestFailedRetryPending(e) => {
-                        IapManager::handle(ctx).update(ctx, |manager, ctx| {
-                            manager.check_ws_connect_error(&e, ctx);
-                        });
                         sharer_warn!(
                             network,
                             "Failed to reconnect to shared session, will retry: {e}"

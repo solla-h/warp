@@ -21,7 +21,6 @@ use super::{
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
 use crate::editor::ReplicaId;
-use crate::server::iap::IapManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::terminal::shared_session::{
@@ -647,9 +646,6 @@ fn test_messages_are_buffered_before_session_initialized() {
 fn test_messages_are_buffered_while_reconnecting() {
     App::test((), |mut app| async move {
         app.add_singleton_model(|_| ServerApiProvider::new_for_test());
-        // Disabled (`None`) IapManager so the reconnect path, which reads the
-        // singleton, doesn't panic; inert no-op in tests.
-        app.add_singleton_model(|ctx| IapManager::new(None, ctx));
         app.add_singleton_model(|_| AuthStateProvider::new_for_test());
         app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
         app.add_singleton_model(AuthManager::new_for_test);
