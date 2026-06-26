@@ -56,7 +56,6 @@ use crate::ai::voice::transcribe::{TranscribeRequest, TranscribeResponse};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::auth::UserUid;
-use crate::server::iap::{IapManager, IapState};
 use crate::server::server_api::presigned_upload::HttpStatusError;
 use crate::server::telemetry::TelemetryApi;
 use crate::settings::PrivacySettingsSnapshot;
@@ -406,8 +405,6 @@ pub struct ServerApi {
     ambient_agent_task_id: Arc<RwLock<Option<AmbientAgentTaskId>>>,
     /// The source of agent runs (e.g. CLI, GitHub Action). Set once at startup and immutable.
     agent_source: Option<ai::AgentSource>,
-    /// IAP credential cache for staging server access. [`None`] on production builds.
-    iap_state: Option<Arc<super::iap::IapState>>,
 
     #[cfg(feature = "agent_mode_evals")]
     eval_user_id: Option<i32>,
@@ -418,13 +415,9 @@ impl ServerApi {
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
         agent_source: Option<ai::AgentSource>,
-        iap_state: Option<Arc<IapState>>,
         ctx: &mut ModelContext<ServerApiProvider>,
     ) -> Self {
         let mut client = http_client::Client::new();
-        if let Some(state) = iap_state.as_ref() {
-            client.set_iap_token_provider(state.clone());
-        }
         let mut telemetry_api = TelemetryApi::new();
         if ContextFlag::NetworkLogConsole.is_enabled() {
             super::network_logging::init([&mut client, &mut telemetry_api.client], ctx);
@@ -434,7 +427,6 @@ impl ServerApi {
             auth_state,
             event_sender,
             agent_source,
-            iap_state,
             telemetry_api,
         )
     }
@@ -444,7 +436,6 @@ impl ServerApi {
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
         agent_source: Option<ai::AgentSource>,
-        iap_state: Option<Arc<IapState>>,
         telemetry_api: TelemetryApi,
     ) -> Self {
         // We generate a random user ID for evals so we can run evals in parallel.
@@ -470,7 +461,6 @@ impl ServerApi {
             ambient_workload_token: Arc::new(Mutex::new(None)),
             ambient_agent_task_id: Arc::new(RwLock::new(None)),
             agent_source,
-            iap_state,
             #[cfg(feature = "agent_mode_evals")]
             eval_user_id,
         }
@@ -481,7 +471,7 @@ impl ServerApi {
         let (tx, _) = async_channel::unbounded();
         let auth_state = std::sync::Arc::new(AuthState::new_for_test());
         let client = std::sync::Arc::new(http_client::Client::new());
-        Self::new_with_parts(client, auth_state, tx, None, None, TelemetryApi::new())
+        Self::new_with_parts(client, auth_state, tx, None, TelemetryApi::new())
     }
 
     #[cfg(test)]
@@ -490,7 +480,7 @@ impl ServerApi {
         let auth_state = Arc::new(AuthState::new_for_test());
         let client = Arc::new(http_client::Client::new_for_test());
 
-        Self::new_with_parts(client, auth_state, tx, None, None, TelemetryApi::new())
+        Self::new_with_parts(client, auth_state, tx, None, TelemetryApi::new())
     }
 
     #[cfg(all(test, feature = "skip_login"))]
@@ -506,7 +496,6 @@ impl ServerApi {
             Arc::new(http_client::Client::new_for_test()),
             auth_state,
             event_sender,
-            None,
             None,
             TelemetryApi::new(),
         )
@@ -536,86 +525,6 @@ impl ServerApi {
     pub fn set_ambient_agent_task_id(&self, task_id: Option<AmbientAgentTaskId>) {
         *self.ambient_agent_task_id.write() = task_id;
     }
-
-    /// Inspects a response for the IAP challenge header and emits an
-    /// `IapChallengeReceived` event if detected. Returns `true` if the
-    /// response was an IAP challenge.
-    ///
-    /// TODO(isaiah): implement retries on IAP challenge failures so the
-    /// triggering request transparently succeeds after the refresh
-    /// completes instead of bubbling up a one-off error to the caller.
-    fn check_for_iap_challenge(&self, response: &http_client::Response) {
-        if self.iap_state.is_none() {
-            return;
-        }
-        if http_client::iap::is_iap_challenge(response.status(), response.headers()) {
-            log::warn!(
-                "Received IAP challenge (status {}); notifying IapManager",
-                response.status()
-            );
-            if let Err(err) = self.event_sender.try_send(AuthEvent::IapChallengeReceived) {
-                log::warn!("Failed to enqueue IapChallengeReceived event: {err}");
-            }
-        }
-    }
-
-    /// Wraps an eventsource stream so that any `InvalidStatusCode` error
-    /// carrying an IAP challenge header triggers an `IapChallengeReceived`
-    /// event. The original error is passed through unchanged — the
-    /// stream is not transparently reconnected after the refresh.
-    ///
-    /// TODO(isaiah): implement retries on IAP challenge failures so
-    /// streams transparently reconnect after the refresh completes.
-    fn wrap_eventsource_with_iap_detection(
-        &self,
-        stream: http_client::EventSourceStream,
-    ) -> http_client::EventSourceStream {
-        if self.iap_state.is_none() {
-            return stream;
-        }
-        let event_sender = self.event_sender.clone();
-        let wrapped = stream.map(move |event| {
-            if let Err(reqwest_eventsource::Error::InvalidStatusCode(status, ref response)) = event
-            {
-                if http_client::iap::is_iap_challenge(status, response.headers()) {
-                    log::warn!(
-                        "Received IAP challenge on eventsource (status {status}); notifying IapManager"
-                    );
-                    if let Err(err) = event_sender.try_send(AuthEvent::IapChallengeReceived) {
-                        log::warn!(
-                            "Failed to enqueue IapChallengeReceived event from eventsource: {err}"
-                        );
-                    }
-                }
-            }
-            event
-        });
-        cfg_if::cfg_if! {
-            if #[cfg(target_family = "wasm")] {
-                wrapped.boxed_local()
-            } else {
-                wrapped.boxed()
-            }
-        }
-    }
-
-    /// Inspects a websocket *handshake* connect error for an IAP challenge and
-    /// enqueues an `IapChallengeReceived` event if detected.
-    #[cfg(not(target_family = "wasm"))]
-    fn report_ws_iap_challenge(&self, err: &anyhow::Error) {
-        if self.iap_state.is_none() {
-            return;
-        }
-        if super::iap::ws_connect_is_iap_challenge(err) {
-            log::warn!("Received IAP challenge on websocket handshake; notifying IapManager");
-            if let Err(err) = self.event_sender.try_send(AuthEvent::IapChallengeReceived) {
-                log::warn!("Failed to enqueue IapChallengeReceived: {err}");
-            }
-        }
-    }
-
-    #[cfg(target_family = "wasm")]
-    fn report_ws_iap_challenge(&self, _err: &anyhow::Error) {}
 
     async fn get_or_create_ambient_workload_token(&self) -> Result<Option<String>> {
         if cfg!(target_family = "wasm") {
@@ -726,7 +635,6 @@ impl ServerApi {
         if response.status().is_success() {
             Ok(response)
         } else {
-            self.check_for_iap_challenge(&response);
             // Put `HttpStatusError` in the error chain so shared retry classifiers
             // (`is_transient_http_error`) can distinguish transient 5xx / 408 / 429
             // from permanent 4xx without string-matching the Display output.
@@ -785,7 +693,7 @@ impl ServerApi {
             request = request.header(name, value);
         }
 
-        Ok(self.wrap_eventsource_with_iap_detection(request.eventsource()))
+        Ok(request.eventsource())
     }
 
     /// Opens an SSE stream against the ancestor-scoped agent event endpoint.
@@ -824,7 +732,7 @@ impl ServerApi {
             request = request.header(name, value);
         }
 
-        Ok(self.wrap_eventsource_with_iap_detection(request.eventsource()))
+        Ok(request.eventsource())
     }
 
     pub async fn stream_agent_events_for_task(
@@ -858,7 +766,7 @@ impl ServerApi {
             request = request.header(name, value);
         }
 
-        Ok(self.wrap_eventsource_with_iap_detection(request.eventsource()))
+        Ok(request.eventsource())
     }
 
     /// Sends a POST request to a public API endpoint and returns the raw response on success.
@@ -894,7 +802,6 @@ impl ServerApi {
         if response.status().is_success() {
             Ok(response)
         } else {
-            self.check_for_iap_challenge(&response);
             Err(Self::error_from_response(response).await)
         }
     }
@@ -1394,7 +1301,7 @@ impl ServerApi {
             }
         }
 
-        let raw_stream = self.wrap_eventsource_with_iap_detection(request.eventsource());
+        let raw_stream = request.eventsource();
         let output_stream = raw_stream.filter_map(|event| async {
             let result = match event {
                 Ok(reqwest_eventsource::Event::Message(message_event)) => {
@@ -1482,9 +1389,6 @@ impl ServerApi {
         log::info!("Sending server time request to {}", &time_endpoint);
         let res = self.client.get(&time_endpoint).send().await?;
 
-        if !res.status().is_success() {
-            self.check_for_iap_challenge(&res);
-        }
 
         match res.status() {
             StatusCode::OK => {
@@ -1556,7 +1460,6 @@ impl ServerApi {
 
         let response = request_builder.send().await?;
         if !response.status().is_success() {
-            self.check_for_iap_challenge(&response);
         }
         let versions: ChannelVersions = response.json().await?;
         log::info!("Received channel versions from Warp server: {versions}");
@@ -1576,7 +1479,6 @@ impl ServerApiProvider {
     pub fn new(
         auth_state: Arc<AuthState>,
         agent_source: Option<ai::AgentSource>,
-        iap_state: Option<Arc<super::iap::IapState>>,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
         let (event_sender, event_receiver) = async_channel::bounded(10);
@@ -1585,7 +1487,6 @@ impl ServerApiProvider {
             auth_state.clone(),
             event_sender,
             agent_source,
-            iap_state,
             ctx,
         );
 
@@ -1609,10 +1510,7 @@ impl ServerApiProvider {
                             auth_manager.set_needs_reauth(true, ctx);
                         });
                     }
-                    AuthEvent::IapChallengeReceived => {
-                        IapManager::handle(ctx)
-                            .update(ctx, |manager, ctx| manager.handle_challenge(ctx));
-                    }
+                    AuthEvent::IapChallengeReceived => {}
                     // Re-emit the event for subscribers.
                     // TODO: we probably want a different type for the event emitted to subscribers
                     // from the one that's used for the async channel.
