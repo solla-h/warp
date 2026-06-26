@@ -33,7 +33,6 @@ use cloud_object_models::ObjectClient;
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::{init_and_register_user_preferences, Preference};
 use crate::system::SystemStats;
@@ -96,7 +95,6 @@ fn initialize_app(
         )
     });
     app.add_singleton_model(TeamTesterStatus::new);
-    app.add_singleton_model(SyncQueue::mock);
     app.add_singleton_model(|_ctx| CloudModel::new(None, cached_objects, None));
     app.add_singleton_model(|ctx| UpdateManager::new(None, cloud_object_server_api_mock, ctx));
     app.add_singleton_model(|_| UserProfiles::new(Vec::new()));

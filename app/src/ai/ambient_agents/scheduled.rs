@@ -23,7 +23,6 @@ use crate::server::cloud_objects::update_manager::{
 use crate::server::ids::{ClientId, SyncId};
 use crate::server::server_api::ai::ScheduledAgentHistory;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::QueueItem;
 
 impl StringModel for ScheduledAmbientAgent {
     type CloudObjectType = CloudScheduledAmbientAgent;
@@ -43,19 +42,6 @@ impl StringModel for ScheduledAmbientAgent {
     fn display_name(&self) -> String {
         self.name.clone()
     }
-
-    fn update_object_queue_item(
-        &self,
-        revision_ts: Option<Revision>,
-        object: &CloudScheduledAmbientAgent,
-    ) -> QueueItem {
-        QueueItem::UpdateScheduledAmbientAgent {
-            model: object.model().clone().into(),
-            id: object.id,
-            revision: revision_ts.or_else(|| object.metadata.revision.clone()),
-        }
-    }
-
     fn uniqueness_key(&self) -> Option<GenericStringObjectUniqueKey> {
         None
     }
