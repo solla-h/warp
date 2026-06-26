@@ -97,6 +97,7 @@ pub enum TipAction {
     // value. Since old clients will have this value in their user defaults, we want
     // to prevent future usage of this enum value.
     Workflows,
+    OpenWarpDrive,
 }
 
 impl TipAction {
@@ -114,6 +115,7 @@ impl TipAction {
             // the same way they do regular app actions.
             TipAction::Changelog => "/changelog",
             TipAction::Workflows => "input:toggle_workflows",
+            TipAction::OpenWarpDrive => "workspace:toggle_warp_drive",
         }
     }
 
@@ -310,3 +312,5 @@ impl TipsCompleted {
         self.gamified_tips_count = Some(total)
     }
 }
+
+

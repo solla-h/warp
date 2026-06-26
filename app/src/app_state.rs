@@ -225,7 +225,7 @@ pub enum NotebookPaneSnapshot {
         /// 3. The pane contains a notebook that's known to the server, so this will contain the
         ///    server ID.
         notebook_id: Option<SyncId>,
-        // Settings for the notebook pane when it's opened (such as a folder to focus upon opening)
+        settings: crate::drive::OpenWarpDriveObjectSettings,
     },
     LocalFileNotebook {
         /// The path to the local file that was open in this pane. This may be `None` if
@@ -263,6 +263,7 @@ pub enum CodePaneSnapShot {
 pub enum WorkflowPaneSnapshot {
     CloudWorkflow {
         workflow_id: Option<SyncId>,
+        settings: crate::drive::OpenWarpDriveObjectSettings,
     },
 }
 
@@ -392,3 +393,6 @@ pub fn get_app_state(app: &AppContext) -> AppState {
 #[cfg(test)]
 #[path = "app_state_tests.rs"]
 mod tests;
+
+
+

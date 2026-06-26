@@ -1317,7 +1317,7 @@ impl TeamsPageView {
     fn show_error(
         &mut self,
         error_msg: impl Into<String>,
-        error: Option<&anyhow::Error>,
+        error: Option<&dyn std::fmt::Display>,
         ctx: &mut ViewContext<Self>,
     ) {
         let message = error_msg.into();
@@ -4342,3 +4342,4 @@ pub fn test_owner_state_chip_text_contrasts_with_accent_overlay() {
         );
     }
 }
+

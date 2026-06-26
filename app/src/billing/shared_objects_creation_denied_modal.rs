@@ -46,7 +46,7 @@ pub fn init(app: &mut AppContext) {
 }
 
 impl SharedObjectsCreationDeniedModal {
-    pub fn new(ctx: &mut ViewContext<Self>) -> Self {
+    pub fn new<T: 'static>(_team: Option<T>, ctx: &mut ViewContext<Self>) -> Self {
         let shared_objects_creation_denied_body = ctx.add_typed_action_view(
             |_ctx: &mut ViewContext<'_, SharedObjectsCreationDeniedBody>| {
                 SharedObjectsCreationDeniedBody::new(None)
@@ -166,3 +166,4 @@ impl TypedActionView for SharedObjectsCreationDeniedModal {
         }
     }
 }
+

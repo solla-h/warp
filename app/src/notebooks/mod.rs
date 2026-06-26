@@ -20,7 +20,7 @@ use crate::appearance::Appearance;
 use crate::cloud_object::{CloudObjectTypeAndId, 
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Owner, Revision,
-    UpdateCloudObjectResult,
+    SerializedModel, UpdateCloudObjectResult,
 };
 use crate::persistence::ModelEvent;
 use crate::server::ids::{ServerId, SyncId};

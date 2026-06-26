@@ -16,6 +16,7 @@ mod billing;
 mod changelog_model;
 mod chip_configurator;
 #[cfg(feature = "cloud")]
+mod workspaces;
 mod cloud_object;
 mod code;
 mod code_review;

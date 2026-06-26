@@ -25,10 +25,10 @@ pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::cloud_object::{CloudObjectTypeAndId,
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision,
-    UpdateCloudObjectResult,
+    SerializedModel, UpdateCloudObjectResult,
 };
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;

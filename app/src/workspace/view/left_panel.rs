@@ -80,6 +80,7 @@ pub enum LeftPanelAction {
 
 #[allow(clippy::large_enum_variant)]
 pub enum LeftPanelEvent {
+    WarpDrive(crate::drive::DrivePanelEvent),
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     FileTree(pane_group::Event),
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
@@ -168,6 +169,7 @@ pub struct LeftPanelView {
     mouse_state_handles: MouseStateHandles,
     close_button_mouse_state: MouseStateHandle,
     conversation_list_view: ViewHandle<ConversationListView>,
+    warp_drive_view: ViewHandle<crate::drive::DrivePanel>,
     active_view: active_view_state::ActiveViewState,
     toolbelt_buttons: Vec<ToolbeltButtonConfig>,
     active_pane_group: Option<WeakViewHandle<PaneGroup>>,
@@ -319,6 +321,7 @@ impl LeftPanelView {
             mouse_state_handles: Default::default(),
             close_button_mouse_state: Default::default(),
             conversation_list_view,
+            warp_drive_view: ctx.add_typed_action_view(|ctx| crate::drive::DrivePanel::default()),
             active_view: active_view_state::new(active_view),
             toolbelt_buttons,
             active_pane_group: None,
@@ -534,6 +537,10 @@ impl LeftPanelView {
 
     pub fn active_view(&self) -> ToolPanelView {
         self.active_view.get()
+    }
+
+    pub fn warp_drive_view(&self) -> &ViewHandle<crate::drive::DrivePanel> {
+        &self.warp_drive_view
     }
 
     pub fn is_warp_drive_active(&self) -> bool {
@@ -1229,3 +1236,7 @@ fn deduplicate_by_directory_name(directories: Vec<PathBuf>) -> Vec<PathBuf> {
         .filter(|path| seen_paths.insert(path.clone()))
         .collect()
 }
+
+
+
+

@@ -1437,6 +1437,14 @@ pub enum NewWorkspaceSource {
     NotebookFromFilePath {
         file_path: Option<PathBuf>,
     },
+    NotebookById {
+        id: crate::server::ids::SyncId,
+        settings: crate::drive::OpenWarpDriveObjectSettings,
+    },
+    WorkflowById {
+        id: crate::server::ids::SyncId,
+        settings: crate::drive::OpenWarpDriveObjectSettings,
+    },
 
     AgentSession {
         options: Box<NewTerminalOptions>,
@@ -3455,3 +3463,4 @@ impl AuthOnboardingTarget {
 #[cfg(test)]
 #[path = "root_view_tests.rs"]
 mod tests;
+

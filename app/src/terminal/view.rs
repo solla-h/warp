@@ -13694,6 +13694,8 @@ impl TerminalView {
         }
     }
 
+    pub fn insert_drive_sharing_onboarding_block<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
+
     pub fn interrupt_onboarding_blocks(&mut self, ctx: &mut ViewContext<Self>) {
         if let Some(onboarding_prompt_block_handle) = &self.onboarding_prompt_block {
             onboarding_prompt_block_handle.update(ctx, |onboarding_prompt_block, block_ctx| {
@@ -28236,3 +28238,4 @@ fn is_rich_input_chip_in_cli_toolbar(app: &AppContext) -> bool {
 #[cfg(test)]
 #[path = "view_tests.rs"]
 mod tests;
+

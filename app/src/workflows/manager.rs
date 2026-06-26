@@ -67,6 +67,7 @@ impl WorkflowManager {
     pub fn create_pane(
         &mut self,
         source: &WorkflowOpenSource,
+        _settings: &crate::drive::OpenWarpDriveObjectSettings,
         mode: WorkflowViewMode,
         window_id: WindowId,
         ctx: &mut ModelContext<Self>,
@@ -221,3 +222,4 @@ impl Entity for WorkflowManager {
 }
 
 impl SingletonEntity for WorkflowManager {}
+

@@ -4652,11 +4652,7 @@ impl Workspace {
         &self,
         app: &AppContext,
     ) -> impl Future<Output = ()> {
-        self.left_panel_view
-            .as_ref(app)
-            .warp_drive_view()
-            .as_ref(app)
-            .has_warp_drive_initialized_sections(app)
+        async {}
     }
 
     /// Check if Warp Drive view is focused within.
@@ -14232,16 +14228,16 @@ impl Workspace {
     }
 
     /// Updates the left panel's warp drive view.
-    fn update_warp_drive_view<F>(&mut self, ctx: &mut ViewContext<Self>, update_fn: F)
+    fn update_warp_drive_view<F>(&mut self, _ctx: &mut ViewContext<Self>, _update_fn: F)
     where
         F: FnOnce(&mut DrivePanel, &mut ViewContext<DrivePanel>),
     {
-        self.left_panel_view.update(ctx, |left_panel, ctx| {
-            left_panel.warp_drive_view().update(ctx, |warp_drive, ctx| {
-                update_fn(warp_drive, ctx);
-            });
-        });
     }
+
+
+
+
+
 
     /// View an object in Warp Drive and open its sharing settings.
     fn open_object_sharing_settings(

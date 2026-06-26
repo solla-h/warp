@@ -26,8 +26,8 @@ use self::model::persistence::CloudModel;
 use crate::appearance::Appearance;
 use crate::auth::UserUid;
 use crate::channel::ChannelState;
-use crate::drive::items::WarpDriveItem;
-use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
+pub use crate::drive::items::WarpDriveItem;
+pub use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::persistence::ModelEvent;
 use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
 use cloud_object_models::ObjectClient;
@@ -117,7 +117,7 @@ impl UpdateManager {
     }
 
     pub fn create_object<T: 'static, O: 'static, I: 'static, E: 'static, F: 'static>(&mut self, _model: T, _owner: O, _client_id: I, _entrypoint: E, _show_toast: bool, _folder_id: F, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn create_folder<O: 'static, I: 'static, F: 'static>(&mut self, _name: String, _owner: O, _client_id: I, _folder_id: Option<F>, _show_toast: bool, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_folder<O: 'static, I: 'static>(&mut self, _name: String, _owner: O, _client_id: I, _folder_id: Option<SyncId>, _show_toast: bool, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn create_notebook<I: 'static, O: 'static, F: 'static, D: 'static, E: 'static>(&mut self, _client_id: I, _owner: O, _folder_id: Option<F>, _data: D, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn create_workflow<W: 'static, O: 'static, F: 'static, I: 'static, E: 'static>(&mut self, _workflow: W, _owner: O, _folder_id: F, _client_id: I, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn create_workflow_enum<W: 'static, O: 'static, I: 'static, E: 'static>(&mut self, _model: W, _owner: O, _client_id: I, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
@@ -129,13 +129,13 @@ impl UpdateManager {
     pub fn create_scheduled_ambient_agent_online<C: 'static, I: 'static, O: 'static>(&mut self, _config: C, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<crate::server::ids::ServerId>> { std::future::ready(Ok(crate::server::ids::ServerId::default())) }
     pub fn create_templatable_mcp_server<S: 'static, I: 'static, O: 'static>(&mut self, _server: S, _client_id: I, _owner: O, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_object<K: 'static, M: 'static, I: 'static, R: 'static>(&mut self, _model: M, _id: I, _revision: R, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn update_notebook_data<C: 'static, I: 'static>(&mut self, _content: C, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_notebook_data(&mut self, _content: Arc<String>, _id: SyncId, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_notebook_title<T: 'static, I: 'static>(&mut self, _title: T, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_workflow<W: 'static, I: 'static, R: 'static>(&mut self, _workflow: W, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_workflow_enum<W: 'static, I: 'static, R: 'static>(&mut self, _model: W, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_env_var_collection<A: 'static, I: 'static, R: 'static>(&mut self, _collection: A, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_ai_fact<F: 'static, I: 'static, R: 'static>(&mut self, _fact: F, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn update_ai_execution_profile<A: 'static, I: 'static, R: 'static>(&mut self, _data: A, _id: I, _rev: Option<R>, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_ai_execution_profile(&mut self, _data: cloud_object_models::ai_execution_profile::AIExecutionProfile, _id: SyncId, _rev: Option<Revision>, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_ambient_agent_environment<E: 'static, I: 'static, R: 'static>(&mut self, _env: E, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_scheduled_ambient_agent_online<C: 'static, I: 'static, R: 'static>(&mut self, _config: C, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<()>> { std::future::ready(Ok(())) }
     pub fn update_templatable_mcp_server<S: 'static, I: 'static, R: 'static>(&mut self, _server: S, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
@@ -164,7 +164,7 @@ impl UpdateManager {
     pub fn update_ai_conversation_guests<S: 'static, C: 'static, G: 'static, L: 'static>(&mut self, _server_id: S, _conv_id: C, _guests: G, _level: L, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn remove_ai_conversation_guest<S: 'static, C: 'static, G: 'static>(&mut self, _server_id: S, _conv_id: C, _guest: G, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn set_ai_conversation_link_permissions<S: 'static, C: 'static, P: 'static>(&mut self, _server_id: S, _conv_id: C, _perm: P, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn record_object_action<I: 'static, A: 'static, O: 'static>(&mut self, _id: I, _action: A, _opt: O, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn record_object_action<I: 'static, A: 'static>(&mut self, _id: I, _action: A, _opt: Option<String>, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn bulk_create_generic_string_objects<O: 'static, I: 'static>(&mut self, _owner: O, _inputs: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn received_message_from_server<M: 'static>(&mut self, _msg: M, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn reset_initial_load(&mut self) {}
@@ -306,7 +306,7 @@ pub trait CloudObject: Debug {
     /// the object's timestamps are sent to the server for comparison
     fn versions(&self, app: &AppContext) -> Option<UpdatedObjectInput>;
     /// Returns whether this model type should render as a warp drive item.
-    fn renders_in_warp_drive(&self) -> bool;
+    fn renders_in_warp_drive(&self) -> bool { false }
 
     /// Returns whether this model type should show update toasts in the UI.
     fn should_show_activity_toasts(&self) -> bool {
@@ -587,7 +587,7 @@ pub trait CloudModelType: Debug + Clone + Send + Sync {
     fn object_type(&self) -> ObjectType;
 
     /// Returns whether this model type should render as a warp drive item.
-    fn renders_in_warp_drive(&self) -> bool;
+    fn renders_in_warp_drive(&self) -> bool { false }
 
     /// Returns whether this model type should show update toasts in the UI.
     fn should_show_activity_toasts(&self) -> bool {
@@ -604,10 +604,10 @@ pub trait CloudModelType: Debug + Clone + Send + Sync {
     /// if this object does not render in Warp Drive.
     fn to_warp_drive_item(
         &self,
-        id: SyncId,
-        appearance: &Appearance,
-        object: &Self::CloudObjectType,
-    ) -> Option<Box<dyn WarpDriveItem>>;
+        _id: SyncId,
+        _appearance: &Appearance,
+        _object: &Self::CloudObjectType,
+    ) -> Option<Box<dyn WarpDriveItem>> { None }
 
     /// Returns the display name for this model (e.g. to show in the Warp Drive index)
     fn display_name(&self) -> String;
@@ -940,13 +940,21 @@ pub fn extract_server_id_and_object_type_from_warp_drive_link(
 
     let invitee_email: Option<String> = query_string.get("invitee_email").map(|s| s.to_string());
 
+    let server_id = match server_id {
+        Some(server_id) => {
+            let sid: ServerId = server_id.try_into().ok()?;
+            sid
+        }
+        _ => return None,
+    };
+    let sync_id = SyncId::ServerId(server_id);
+    let cloud_object_type_and_id = CloudObjectTypeAndId::from_id_and_type(sync_id, object_type);
     Some(OpenWarpDriveObjectArgs {
-        object_type,
-        server_id: match server_id {
-            Some(server_id) => server_id.try_into().ok()?,
-            _ => return None,
-        },
+        cloud_object_type_and_id,
+        object_type: None,
+        server_id: Some(server_id),
         settings: OpenWarpDriveObjectSettings {
+            show_in_new_pane: false,
             focused_folder_id,
             invitee_email,
         },

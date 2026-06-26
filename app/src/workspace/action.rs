@@ -441,6 +441,7 @@ pub enum WorkspaceAction {
         object_id: CloudObjectTypeAndId,
         source: SharingDialogSource,
     },
+    ViewObjectInWarpDrive(Box<crate::server::ids::SyncId>),
     UndoTrash(CloudObjectTypeAndId),
     /// Open a local path in the file explorer.
     OpenInExplorer {

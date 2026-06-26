@@ -128,6 +128,7 @@ impl PaneContent for WorkflowPane {
         let workflow_id = self.get_view(app).as_ref(app).workflow_id();
         LeafContents::Workflow(WorkflowPaneSnapshot::CloudWorkflow {
             workflow_id: Some(workflow_id),
+            settings: Default::default(),
         })
     }
 

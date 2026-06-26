@@ -95,6 +95,7 @@ pub enum Event {
     /// Open a notebook identified by `id`.
     OpenNotebook { id: SyncId },
     /// View the relevant object in the Warp Drive sidebar.
+    ViewInWarpDrive { id: SyncId },
     /// Open a file at the given path.
     OpenFile {
         path: String,
@@ -1019,3 +1020,4 @@ impl View {
         ctx.dispatch_typed_action_for_view(window_id, view_id, action);
     }
 }
+

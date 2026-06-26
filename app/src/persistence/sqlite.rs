@@ -1216,7 +1216,7 @@ fn save_pane_state(
         LeafContents::Workflow(workflow_pane_snapshot) => {
             let workflow_id = match workflow_pane_snapshot {
                 WorkflowPaneSnapshot::CloudWorkflow {
-                    workflow_id,
+                    workflow_id, ..
                 } => workflow_id.map(|id| id.sqlite_uid_hash(ObjectIdType::Workflow)),
             };
 
@@ -2135,6 +2135,7 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
 
                     LeafContents::Workflow(WorkflowPaneSnapshot::CloudWorkflow {
                         workflow_id,
+                        settings: Default::default(),
                     })
                 }
                 CODE_PANE_KIND => {
@@ -2520,6 +2521,7 @@ fn read_sqlite_data(
                     email: row.email,
                     role: serde_json::from_str(&row.role)
                         .unwrap_or(crate::workspaces::team::MembershipRole::User),
+                    ..Default::default()
                 };
                 acc.entry(row.team_id).or_default().push(member);
                 acc
@@ -2606,7 +2608,7 @@ fn read_sqlite_data(
     let user_profiles = schema::user_profiles::dsl::user_profiles
         .load_iter::<model::UserProfile, DefaultLoadingMode>(conn)?
         .filter_map(|user_profile| user_profile.ok())
-        .map(user_profile_from_persistence)
+        .filter_map(user_profile_from_persistence)
         .collect();
 
     let object_actions: Vec<ObjectAction> = schema::object_actions::dsl::object_actions

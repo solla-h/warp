@@ -174,6 +174,7 @@ impl NotebookManager {
     pub fn create_pane(
         &mut self,
         source: &NotebookSource,
+        _settings: &crate::drive::OpenWarpDriveObjectSettings,
         window_id: WindowId,
         ctx: &mut ModelContext<Self>,
     ) -> NotebookPane {
@@ -373,3 +374,4 @@ impl Entity for NotebookManager {
 }
 
 impl SingletonEntity for NotebookManager {}
+
