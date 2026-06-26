@@ -11,7 +11,6 @@ use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
 use crate::drive::OpenWarpDriveObjectSettings;
 use crate::integration_testing::view_getters::{notebook_view, workspace_view};
 use crate::notebooks::manager::NotebookSource;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, SyncId};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 

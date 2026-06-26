@@ -293,7 +293,7 @@ use crate::banner::{
 };
 use crate::cloud_object::model::actions::ObjectActionType;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObject, GenericStringObjectFormat, JsonObjectType};
+use crate::cloud_object::{CloudObject, GenericStringObjectFormat, JsonObjectType, UpdateManager};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code_review::comments::{
@@ -339,7 +339,6 @@ use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipHint, TipsCompleted,
 };
 use crate::search::slash_command_menu::static_commands::commands;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
@@ -12154,7 +12153,7 @@ impl TerminalView {
                     // If the block was a cloud workflow, record the workflow execution as an object action.
                     if let Some(cloud_workflow_id) = cloud_workflow_id {
                         let id_and_type = CloudObjectTypeAndId::Workflow(*cloud_workflow_id);
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                             update_manager.record_object_action(
                                 id_and_type,
                                 ObjectActionType::Execute,
@@ -12172,7 +12171,7 @@ impl TerminalView {
 
                             id: *cloud_env_var_collection_id,
                         };
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                             update_manager.record_object_action(
                                 id_and_type,
                                 ObjectActionType::Execute,
@@ -25031,11 +25030,11 @@ impl TerminalView {
                         },
                     }));
 
-                    UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                         update_manager.record_object_action(
                             cloud_object_type_and_id,
                             ObjectActionType::Execute,
-                            None,
+                            None::<()>,
                             ctx,
                         )
                     });
@@ -25237,11 +25236,11 @@ impl TerminalView {
         self.set_and_execute_subshell_command(&shell_path_string, shell_type, ctx);
 
         // Ok to update the execution record here because we auto-execute when in subshell
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.record_object_action(
                 cloud_env_var_collection.cloud_object_type_and_id(),
                 ObjectActionType::Execute,
-                None,
+                None::<()>,
                 ctx,
             )
         });

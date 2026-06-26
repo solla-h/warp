@@ -44,16 +44,12 @@ use crate::appearance::Appearance;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{
     CloudObjectLocation, CloudObjectLookup as _, GenericStringObjectFormat, JsonObjectType, Owner,
-    Space,
-};
+    Space, UpdateManagerEvent, UpdateManager};
 use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{
     EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::terminal::view::init_environment::mode_selector::{
     EnvironmentSetupMode, EnvironmentSetupModeSelector, EnvironmentSetupModeSelectorEvent,
@@ -612,89 +608,6 @@ impl EnvironmentsPageView {
         event: &UpdateManagerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        // Check if this is a successful update for our pending save
-        if let (ObjectOperation::Update, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            let Some(server_id) = &result.server_id else {
-                return;
-            };
-
-            let should_handle = self
-                .pending_save_env_id
-                .is_some_and(|pending_env_id| server_id.uid() == pending_env_id.uid());
-
-            if should_handle {
-                self.pending_save_env_id = None;
-                self.show_success_toast("Successfully updated environment".to_string(), ctx);
-
-                // No need to force a global cloud-object refresh here: on update success the
-                // sync pipeline updates this environment's `revision_ts` (used for "Last edited")
-                // in-memory via `CloudModel::set_latest_revision_and_editor`.
-                ctx.notify();
-            }
-        }
-
-        // Check if this is a successful create for our pending create
-        if let (ObjectOperation::Create { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            if let Some(pending_client_id) = self.pending_create_client_id.take() {
-                // Check if the client_id in the result matches our pending client_id
-                if let Some(result_client_id) = &result.client_id {
-                    if *result_client_id == pending_client_id {
-                        self.show_success_toast(
-                            "Successfully created environment".to_string(),
-                            ctx,
-                        );
-                    }
-                }
-            }
-        }
-
-        // Check if this is a successful delete for our pending delete
-        if let (ObjectOperation::Delete { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            if let Some(pending_env_id) = self.pending_delete_env_id.take() {
-                // Check if the server_id matches our pending environment
-                if let Some(server_id) = &result.server_id {
-                    if server_id.uid() == pending_env_id.uid() {
-                        self.show_success_toast(
-                            "Environment deleted successfully".to_string(),
-                            ctx,
-                        );
-                    }
-                }
-            }
-        }
-
-        // Check if this is a completion event for our pending share (personal -> team)
-        if matches!(&result.operation, ObjectOperation::MoveToDrive) {
-            let (Some(pending_server_id), Some(result_server_id)) =
-                (self.pending_share_server_id, result.server_id)
-            else {
-                return;
-            };
-
-            if pending_server_id != result_server_id {
-                return;
-            }
-
-            self.pending_share_server_id = None;
-
-            if matches!(result.success_type, OperationSuccessType::Success) {
-                self.show_success_toast("Successfully shared environment".to_string(), ctx);
-            } else {
-                self.show_error_toast("Failed to share environment with team".to_string(), ctx);
-            }
-
-            ctx.notify();
-        }
     }
 
     fn delete_environment(&mut self, env_id: SyncId, ctx: &mut ViewContext<Self>) {

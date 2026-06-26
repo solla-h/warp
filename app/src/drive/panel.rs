@@ -22,13 +22,11 @@ use crate::ai::facts::CloudAIFactModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{
-    CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType, Owner, Space,
-};
+    CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType, Owner, Space, UpdateManager, InitiatedBy};
 use crate::env_vars::manager::EnvVarCollectionSource;
 use crate::env_vars::CloudEnvVarCollection;
 use crate::notebooks::manager::NotebookSource;
 use crate::notebooks::CloudNotebook;
-use crate::server::cloud_objects::update_manager::{InitiatedBy, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::telemetry::SharingDialogSource;
 use crate::workflows::manager::WorkflowOpenSource;
@@ -172,7 +170,7 @@ impl DrivePanel {
             } => match Self::new_object_owner(*space, initial_folder_id.as_ref(), ctx) {
                 Some(owner) => {
                     let client_id = ClientId::default();
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_folder(
                             title.clone(),
                             owner,
@@ -327,7 +325,7 @@ impl DrivePanel {
             } => match Self::new_object_owner(*space, initial_folder_id.as_ref(), ctx) {
                 Some(owner) => {
                     let client_id = ClientId::default();
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.create_object(
                             CloudAIFactModel::new(fact.clone()),
                             owner,
@@ -423,8 +421,9 @@ impl DrivePanel {
         }
 
         // Otherwise allow object duplication to go through.
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-            update_manager.duplicate_object(cloud_object_type_and_id, ctx);
+        let id = *cloud_object_type_and_id;
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+            update_manager.duplicate_object(id, ctx);
         });
         ctx.notify();
     }

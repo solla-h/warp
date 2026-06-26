@@ -27,14 +27,14 @@ use crate::appearance::Appearance;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
-    CreateObjectRequest, GenericServerObject, ObjectType, Revision, UpdateCloudObjectResult,
+    CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision,
+    UpdateCloudObjectResult,
 };
 use crate::drive::items::workflow::WarpDriveWorkflow;
 use crate::drive::items::WarpDriveItem;
 use crate::drive::CloudObjectTypeAndId;
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};

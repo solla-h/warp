@@ -10,7 +10,6 @@ use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
 use crate::settings::PrivacySettings;

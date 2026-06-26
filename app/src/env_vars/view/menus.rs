@@ -12,7 +12,7 @@ use crate::env_vars::active_env_var_collection_data::TrashStatus;
 use crate::external_secrets::SecretManager;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::PaneEvent;
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::ui_components::icons::Icon;
 use crate::util::bindings::{
     keybinding_name_to_display_string, trigger_to_keystroke, CustomAction,
@@ -424,7 +424,7 @@ impl EnvVarCollectionView {
                 return;
             }
 
-            UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                 update_manager.untrash_object(
                     CloudObjectTypeAndId::GenericStringObject {
                         object_type: GenericStringObjectFormat::Json(
@@ -443,7 +443,7 @@ impl EnvVarCollectionView {
         if let Some(env_var_collection_id) = self.env_var_collection_id(ctx) {
             self.close_env_var_collection(ctx);
 
-            UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                 update_manager.trash_object(
                     CloudObjectTypeAndId::from_generic_string_object(
                         GenericStringObjectFormat::Json(
@@ -460,9 +460,9 @@ impl EnvVarCollectionView {
 
     pub(super) fn duplicate_env_var_collection(&self, ctx: &mut ViewContext<Self>) {
         if let Some(env_var_collection_id) = self.env_var_collection_id(ctx) {
-            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 update_manager.duplicate_object(
-                    &CloudObjectTypeAndId::from_generic_string_object(
+                    CloudObjectTypeAndId::from_generic_string_object(
                         GenericStringObjectFormat::Json(
                             crate::cloud_object::JsonObjectType::EnvVarCollection,
                         ),

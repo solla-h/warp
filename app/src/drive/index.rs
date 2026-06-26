@@ -71,7 +71,7 @@ use crate::features::FeatureFlag;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;
 use crate::notebooks::CloudNotebookModel;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     FetchSingleObjectOption, InitiatedBy, UpdateManager,
 };
 use crate::server::ids::{ClientId, ObjectUid, ServerId, SyncId};
@@ -3308,7 +3308,7 @@ impl DriveIndex {
         }
 
         // Otherwise allow object move to go through.
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.move_object_to_location(*cloud_object_type_and_id, new_location, ctx);
         });
 
@@ -3337,7 +3337,7 @@ impl DriveIndex {
             return;
         };
 
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.leave_object(server_id, ctx);
         });
 
@@ -3493,7 +3493,7 @@ impl DriveIndex {
             if !new_name.is_empty() {
                 self.reset_menus(ctx);
 
-                UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                     update_manager.rename_folder(folder_id, new_name, ctx);
                 });
 
@@ -3508,7 +3508,7 @@ impl DriveIndex {
         cloud_object_type_and_id: CloudObjectTypeAndId,
         ctx: &mut ViewContext<Self>,
     ) {
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.trash_object(cloud_object_type_and_id, ctx);
         });
         self.reset_menus(ctx);
@@ -3639,7 +3639,7 @@ impl DriveIndex {
         }
 
         // Otherwise allow object untrash to go through.
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.untrash_object(*cloud_object_type_and_id, ctx);
         });
         self.reset_menus(ctx);
@@ -3651,7 +3651,7 @@ impl DriveIndex {
         cloud_object_type_and_id: &CloudObjectTypeAndId,
         ctx: &mut ViewContext<Self>,
     ) {
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.delete_object_by_user(*cloud_object_type_and_id, ctx);
         });
         self.reset_menus(ctx);
@@ -3659,7 +3659,7 @@ impl DriveIndex {
     }
 
     fn empty_trash(&mut self, space: &Space, ctx: &mut ViewContext<Self>) {
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
             update_manager.empty_trash(*space, ctx);
         });
         self.reset_menus(ctx);
@@ -3857,8 +3857,8 @@ impl DriveIndex {
         cloud_object_type_and_id: &CloudObjectTypeAndId,
         ctx: &mut ViewContext<Self>,
     ) {
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
-            update_manager.resync_object(cloud_object_type_and_id, ctx);
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+            update_manager.resync_object(cloud_object_type_and_id.clone(), ctx);
         });
     }
 
@@ -3887,7 +3887,8 @@ impl DriveIndex {
     }
 
     fn revert_failed_object(&mut self, server_id: &ServerId, ctx: &mut ViewContext<Self>) {
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        let server_id = server_id.clone();
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             let fetch_cloud_object_rx = update_manager.fetch_single_cloud_object(
                 server_id,
                 FetchSingleObjectOption::ForceOverwrite,

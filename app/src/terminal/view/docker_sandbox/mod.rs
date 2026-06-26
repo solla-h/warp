@@ -27,7 +27,6 @@ use crate::pane_group::TerminalViewResources;
 #[cfg(feature = "local_tty")]
 use crate::persistence::ModelEvent;
 #[cfg(not(target_family = "wasm"))]
-use crate::server::cloud_objects::update_manager::UpdateManager;
 #[cfg(not(target_family = "wasm"))]
 use crate::server::ids::{ServerId, SyncId};
 #[cfg(any(feature = "local_tty", not(target_family = "wasm")))]
@@ -40,6 +39,7 @@ use crate::terminal::local_tty::docker_sandbox::DOCKER_SANDBOX_HOME_DIR;
 use crate::terminal::remote_tty::TerminalManager as RemoteTtyTerminalManager;
 #[cfg(feature = "local_tty")]
 use crate::terminal::TerminalManager;
+use crate::cloud_object::UpdateManager;
 
 /// Default base Docker image used for newly created sandbox shells.
 ///

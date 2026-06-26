@@ -1,10 +1,6 @@
 use warpui::AppContext;
 
-use super::{CloudObject, GenericStringObjectFormat, JsonObjectType, ObjectType};
-use crate::server::cloud_objects::update_manager::{
-    InitiatedBy, ObjectOperation, OperationSuccessType,
-};
-
+use super::{CloudObject, GenericStringObjectFormat, InitiatedBy, JsonObjectType, ObjectOperation, ObjectType, OperationSuccessType};
 pub struct CloudObjectToastMessage;
 
 impl CloudObjectToastMessage {

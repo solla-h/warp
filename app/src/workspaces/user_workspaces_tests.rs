@@ -11,7 +11,6 @@ use crate::auth::AuthManager;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::features::FeatureFlag;
 use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::ClientId;
 use crate::server::server_api::team::{MockTeamClient, TeamClient};
 use crate::server::server_api::ServerApiProvider;

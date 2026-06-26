@@ -16,7 +16,6 @@ use crate::network::NetworkStatus;
 use crate::notebooks::manager::NotebookManager;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::search::data_source::Query;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::ServerId;
 use crate::server::ids::SyncId::{self};
 use crate::server::server_api::team::MockTeamClient;

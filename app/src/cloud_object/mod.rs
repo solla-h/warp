@@ -14,7 +14,7 @@ use warp_core::channel::Channel;
 use warp_core::features::FeatureFlag;
 use cloud_objects::cloud_object::UpdatedObjectInput;
 use warp_types::ServerTimestamp;
-use warpui::{AppContext, SingletonEntity};
+use warpui::{AppContext, Entity, ModelHandle, SingletonEntity};
 
 use self::breadcrumbs::ContainingObject;
 #[allow(unused_imports)]
@@ -29,7 +29,6 @@ use crate::channel::ChannelState;
 use crate::drive::items::WarpDriveItem;
 use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
 use cloud_object_models::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};
@@ -45,10 +44,180 @@ pub mod toast_message;
 
 pub use cloud_objects::cloud_object::*;
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum InitiatedBy {
+    User,
+    System,
+    CloudSync,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ObjectOperation {
+    Create { initiated_by: InitiatedBy },
+    Update,
+    Delete { initiated_by: InitiatedBy },
+    MoveToFolder,
+    MoveToDrive,
+    Trash,
+    Untrash,
+    Leave,
+    TakeEditAccess,
+    UpdatePermissions,
+    EmptyTrash,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum OperationSuccessType {
+    Success,
+    Failure,
+    Rejection,
+    FeatureNotAvailable,
+    Denied(String),
+}
+
+#[derive(Debug, Clone)]
+pub struct ObjectOperationResult {
+    pub operation: ObjectOperation,
+    pub success_type: OperationSuccessType,
+    pub client_id: Option<crate::server::ids::ClientId>,
+    pub server_id: Option<crate::server::ids::ServerId>,
+}
+
+#[derive(Debug, Clone)]
+pub enum UpdateManagerEvent {
+    ObjectOperationComplete { result: ObjectOperationResult },
+    AmbientTaskUpdated { task_id: String, timestamp: chrono::DateTime<chrono::Utc> },
+    CloudPreferencesUpdated { updated: Vec<String> },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FetchSingleObjectOption {
+    None,
+    ForceOverwrite,
+    IgnoreIfExists,
+}
+
+#[derive(Default)]
+pub struct UpdateManager;
+
+impl UpdateManager {
+    pub fn new<A: 'static, B: 'static, Ctx>(
+        _persistence_sender: A,
+        _client: B,
+        _ctx: &mut Ctx,
+    ) -> Self {
+        Self
+    }
+
+    pub fn mock(_ctx: &mut warpui::ModelContext<Self>) -> Self { Self }
+    pub fn mock_initial_load(_ctx: &mut warpui::ModelContext<Self>) -> Self { Self }
+
+    pub fn initial_load_complete(&self) -> std::future::Ready<()> {
+        std::future::ready(())
+    }
+
+    pub fn create_object<T: 'static, O: 'static, I: 'static, E: 'static, F: 'static>(&mut self, _model: T, _owner: O, _client_id: I, _entrypoint: E, _show_toast: bool, _folder_id: F, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_folder<O: 'static, I: 'static, F: 'static>(&mut self, _name: String, _owner: O, _client_id: I, _folder_id: Option<F>, _show_toast: bool, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_notebook<I: 'static, O: 'static, F: 'static, D: 'static, E: 'static>(&mut self, _client_id: I, _owner: O, _folder_id: Option<F>, _data: D, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_workflow<W: 'static, O: 'static, F: 'static, I: 'static, E: 'static>(&mut self, _workflow: W, _owner: O, _folder_id: F, _client_id: I, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_workflow_enum<W: 'static, O: 'static, I: 'static, E: 'static>(&mut self, _model: W, _owner: O, _client_id: I, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_env_var_collection<I: 'static, O: 'static, F: 'static, M: 'static, E: 'static>(&mut self, _client_id: I, _owner: O, _folder_id: F, _model: M, _entrypoint: E, _show_toast: bool, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_ai_fact<A: 'static, I: 'static, O: 'static>(&mut self, _fact: A, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_ai_execution_profile<A: 'static, I: 'static, O: 'static>(&mut self, _profile: A, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_ambient_agent_environment<E: 'static, I: 'static, O: 'static>(&mut self, _env: E, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn create_ambient_agent_environment_online<E: 'static, I: 'static, O: 'static>(&mut self, _env: E, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<crate::server::ids::ServerId> { std::future::ready(crate::server::ids::ServerId::default()) }
+    pub fn create_scheduled_ambient_agent_online<C: 'static, I: 'static, O: 'static>(&mut self, _config: C, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<crate::server::ids::ServerId>> { std::future::ready(Ok(crate::server::ids::ServerId::default())) }
+    pub fn create_templatable_mcp_server<S: 'static, I: 'static, O: 'static>(&mut self, _server: S, _client_id: I, _owner: O, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_object<K: 'static, M: 'static, I: 'static, R: 'static>(&mut self, _model: M, _id: I, _revision: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_notebook_data<C: 'static, I: 'static>(&mut self, _content: C, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_notebook_title<T: 'static, I: 'static>(&mut self, _title: T, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_workflow<W: 'static, I: 'static, R: 'static>(&mut self, _workflow: W, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_workflow_enum<W: 'static, I: 'static, R: 'static>(&mut self, _model: W, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_env_var_collection<A: 'static, I: 'static, R: 'static>(&mut self, _collection: A, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_ai_fact<F: 'static, I: 'static, R: 'static>(&mut self, _fact: F, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_ai_execution_profile<A: 'static, I: 'static, R: 'static>(&mut self, _data: A, _id: I, _rev: Option<R>, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_ambient_agent_environment<E: 'static, I: 'static, R: 'static>(&mut self, _env: E, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_scheduled_ambient_agent_online<C: 'static, I: 'static, R: 'static>(&mut self, _config: C, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<()>> { std::future::ready(Ok(())) }
+    pub fn update_templatable_mcp_server<S: 'static, I: 'static, R: 'static>(&mut self, _server: S, _id: I, _rev: R, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn delete_object_by_user<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn delete_object_with_initiated_by<I: 'static>(&mut self, _id: I, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn delete_ai_execution_profile<A: 'static>(&mut self, _input: A, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn duplicate_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn trash_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn untrash_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn empty_trash<S: 'static>(&mut self, _space: S, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn leave_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn move_object_to_location<I: 'static, L: 'static>(&mut self, _id: I, _loc: L, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn rename_folder<I: 'static>(&mut self, _id: I, _name: String, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn fetch_single_cloud_object<I: 'static>(&mut self, _id: I, _option: FetchSingleObjectOption, _ctx: &mut warpui::ModelContext<Self>) -> tokio::sync::oneshot::Receiver<()> { let (_, rx) = tokio::sync::oneshot::channel(); rx }
+    pub fn resync_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn replace_object_with_conflict<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn refresh_updated_objects(&mut self, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn refresh_workspace_metadata(&mut self, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn grab_notebook_edit_access<I: 'static, B: 'static>(&mut self, _id: I, _optimistic: B, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn give_up_notebook_edit_access<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn add_object_guests<I: 'static, G: 'static, L: 'static>(&mut self, _id: I, _guests: G, _level: L, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_object_guests<I: 'static, G: 'static, L: 'static>(&mut self, _id: I, _guests: G, _level: L, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn remove_object_guest<I: 'static, G: 'static>(&mut self, _id: I, _guest: G, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn set_object_link_permissions<I: 'static, P: 'static>(&mut self, _id: I, _perm: P, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn add_ai_conversation_guests<S: 'static, C: 'static, G: 'static, L: 'static>(&mut self, _server_id: S, _conv_id: C, _guests: G, _level: L, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn update_ai_conversation_guests<S: 'static, C: 'static, G: 'static, L: 'static>(&mut self, _server_id: S, _conv_id: C, _guests: G, _level: L, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn remove_ai_conversation_guest<S: 'static, C: 'static, G: 'static>(&mut self, _server_id: S, _conv_id: C, _guest: G, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn set_ai_conversation_link_permissions<S: 'static, C: 'static, P: 'static>(&mut self, _server_id: S, _conv_id: C, _perm: P, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn record_object_action<I: 'static, A: 'static, O: 'static>(&mut self, _id: I, _action: A, _opt: O, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn bulk_create_generic_string_objects<O: 'static, I: 'static>(&mut self, _owner: O, _inputs: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn received_message_from_server<M: 'static>(&mut self, _msg: M, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn reset_initial_load(&mut self) {}
+    pub fn stop_polling_for_updated_objects(&mut self) {}
+    pub fn stop_polling_for_workspace_metadata_updates(&mut self) {}
+    pub fn remove_team_objects<T: 'static>(&mut self, _team_uid: T, _ctx: &mut warpui::ModelContext<Self>) {}
+}
+
+impl Entity for UpdateManager {
+    type Event = UpdateManagerEvent;
+}
+
+impl SingletonEntity for UpdateManager {}
+
+pub struct Listener;
+
+impl Listener {
+    pub fn new<C: 'static, Ctx>(_client: C, _ctx: &mut Ctx) -> Self {
+        Self
+    }
+
+    pub fn mock(_ctx: &mut warpui::ModelContext<Self>) -> Self {
+        Self
+    }
+}
+
+impl Entity for Listener {
+    type Event = ();
+}
+
+impl SingletonEntity for Listener {}
+
+#[allow(unused)]
+pub struct GenericStringObjectInput<T, S> {
+    pub id: crate::server::ids::ClientId,
+    pub model: T,
+    pub initial_folder_id: Option<crate::server::ids::SyncId>,
+    pub entrypoint: CloudObjectEventEntrypoint,
+    _phantom: std::marker::PhantomData<fn() -> S>,
+}
+
+impl<T, S> GenericStringObjectInput<T, S> {
+    pub fn new(id: crate::server::ids::ClientId, model: T, initial_folder_id: Option<crate::server::ids::SyncId>, entrypoint: CloudObjectEventEntrypoint) -> Self {
+        Self { id, model, initial_folder_id, entrypoint, _phantom: std::marker::PhantomData }
+    }
+}
+
 /// A CloudObject represents
 /// therefore shareable and editable (i.e. Notebooks and Workflows). In order
 /// to support collaborative editing of these objects, they must each store local
 /// revision numbers to ensure a stable way of accepting and rejecting edits.
+
 ///
 /// Note that this trait must be object-safe and non-generic.  The reason for this
 /// is that (a) we need to be able to store instances of it as trait objects in

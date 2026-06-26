@@ -11,8 +11,6 @@ use warpui::{App, SingletonEntity};
 
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::Space;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-
 /// Clears the cloud model of all non-welcome objects in the user's personal space.
 /// Returns a future that resolves when the cloud model is cleared.
 pub fn clear_cloud_model(app: &mut App) -> Pin<Box<dyn Future<Output = ()> + Send>> {

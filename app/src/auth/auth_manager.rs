@@ -20,7 +20,6 @@ use crate::ai::AIRequestUsageModel;
 use crate::autoupdate::AutoupdateState;
 use crate::persistence;
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::auth::{
     AnonymousUserCreationError, AuthClient, AuthClientImpl, FetchUserResult, MintCustomTokenError,
     UserAuthenticationError,
@@ -42,6 +41,7 @@ use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::server::telemetry::AnonymousUserSignupEntrypoint;
 use crate::{send_telemetry_from_ctx, TelemetryEvent};
+use crate::cloud_object::UpdateManager;
 
 #[derive(Debug)]
 pub enum AuthManagerEvent {
@@ -292,7 +292,7 @@ impl AuthManager {
                 // Only do this for non-refresh fetches (login/signup), not for
                 // token refreshes where the user identity hasn't changed.
                 if !from_refresh {
-                    UpdateManager::handle(ctx).update(ctx, |manager, _| {
+                    UpdateManager::handle(ctx).update(ctx, |manager: &mut UpdateManager, _| {
                         manager.reset_initial_load();
                     });
                 }

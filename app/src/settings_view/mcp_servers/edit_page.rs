@@ -34,12 +34,11 @@ use crate::ai::mcp::{
     TransportType,
 };
 use crate::banner::{Banner, BannerTextContent};
-use crate::cloud_object::{CloudObject, Space};
+use crate::cloud_object::{CloudObject, Space, InitiatedBy};
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]
 use crate::persistence::{database_file_path_for_scope, establish_ro_connection, PersistenceScope};
-use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::telemetry::{MCPTemplateCreationSource, TelemetryEvent};
 use crate::settings_view::mcp_servers::destructive_mcp_confirmation_dialog::{
     DestructiveMCPConfirmationDialog, DestructiveMCPConfirmationDialogEvent,

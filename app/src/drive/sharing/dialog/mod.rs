@@ -36,12 +36,9 @@ use crate::ai::blocklist::{BlocklistAIHistoryEvent, BlocklistAIHistoryModel};
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObject, Owner, ServerGuestSubject};
+use crate::cloud_object::{CloudObject, Owner, ServerGuestSubject, UpdateManagerEvent, UpdateManager};
 use crate::editor::PropagateAndNoOpNavigationKeys;
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::ServerId;
 use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, OpenedSharingDialogEvent, SharingDialogSource,
@@ -306,13 +303,6 @@ impl SharingDialog {
         event: &UpdateManagerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if let ObjectOperation::UpdatePermissions = result.operation {
-            self.refresh_object_permission_states(ctx);
-        }
     }
 
     fn handle_cloud_model_event(&mut self, event: &CloudModelEvent, ctx: &mut ViewContext<Self>) {
@@ -1060,7 +1050,7 @@ impl SharingDialog {
                 let guest_identifier = guest.subject.to_guest_identifier(ctx);
                 if let Some(guest_identifier) = guest_identifier {
                     let object_id = *object_id;
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.remove_object_guest(object_id, guest_identifier, ctx);
                     });
                 }
@@ -1158,21 +1148,21 @@ impl SharingDialog {
             None => return,
         };
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             // If there's only an inherited guest ACL, we have to add a new guest to the descendant
             // object.
             if is_inherited {
                 update_manager.add_object_guests(
                     object_id,
                     vec![guest_email],
-                    access_level.into(),
+                    access_level,
                     ctx,
                 );
             } else {
                 update_manager.update_object_guests(
                     object_id,
                     vec![guest_email],
-                    access_level.into(),
+                    access_level,
                     ctx,
                 );
             }
@@ -1246,7 +1236,7 @@ impl SharingDialog {
         };
 
         // Call UpdateManager to remove the guest
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.remove_ai_conversation_guest(
                 server_id,
                 conversation_id,
@@ -1287,12 +1277,12 @@ impl SharingDialog {
         };
 
         // Call UpdateManager to update the guest's access level
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.update_ai_conversation_guests(
                 server_id,
                 conversation_id,
                 vec![guest_email],
-                access_level.into(),
+                access_level,
                 ctx,
             );
         });
@@ -1321,12 +1311,12 @@ impl SharingDialog {
         };
 
         // Call UpdateManager to add guests
-        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.add_ai_conversation_guests(
                 server_id,
                 conversation_id,
                 guest_emails,
-                access_level.into(),
+                access_level,
                 ctx,
             );
         });
@@ -1610,11 +1600,11 @@ impl SharingDialog {
 
         match &self.target {
             Some(ShareableObject::WarpDriveObject(object_id)) => {
-                UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                     update_manager.add_object_guests(
                         *object_id,
                         form_state.invitee_emails,
-                        self.invite_form.selected_access_level.into(),
+                        self.invite_form.selected_access_level,
                         ctx,
                     );
                 });
@@ -2917,7 +2907,7 @@ impl TypedActionView for SharingDialog {
             SharingDialogAction::SetLinkPermissions(access_level) => {
                 self.set_open_menu(OpenMenuState::None, ctx);
                 if let Some(ShareableObject::WarpDriveObject(id)) = self.target.as_ref() {
-                    UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                         update_manager.set_object_link_permissions(*id, *access_level, ctx);
                     });
                 } else if let Some(ShareableObject::Session { handle, .. }) = self.target.as_ref() {
@@ -2935,7 +2925,7 @@ impl TypedActionView for SharingDialog {
                         .get_server_conversation_metadata(conversation_id)
                         .map(|m| ServerId::from_string_lossy(m.metadata.uid.uid()))
                     {
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
+                        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
                             update_manager.set_ai_conversation_link_permissions(
                                 server_id,
                                 *conversation_id,

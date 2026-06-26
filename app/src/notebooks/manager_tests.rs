@@ -18,7 +18,6 @@ use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::NotebookPane;
 use crate::persistence::ModelEvent;
 use crate::search::files::model::FileSearchModel;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;

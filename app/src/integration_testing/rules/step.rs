@@ -9,7 +9,6 @@ use crate::ai::facts::AIMemory;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::Space;
 use crate::integration_testing::view_getters::workspace_view;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, SyncId};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 

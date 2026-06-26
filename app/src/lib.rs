@@ -269,9 +269,11 @@ use crate::autoupdate::AutoupdateState;
 use crate::autoupdate::RelaunchModel;
 use crate::changelog_model::ChangelogModel;
 #[cfg(feature = "cloud")]
-use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
+pub(crate) use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
 #[cfg(feature = "cloud")]
-use crate::cloud_object::model::persistence::CloudModel;
+pub(crate) use crate::cloud_object::model::persistence::CloudModel;
+#[cfg(feature = "cloud")]
+pub(crate) use crate::cloud_object::{FetchSingleObjectOption, GenericStringObjectInput, InitiatedBy, Listener, ObjectOperation, ObjectOperationResult, OperationSuccessType, UpdateManager, UpdateManagerEvent};
 #[cfg(feature = "cloud")]
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
@@ -299,10 +301,6 @@ use crate::projects::ProjectManagementModel;
 use crate::root_view::{
     quake_mode_window_id, quake_mode_window_is_open, OpenFromRestoredArg, OpenPath,
 };
-#[cfg(feature = "cloud")]
-use crate::server::cloud_objects::listener::Listener;
-#[cfg(feature = "cloud")]
-use crate::server::cloud_objects::update_manager::UpdateManager;
 #[cfg(feature = "cloud")]
 use crate::server::experiments::ServerExperiments;
 #[cfg(feature = "cloud")]

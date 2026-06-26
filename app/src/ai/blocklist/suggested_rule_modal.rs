@@ -19,6 +19,8 @@ use crate::ai::facts::{AIFact, AIMemory, CloudAIFactModel};
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::Owner;
+use crate::cloud_object::UpdateManager;
+use crate::cloud_object::UpdateManagerEvent;
 use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{
     EditorOptions, EditorView, EnterAction, EnterSettings, Event as EditorEvent, InteractionState,
@@ -27,9 +29,6 @@ use crate::editor::{
 use crate::modal::{Modal, ModalEvent};
 use crate::network::NetworkStatus;
 use crate::send_telemetry_from_ctx;
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::SyncId;
 use crate::server::telemetry::TelemetryEvent;
 use crate::ui_components::blended_colors;
@@ -403,26 +402,6 @@ impl SuggestedRuleView {
         event: &UpdateManagerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
-            return;
-        };
-
-        if let (ObjectOperation::Create { .. }, OperationSuccessType::Success) =
-            (&result.operation, &result.success_type)
-        {
-            if let Some(rule_and_id) = &self.rule_and_id {
-                if rule_and_id.sync_id.into_client() == result.client_id {
-                    if let Some(server_id) = result.server_id {
-                        self.rule_and_id = Some(SuggestedRuleAndId {
-                            rule: rule_and_id.rule.clone(),
-                            sync_id: SyncId::ServerId(server_id),
-                        });
-                        // Reload the rule from the cloud model.
-                        self.load_rule(ctx);
-                    }
-                }
-            }
-        }
     }
 
     fn handle_cloud_model_event(&mut self, event: &CloudModelEvent, ctx: &mut ViewContext<Self>) {
@@ -524,7 +503,7 @@ impl SuggestedRuleView {
                 content,
                 suggested_logging_id: Some(rule.logging_id.clone()),
             });
-            update_manager.update(ctx, |update_manager, ctx| {
+            update_manager.update(ctx, |update_manager: &mut UpdateManager, ctx| {
                 if let Some(client_id) = sync_id.into_client() {
                     update_manager.create_ai_fact(ai_fact, client_id, owner, ctx);
                 }

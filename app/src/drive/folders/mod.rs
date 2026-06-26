@@ -11,10 +11,10 @@ use super::CloudObjectTypeAndId;
 use crate::appearance::Appearance;
 use crate::cloud_object::{
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
-    CreateObjectRequest, GenericServerObject, ObjectType, Revision, Space, UpdateCloudObjectResult,
+    CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision, Space,
+    UpdateCloudObjectResult,
 };
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};

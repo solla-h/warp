@@ -14,12 +14,8 @@ use crate::cloud_object::model::json_model::JsonModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{
     CloudObjectLookup as _, GenericStringObjectFormat, GenericStringObjectUniqueKey,
-    JsonObjectType, Owner, Revision,
-};
+    JsonObjectType, Owner, Revision, UpdateManagerEvent, UpdateManager};
 use crate::drive::CloudObjectTypeAndId;
-use crate::server::cloud_objects::update_manager::{
-    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
-};
 use crate::server::ids::{ClientId, SyncId};
 use crate::server::server_api::ai::ScheduledAgentHistory;
 use crate::server::server_api::ServerApiProvider;
@@ -161,38 +157,6 @@ impl ScheduledAgentManager {
         event: &UpdateManagerEvent,
         _ctx: &mut ModelContext<Self>,
     ) {
-        if let UpdateManagerEvent::ObjectOperationComplete { result } = event {
-            if let ObjectOperation::Delete { .. } = result.operation {
-                if let Some(server_id) = result.server_id {
-                    let sync_id = SyncId::ServerId(server_id);
-                    if let Some(tx) = self.pending_deletes.remove(&sync_id) {
-                        match result.success_type {
-                            OperationSuccessType::Success => {
-                                let _ = tx.send(Ok(()));
-                            }
-                            OperationSuccessType::Failure => {
-                                let _ = tx.send(Err(anyhow::anyhow!(
-                                    "Failed to delete scheduled ambient agent"
-                                )));
-                            }
-                            OperationSuccessType::Denied(ref message) => {
-                                let _ =
-                                    tx.send(Err(anyhow::anyhow!("Deletion denied: {}", message)));
-                            }
-                            OperationSuccessType::Rejection => {
-                                let _ =
-                                    tx.send(Err(anyhow::anyhow!("Deletion rejected by server")));
-                            }
-                            OperationSuccessType::FeatureNotAvailable => {
-                                let _ = tx.send(Err(anyhow::anyhow!(
-                                    "Scheduled ambient agents not available"
-                                )));
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /// Create a new scheduled ambient agent.
@@ -203,7 +167,7 @@ impl ScheduledAgentManager {
         ctx: &mut ModelContext<Self>,
     ) -> impl Future<Output = anyhow::Result<SyncId>> + Send + 'static {
         let client_id = ClientId::default();
-        let create_future = UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+        let create_future = UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
             update_manager.create_scheduled_ambient_agent_online(config, client_id, owner, ctx)
         });
         async move { create_future.await.map(SyncId::ServerId) }
@@ -230,7 +194,7 @@ impl ScheduledAgentManager {
                 let revision = schedule_obj.metadata.revision.clone();
 
                 let update_future =
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.update_scheduled_ambient_agent_online(
                             updated_config,
                             schedule_id,
@@ -377,7 +341,7 @@ impl ScheduledAgentManager {
                     )));
                 } else {
                     self.pending_deletes.insert(schedule_id, tx);
-                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
                         update_manager.delete_object_by_user(id_and_type, ctx);
                     });
                 }
