@@ -1,6 +1,13 @@
-use warp_graphql::queries::get_updated_cloud_objects::UpdatedObjectInput;
+use warp_types::ServerTimestamp;
 
 use super::RevisionAndLastEditor;
+
+/// Input for fetching an updated object from the server.
+#[derive(Debug, Clone)]
+pub struct UpdatedObjectInput {
+    pub uid: String,
+    pub revision: ServerTimestamp,
+}
 
 /// Result of attempting to update a cloud object.
 #[derive(Debug)]

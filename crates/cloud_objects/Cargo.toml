@@ -25,5 +25,4 @@ thiserror.workspace = true
 uuid.workspace = true
 warp_types.workspace = true
 warp_core.workspace = true
-warp_graphql.workspace = true
 warpui_core.workspace = true

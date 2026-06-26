@@ -6,7 +6,6 @@ use chrono::{DateTime, Utc};
 use comfy_table::Cell;
 use inquire::{Confirm, InquireError, Password};
 use serde::Serialize;
-use warp_cli::agent::OutputFormat;
 use warp_cli::scope::ObjectScope;
 use warp_cli::secret::{
     AnthropicMethod, CodexMethod, CreateProvider, CreateSecretArgs, DeleteSecretArgs,
@@ -14,14 +13,13 @@ use warp_cli::secret::{
 };
 use warp_cli::GlobalOptions;
 use warp_core::features::FeatureFlag;
-use warp_graphql::managed_secrets::{ManagedSecret, ManagedSecretType};
-use warp_graphql::object::SpaceType;
 use crate::managed_secrets::client::SecretOwner;
-use crate::managed_secrets::{ManagedSecretManager, ManagedSecretValue};
+use crate::managed_secrets::{ManagedSecretManager, ManagedSecretValue, SecretListEntry};
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, SingletonEntity as _};
 
 use super::output::{self, TableFormat};
+use crate::ai::auth_secret_types::ManagedSecretType;
 use crate::auth::UserUid;
 use crate::cloud_object::Owner;
 use crate::server::ids::ServerId;
@@ -75,7 +73,7 @@ pub fn run(
         SecretCommand::Create(args) => create_secret(ctx, args),
         SecretCommand::Delete(args) => delete_secret(ctx, args),
         SecretCommand::Update(args) => update_secret(ctx, args),
-        SecretCommand::List(args) => list_secrets(ctx, global_options.output_format, args),
+        SecretCommand::List(_) => Err(anyhow::anyhow!("Secret listing is not available")),
     }
 }
 
@@ -485,45 +483,6 @@ fn update_secret(ctx: &mut AppContext, args: UpdateSecretArgs) -> Result<()> {
     Ok(())
 }
 
-/// List secrets.
-fn list_secrets(
-    ctx: &mut AppContext,
-    output_format: OutputFormat,
-    _args: ListSecretsArgs,
-) -> Result<()> {
-    ManagedSecretManager::handle(ctx).update(ctx, |manager, ctx| {
-        ctx.spawn(manager.list_secrets(), move |_, result, ctx| match result {
-            Ok(secrets) => {
-                let secret_infos = secrets.into_iter().map(|secret| {
-                    let owner = match secret.owner.type_ {
-                        SpaceType::User => Owner::User {
-                            user_uid: UserUid::new(secret.owner.uid.inner()),
-                        },
-                        SpaceType::Team => Owner::Team {
-                            team_uid: ServerId::from_string_lossy(secret.owner.uid.inner()),
-                        },
-                    };
-
-                    SecretInfo {
-                        name: secret.name,
-                        scope: super::common::format_owner(&owner).to_string(),
-                        secret_type: secret.type_,
-                        created_at: secret.created_at.utc(),
-                        updated_at: secret.updated_at.utc(),
-                    }
-                });
-
-                output::print_list(secret_infos, output_format);
-
-                ctx.terminate_app(TerminationMode::ForceTerminate, None);
-            }
-            Err(err) => {
-                super::report_fatal_error(err, ctx);
-            }
-        });
-    });
-    Ok(())
-}
 /// Read a raw secret string from either the provided file or stdin.
 fn read_simple_secret_value(args: &ValueArgs) -> Result<Option<String>> {
     if let Some(value_file) = args.value_file.as_ref() {
@@ -825,26 +784,6 @@ fn read_bedrock_access_key_secret_value(
     )))
 }
 
-/// Finds the type of an existing secret by name and owner scope.
-fn find_secret_type(
-    secrets: &[ManagedSecret],
-    name: &str,
-    owner: &SecretOwner,
-) -> Option<ManagedSecretType> {
-    secrets
-        .iter()
-        .find(|s| {
-            s.name == name
-                && match owner {
-                    SecretOwner::CurrentUser => matches!(s.owner.type_, SpaceType::User),
-                    SecretOwner::Team { team_uid } => {
-                        matches!(s.owner.type_, SpaceType::Team) && s.owner.uid.inner() == team_uid
-                    }
-                }
-        })
-        .map(|s| s.type_)
-}
-
 fn format_secret_type(type_: &ManagedSecretType) -> String {
     match type_ {
         ManagedSecretType::RawValue => "Raw Value".to_string(),
@@ -854,4 +793,31 @@ fn format_secret_type(type_: &ManagedSecretType) -> String {
         ManagedSecretType::AnthropicBedrockApiKey => "Anthropic Bedrock API Key".to_string(),
         ManagedSecretType::OpenaiApiKey => "OpenAI API Key".to_string(),
     }
+}
+
+fn parse_secret_type(s: &str) -> Option<ManagedSecretType> {
+    match s {
+        "RAW_VALUE" | "raw_value" => Some(ManagedSecretType::RawValue),
+        "DOTENVX" | "dotenvx" => Some(ManagedSecretType::Dotenvx),
+        "ANTHROPIC_API_KEY" | "anthropic_api_key" => Some(ManagedSecretType::AnthropicApiKey),
+        "ANTHROPIC_BEDROCK_ACCESS_KEY" | "anthropic_bedrock_access_key" => {
+            Some(ManagedSecretType::AnthropicBedrockAccessKey)
+        }
+        "ANTHROPIC_BEDROCK_API_KEY" | "anthropic_bedrock_api_key" => {
+            Some(ManagedSecretType::AnthropicBedrockApiKey)
+        }
+        "OPENAI_API_KEY" | "openai_api_key" => Some(ManagedSecretType::OpenaiApiKey),
+        _ => None,
+    }
+}
+
+fn find_secret_type(
+    secrets: &[SecretListEntry],
+    name: &str,
+    owner: &SecretOwner,
+) -> Option<ManagedSecretType> {
+    secrets
+        .iter()
+        .find(|s| s.name == name && &s.owner == owner)
+        .and_then(|s| parse_secret_type(&s.secret_type))
 }

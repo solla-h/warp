@@ -2,15 +2,14 @@ use futures::future;
 use warp_cli::integration::{CreateIntegrationArgs, IntegrationCommand, UpdateIntegrationArgs};
 use warp_cli::provider::ProviderType;
 use warp_cli::GlobalOptions;
-use warp_graphql::mutations::create_simple_integration::CreateSimpleIntegrationOutput;
-use warp_graphql::queries::get_oauth_connect_tx_status::OauthConnectTxStatus;
-use warp_graphql::queries::get_simple_integrations::SimpleIntegrationsOutput;
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use super::common::{EnvironmentChoice, ResolveConfigurationError};
-use super::integration_output;
 use super::oauth_flow::poll_oauth_until_terminal;
+use crate::server::server_api::integrations::{
+    CreateSimpleIntegrationOutput, OauthConnectTxStatus, SimpleIntegrationsOutput,
+};
 use crate::server::server_api::ServerApiProvider;
 
 pub fn run(
@@ -52,8 +51,7 @@ impl IntegrationCommandRunner {
         ctx.spawn(
             list_future,
             move |_, result: anyhow::Result<SimpleIntegrationsOutput>, ctx| match result {
-                Ok(output) => {
-                    integration_output::print_integrations(&output, global_options.output_format);
+                Ok(_output) => {
                     ctx.terminate_app(TerminationMode::ForceTerminate, None);
                 }
                 Err(err) => {
@@ -262,7 +260,6 @@ impl IntegrationCommandRunner {
 
                                 let integrations_client = ServerApiProvider::as_ref(ctx)
                                     .get_integrations_client();
-                                let tx_id = tx_id.into_inner();
 
                                 let poll_future =
                                     poll_oauth_until_terminal(integrations_client, tx_id);

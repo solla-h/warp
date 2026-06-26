@@ -5,8 +5,9 @@ use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use vec1::Vec1;
-use warp_graphql::managed_secrets::{ManagedSecret, ManagedSecretConfig, ManagedSecretType};
-use warp_graphql::queries::task_secrets::ManagedSecretValue as GqlManagedSecretValue;
+use warp_cli::agent::Harness;
+
+use crate::ai::auth_secret_types::ManagedSecretType;
 
 #[derive(Debug, Clone)]
 pub struct TaskIdentityToken {
@@ -23,8 +24,8 @@ pub struct IdentityTokenOptions {
 
 #[derive(Debug)]
 pub struct ManagedSecretConfigs {
-    pub user_secrets: Option<ManagedSecretConfig>,
-    pub team_secrets: HashMap<String, ManagedSecretConfig>,
+    pub user_public_key: Option<String>,
+    pub team_public_keys: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -33,45 +34,51 @@ pub enum SecretOwner {
     Team { team_uid: String },
 }
 
+/// Metadata returned after creating or updating a managed secret.
+#[derive(Debug, Clone)]
+pub struct SecretMetadata {
+    pub name: String,
+    pub owner: SecretOwner,
+}
+
+/// An entry in the list of managed secrets.
+#[derive(Debug, Clone)]
+pub struct SecretListEntry {
+    pub name: String,
+    pub owner: SecretOwner,
+    pub secret_type: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// An entry representing an auth secret bound to a harness.
+#[derive(Debug, Clone)]
+pub struct AuthSecretEntry {
+    pub name: String,
+    pub owner: SecretOwner,
+}
+
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 pub trait ManagedSecretsClient: 'static + Send + Sync {
     async fn get_managed_secret_configs(&self) -> Result<ManagedSecretConfigs>;
 
-    async fn create_managed_secret(
-        &self,
-        owner: SecretOwner,
-        name: String,
-        secret_type: ManagedSecretType,
-        encrypted_value: String,
-        description: Option<String>,
-    ) -> Result<ManagedSecret>;
-
-    async fn update_managed_secret(
-        &self,
-        owner: SecretOwner,
-        name: String,
-        encrypted_value: Option<String>,
-        description: Option<String>,
-    ) -> Result<ManagedSecret>;
-
     async fn delete_managed_secret(&self, owner: SecretOwner, name: String) -> Result<()>;
 
-    async fn list_secrets(&self) -> Result<Vec<ManagedSecret>>;
-
-    async fn list_harness_auth_secrets(
-        &self,
-        harness: warp_graphql::ai::AgentHarness,
-    ) -> Result<Vec<ManagedSecret>>;
-
-    async fn get_task_secrets(
-        &self,
-        task_id: String,
-        workload_token: String,
-    ) -> Result<HashMap<String, GqlManagedSecretValue>>;
-
+    /// Issue a short-lived OIDC identity token for the current task.
+    ///
+    /// The workload token is not passed explicitly - it's automatically provided
+    /// as part of the client's cloud agent workload identity token support
+    /// (see the `ServerApi` implementation).
     async fn issue_task_identity_token(
         &self,
         options: IdentityTokenOptions,
     ) -> Result<TaskIdentityToken>;
+
+    async fn list_harness_auth_secrets(
+        &self,
+        _harness: Harness,
+    ) -> Result<Vec<AuthSecretEntry>> {
+        todo!("GraphQL backend removed")
+    }
 }

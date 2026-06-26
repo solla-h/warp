@@ -1,5 +1,5 @@
 use chrono::Utc;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warpui::{App, SingletonEntity};
 
 use super::*;

@@ -12,11 +12,12 @@ use regex::Regex;
 use url::Url;
 use warp_core::channel::Channel;
 use warp_core::features::FeatureFlag;
-use warp_graphql::queries::get_updated_cloud_objects::UpdatedObjectInput;
-use warp_graphql::scalars::time::ServerTimestamp;
+use cloud_objects::cloud_object::UpdatedObjectInput;
+use warp_types::ServerTimestamp;
 use warpui::{AppContext, SingletonEntity};
 
 use self::breadcrumbs::ContainingObject;
+#[allow(unused_imports)]
 use self::model::actions::ObjectActions;
 use self::model::generic_string_model::{
     GenericStringModel, GenericStringObjectId, Serializer, StringModel,
@@ -30,7 +31,7 @@ use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveO
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
-use crate::server::server_api::object::ObjectClient;
+use cloud_object_client::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workflows::{CloudWorkflow, WorkflowSource};
@@ -742,15 +743,9 @@ where
     fn versions(&self, app: &AppContext) -> Option<UpdatedObjectInput> {
         match (self.id, self.metadata.revision.as_ref()) {
             (SyncId::ServerId(id), Some(revision)) => {
-                let actions_ts = ObjectActions::as_ref(app)
-                    .get_latest_processed_at_ts(&self.id.uid())
-                    .map(|t| t.into());
-                Some(UpdatedObjectInput {
+                    Some(UpdatedObjectInput {
                     uid: id.into(),
-                    revision_ts: revision.timestamp(),
-                    metadata_ts: self.metadata.metadata_last_updated_ts,
-                    permissions_ts: self.permissions.permissions_last_updated_ts,
-                    actions_ts,
+                    revision: revision.timestamp(),
                 })
             }
             _ => None,
@@ -984,7 +979,7 @@ pub use cloud_object_models::{
     ServerAIExecutionProfile, ServerAIFact, ServerAmbientAgentEnvironment, ServerCloudAgentConfig,
     ServerCloudObject, ServerEnvVarCollection, ServerFolder, ServerMCPServer, ServerNotebook,
     ServerPreference, ServerScheduledAmbientAgent, ServerTemplatableMCPServer, ServerWorkflow,
-    ServerWorkflowEnum, TryFromGql,
+    ServerWorkflowEnum,
 };
 
 #[derive(Default, Clone, Copy, Debug, Eq, Derivative)]

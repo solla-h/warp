@@ -8,17 +8,15 @@ use chrono::{DateTime, Utc};
 // Re-exported from cloud_objects.
 pub use cloud_objects::cloud_object::SerializedModel;
 use derivative::Derivative;
-use http::StatusCode;
 use lazy_static::lazy_static;
 use uuid::Uuid;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warpui::r#async::FutureId;
 use warpui::{Entity, ModelContext, RequestState, RetryOption, SingletonEntity};
 
-use super::graphql::GraphQLError;
 use super::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
 use super::server_api::auth::UserAuthenticationError;
-use super::server_api::object::ObjectClient;
+use cloud_object_client::ObjectClient;
 use crate::ai::ambient_agents::scheduled::CloudScheduledAmbientAgentModel;
 use crate::ai::cloud_agent_config::CloudAgentConfigModel;
 use crate::ai::cloud_environments::CloudAmbientAgentEnvironmentModel;
@@ -1719,21 +1717,6 @@ impl SyncQueue {
 
             if cause.is::<UserAuthenticationError>() {
                 return true;
-            }
-
-            if let Some(err) = cause.downcast_ref::<GraphQLError>() {
-                match err {
-                    // This only applies to WarpDev, but if someone's IP address is blocked, there's no
-                    // point in continuing to dequeue.
-                    GraphQLError::StagingAccessBlocked => return true,
-                    // If the user isn't authorized, stop dequeuing. In general, this should
-                    // manifest as a UserAuthenticationError instead.
-                    GraphQLError::HttpError {
-                        status: StatusCode::FORBIDDEN | StatusCode::UNAUTHORIZED,
-                        ..
-                    } => return true,
-                    _ => (),
-                }
             }
 
             false

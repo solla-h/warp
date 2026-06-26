@@ -2,11 +2,9 @@ use asset_macro::bundled_or_fetched_asset;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
-use thousands::Separable;
 use warp_core::send_telemetry_from_ctx;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::{Fill, WarpTheme};
-use warp_graphql::billing::{PlanPricing, StripeSubscriptionPlan};
 use warpui::elements::{
     Align, Border, CacheOption, ChildAnchor, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Flex, FormattedTextElement, HighlightedHyperlink, Image,
@@ -88,11 +86,6 @@ impl FreeTierLimitHitModal {
             let user_id = auth_state.user_id().unwrap_or_default();
             UserWorkspaces::upgrade_link(user_id)
         }
-    }
-
-    fn get_build_plan_details(app: &AppContext) -> Option<&PlanPricing> {
-        let pricing_model = PricingInfoModel::handle(app).as_ref(app);
-        pricing_model.plan_pricing(&StripeSubscriptionPlan::Build)
     }
 
     fn render_checklist_item_dynamic(
@@ -180,12 +173,7 @@ impl FreeTierLimitHitModal {
                         )
                         .with_child(
                             Container::new({
-                                let benefits_text = if let Some(plan) = Self::get_build_plan_details(app) {
-                                    let price = plan.monthly_plan_price_per_month_usd_cents / 100;
-                                    format!("The Build plan is ${price}/month which includes everything in the free tier plus:")
-                                } else {
-                                    "The Build plan includes everything in the free tier plus:".to_string()
-                                };
+                                let benefits_text = "The Build plan includes everything in the free tier plus:".to_string();
                                 let formatted_text = FormattedText::new([FormattedTextLine::Line(vec![
                                     FormattedTextFragment::plain_text(benefits_text),
                                 ])]);
@@ -204,12 +192,7 @@ impl FreeTierLimitHitModal {
                         )
                         .with_child(
                             Container::new({
-                                let credits_text = if let Some(plan) = Self::get_build_plan_details(app) {
-                                    let limit = plan.request_limit.unwrap_or(1500);
-                                    format!("{} Credits per month", limit.separate_with_commas())
-                                } else {
-                                    "Extended Credits per month".to_string()
-                                };
+                                let credits_text = "Extended Credits per month".to_string();
                                 Self::render_checklist_item_dynamic(credits_text, appearance, theme)
                             })
                             .with_margin_bottom(8.)

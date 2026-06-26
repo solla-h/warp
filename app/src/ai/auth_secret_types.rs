@@ -1,7 +1,16 @@
 use anyhow::{anyhow, Result};
 use warp_cli::agent::Harness;
-use warp_graphql::managed_secrets::ManagedSecretType;
 use crate::managed_secrets::ManagedSecretValue;
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+pub enum ManagedSecretType {
+    AnthropicApiKey,
+    AnthropicBedrockApiKey,
+    AnthropicBedrockAccessKey,
+    OpenaiApiKey,
+    RawValue,
+    Dotenvx,
+}
 
 pub struct AuthSecretTypeField {
     pub label: &'static str,

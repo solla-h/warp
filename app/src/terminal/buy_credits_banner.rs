@@ -1,14 +1,8 @@
-use std::sync::Arc;
-
-use enclose::enclose;
-use itertools::Itertools as _;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::Icon;
-use warp_graphql::billing::AddonCreditsOption;
-use warp_graphql::error::BudgetExceededError;
 use warpui::elements::{
     Align, Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Expanded, Flex, FormattedTextElement, HighlightedHyperlink,
@@ -26,12 +20,10 @@ use crate::ai::request_usage_model::{
 };
 use crate::auth::AuthStateProvider;
 use crate::features::FeatureFlag;
-use crate::menu::MenuItemFields;
 use crate::pricing::{PricingInfoModel, PricingInfoModelEvent};
 use crate::send_telemetry_from_ctx;
 use crate::server::ids::ServerId;
 use crate::server::telemetry::{OutOfCreditsBannerAction, TelemetryEvent};
-use crate::settings_view::create_discount_badge;
 use crate::view_components::{Dropdown, DropdownAction};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
@@ -47,8 +39,8 @@ struct MouseStates {
 pub struct BuyCreditsBanner {
     mouse_states: MouseStates,
     denomination_dropdown: ViewHandle<Dropdown<Action>>,
-    addon_credits_options: Vec<AddonCreditsOption>,
     selected_denomination_index: usize,
+    addon_credits_options: Vec<crate::pricing::AddonCreditsOption>,
     purchase_addon_credits_loading: bool,
     should_display_banner: bool,
     billing_settings_hyperlink: HighlightedHyperlink,
@@ -63,10 +55,9 @@ impl BuyCreditsBanner {
     }
 
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        ctx.subscribe_to_model(&PricingInfoModel::handle(ctx), |me, _handle, event, ctx| {
+        ctx.subscribe_to_model(&PricingInfoModel::handle(ctx), |_me, _handle, event, ctx| {
             #[allow(irrefutable_let_patterns)]
             if let PricingInfoModelEvent::PricingInfoUpdated = event {
-                me.update_addon_credits_options(ctx);
                 ctx.notify();
             }
         });
@@ -106,8 +97,8 @@ impl BuyCreditsBanner {
         let mut me = Self {
             mouse_states: Default::default(),
             denomination_dropdown,
-            addon_credits_options: Default::default(),
             selected_denomination_index: 0,
+            addon_credits_options: Vec::new(),
             purchase_addon_credits_loading: false,
             should_display_banner: false,
             billing_settings_hyperlink: HighlightedHyperlink::default(),
@@ -115,7 +106,6 @@ impl BuyCreditsBanner {
             auto_reload_enabled: false,
             banner_auto_reload_update_in_flight: false,
         };
-        me.update_addon_credits_options(ctx);
         me
     }
 
@@ -133,10 +123,7 @@ impl BuyCreditsBanner {
                 let post_purchase_modal_flag_enabled =
                     FeatureFlag::BuildPlanAutoReloadPostPurchaseModal.is_enabled();
 
-                let selected_credits = self
-                    .addon_credits_options
-                    .get(self.selected_denomination_index)
-                    .map(|option| option.credits);
+                let selected_credits: Option<i32> = None;
                 let has_admin_permissions = {
                     let auth_state = AuthStateProvider::as_ref(ctx).get();
                     let current_team = UserWorkspaces::as_ref(ctx).current_team();
@@ -194,17 +181,13 @@ impl BuyCreditsBanner {
 
                 ctx.notify();
             }
-            UserWorkspacesEvent::PurchaseAddonCreditsRejected(err) => {
+            UserWorkspacesEvent::PurchaseAddonCreditsRejected(_err) => {
                 self.purchase_addon_credits_loading = false;
                 self.banner_auto_reload_update_in_flight = false;
 
-                if err.downcast_ref::<BudgetExceededError>().is_some() {
-                    self.should_display_banner = true;
-                } else {
-                    AIRequestUsageModel::handle(ctx).update(ctx, |ai_request_usage_model, ctx| {
-                        ai_request_usage_model.dismiss_buy_credits_banner(ctx);
-                    });
-                }
+                AIRequestUsageModel::handle(ctx).update(ctx, |ai_request_usage_model, ctx| {
+                    ai_request_usage_model.dismiss_buy_credits_banner(ctx);
+                });
                 ctx.notify();
             }
             UserWorkspacesEvent::UpdateWorkspaceSettingsSuccess => {
@@ -254,12 +237,7 @@ impl BuyCreditsBanner {
             .with_color(sub_text_color.into())
             .finish();
 
-        // Get the selected amount for the tooltip
-        let selected_credits = self
-            .addon_credits_options
-            .get(self.selected_denomination_index)
-            .map(|option| option.credits)
-            .unwrap_or(0);
+        let selected_credits: i32 = 0;
 
         let tooltip_text = format!(
             "When enabled, auto reload will purchase {} credits when your credit balance gets low",
@@ -310,81 +288,6 @@ impl BuyCreditsBanner {
             )
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .finish()
-    }
-
-    fn update_addon_credits_options(&mut self, ctx: &mut ViewContext<Self>) {
-        self.addon_credits_options = PricingInfoModel::as_ref(ctx)
-            .addon_credits_options()
-            .map(|opts| opts.to_vec())
-            .unwrap_or_default();
-
-        let base_rate = self
-            .addon_credits_options
-            .first()
-            .map_or(0., |option| option.rate());
-        let items = self
-            .addon_credits_options
-            .iter()
-            .enumerate()
-            .map(|(index, option)| {
-                let primary_text = format!(
-                    "${:.0} / {} credits",
-                    option.price_usd_cents as f32 / 100.,
-                    option.credits
-                );
-                let discount_percent = if base_rate > 0.0 {
-                    let actual_rate = option.rate();
-                    ((base_rate - actual_rate) / base_rate * 100.0).round() as u32
-                } else {
-                    0
-                };
-                if discount_percent > 0 {
-                    MenuItemFields::new_with_custom_label(
-                        Arc::new(enclose!((primary_text) move |is_selected, is_hovered, appearance, _| {
-                            let text_color = appearance.theme().main_text_color(
-                                if is_selected || is_hovered {
-                                    appearance.theme().accent()
-                                } else {
-                                    appearance.theme().surface_1()
-                                }
-                            );
-                            let main_text = Text::new_inline(
-                                primary_text.clone(),
-                                appearance.ui_font_family(),
-                                appearance.ui_font_size(),
-                            )
-                            .with_color(text_color.into())
-                            .finish();
-
-                            let discount_badge = create_discount_badge(discount_percent, appearance);
-
-                            Flex::row()
-                                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                                .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
-                                .with_main_axis_size(MainAxisSize::Max)
-                                .with_child(main_text)
-                                .with_child(discount_badge)
-                                .finish()
-                        })),
-                        Some(primary_text)
-                    )
-                    .with_on_select_action(DropdownAction::select_action_and_close(
-                        Action::SelectDenomination(index),
-                    ))
-                    .into_item()
-                } else {
-                    MenuItemFields::new(primary_text.clone())
-                        .with_on_select_action(DropdownAction::select_action_and_close(
-                            Action::SelectDenomination(index),
-                        ))
-                        .into_item()
-                }
-            })
-            .collect_vec();
-        self.denomination_dropdown.update(ctx, |dropdown, ctx| {
-            dropdown.set_rich_items(items, ctx);
-            dropdown.set_selected_by_index(0, ctx);
-        });
     }
 
     fn render_auto_reload_blocked(

@@ -7,7 +7,6 @@ use anyhow::{Context, Result};
 use shell_words::quote as shell_quote;
 use uuid::Uuid;
 use warp_cli::agent::Harness;
-use warp_graphql::ai::AgentTaskState;
 
 use super::super::claude_transcript::{
     claude_config_dir, write_envelope, write_session_index_entry, ClaudeTranscriptEnvelope,
@@ -93,7 +92,7 @@ impl ClaudeHarness {
 
         log::info!("Reopening dormant Claude task before wake command: task_id={task_id}");
         server_api
-            .update_agent_task(task_id, Some(AgentTaskState::InProgress), None, None, None)
+            .update_agent_task(task_id, None, None, None, None)
             .await
             .map_err(|err| {
                 anyhow::anyhow!(

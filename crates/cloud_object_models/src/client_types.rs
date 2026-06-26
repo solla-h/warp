@@ -9,8 +9,6 @@ use cloud_objects::drive::sharing::SharingAccessLevel;
 use cloud_objects::ids::{
     FolderId, GenericStringObjectId, HashedSqliteId, ObjectUid, ServerId, SyncId,
 };
-use warp_graphql::mcp_gallery_template::MCPGalleryTemplate;
-use warp_graphql::object_permissions::AccessLevel;
 
 use crate::user_profile::UserProfileWithUID;
 use crate::{NotebookId, ServerCloudObject, ServerFolder, ServerNotebook, ServerWorkflow, WorkflowId};
@@ -103,7 +101,6 @@ pub struct InitialLoadResponse {
     pub deleted_generic_string_objects: Vec<GenericStringObjectId>,
     pub user_profiles: Vec<UserProfileWithUID>,
     pub action_histories: Vec<ObjectActionHistory>,
-    pub mcp_gallery: Vec<MCPGalleryTemplate>,
 }
 
 pub struct GetCloudObjectResponse {
@@ -315,14 +312,14 @@ pub trait ObjectClient: 'static + Send + Sync {
         &self,
         object_id: ServerId,
         guest_emails: Vec<String>,
-        access_level: AccessLevel,
+        access_level: SharingAccessLevel,
     ) -> Result<ObjectPermissionsUpdateData>;
 
     async fn update_object_guests(
         &self,
         object_id: ServerId,
         guest_emails: Vec<String>,
-        access_level: AccessLevel,
+        access_level: SharingAccessLevel,
     ) -> Result<ServerPermissions>;
 
     async fn remove_object_guest(

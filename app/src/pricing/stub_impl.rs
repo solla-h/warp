@@ -1,7 +1,4 @@
-use warp_graphql::billing::{
-    AddonCreditsOption, PlanPricing, PricingInfo, StripeSubscriptionPlan,
-};
-use warpui::{Entity, ModelContext, SingletonEntity};
+use warpui::{Entity, SingletonEntity};
 
 #[derive(Debug)]
 pub struct PricingInfoModel;
@@ -11,31 +8,7 @@ impl PricingInfoModel {
         Self
     }
 
-    pub fn update_pricing_info(&mut self, _pricing_info: PricingInfo, _ctx: &mut ModelContext<Self>) {
-    }
-
-    #[allow(dead_code)]
-    pub fn plan_pricing(&self, _plan: &StripeSubscriptionPlan) -> Option<&PlanPricing> {
-        None
-    }
-
-    pub fn plans(&self) -> &[PlanPricing] {
-        &[]
-    }
-
-    #[allow(dead_code)]
-    pub fn overage_cost_dollars(&self) -> Option<f64> {
-        None
-    }
-
-    #[allow(dead_code)]
-    pub fn monthly_plan_cost_dollars(&self, _plan: &StripeSubscriptionPlan) -> Option<f64> {
-        None
-    }
-
-    pub fn addon_credits_options(&self) -> Option<&[AddonCreditsOption]> {
-        None
-    }
+    pub fn update_pricing_info(&mut self, _pricing_info: (), _ctx: &mut warpui::ModelContext<Self>) {}
 }
 
 impl Default for PricingInfoModel {

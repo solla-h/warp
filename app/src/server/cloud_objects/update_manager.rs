@@ -16,9 +16,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use warp_core::features::FeatureFlag;
 use warp_core::report_error;
-use warp_graphql::mcp_gallery_template::MCPGalleryTemplate;
-use warp_graphql::object_permissions::AccessLevel;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warp_util::sync::Condition;
 use warpui::r#async::{FutureId, Timer};
 use warpui::{
@@ -79,7 +77,7 @@ use crate::server::ids::{
 use crate::server::retry_strategies::{
     OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL, PERIODIC_POLL_RETRY_STRATEGY,
 };
-use crate::server::server_api::object::{GuestIdentifier, ObjectClient};
+use cloud_object_client::{GuestIdentifier, ObjectClient};
 use crate::server::sync_queue::{
     CreationFailureReason, GenericStringObjectToCreate, QueueItem, SyncQueue, SyncQueueEvent,
 };
@@ -143,9 +141,6 @@ pub enum UpdateManagerEvent {
     },
     CloudPreferencesUpdated {
         updated: Vec<Preference>,
-    },
-    MCPGalleryUpdated {
-        templates: Vec<MCPGalleryTemplate>,
     },
     AmbientTaskUpdated {
         task_id: AmbientAgentTaskId,
@@ -1085,12 +1080,6 @@ impl UpdateManager {
         // This is done as a separate call because the timestamps come from GetCloudEnvironments query
         // rather than the generic object sync.
         self.fetch_and_merge_environment_timestamps(ctx);
-
-        if !response.mcp_gallery.is_empty() {
-            ctx.emit(UpdateManagerEvent::MCPGalleryUpdated {
-                templates: response.mcp_gallery,
-            });
-        }
 
         if !updated_preferences.is_empty() {
             ctx.emit(UpdateManagerEvent::CloudPreferencesUpdated {
@@ -2483,65 +2472,6 @@ impl UpdateManager {
         );
     }
 
-    /// Add guests to an object.
-    pub fn add_object_guests(
-        &mut self,
-        server_id: ServerId,
-        guest_emails: Vec<String>,
-        access_level: AccessLevel,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.update_permissions_pessimistic(
-            server_id,
-            ctx,
-            move |object_client| {
-                let guest_emails = guest_emails.clone();
-                async move {
-                    object_client
-                        .add_object_guests(server_id, guest_emails, access_level)
-                        .await
-                }
-            },
-            move |me, data, ctx| {
-                let uid = server_id.uid();
-                me.save_permissions_update(&uid, data, ctx);
-            },
-        );
-    }
-
-    /// Update the access level for guest(s) on an object.
-    pub fn update_object_guests(
-        &mut self,
-        server_id: ServerId,
-        guest_emails: Vec<String>,
-        access_level: AccessLevel,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.update_permissions_pessimistic(
-            server_id,
-            ctx,
-            move |object_client| {
-                let guest_emails = guest_emails.clone();
-                async move {
-                    object_client
-                        .update_object_guests(server_id, guest_emails, access_level)
-                        .await
-                }
-            },
-            move |me, permissions, ctx| {
-                let uid = server_id.uid();
-                me.save_permissions_update(
-                    &uid,
-                    ObjectPermissionsUpdateData {
-                        permissions,
-                        profiles: vec![],
-                    },
-                    ctx,
-                );
-            },
-        );
-    }
-
     /// Remove a guest from an object.
     pub fn remove_object_guest(
         &mut self,
@@ -2569,64 +2499,6 @@ impl UpdateManager {
                     ctx,
                 );
             },
-        );
-    }
-
-    /// Add guests to an AI conversation.
-    pub fn add_ai_conversation_guests(
-        &mut self,
-        server_id: ServerId,
-        conversation_id: AIConversationId,
-        guest_emails: Vec<String>,
-        access_level: AccessLevel,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.update_ai_conversation_permissions(
-            conversation_id,
-            "add guests",
-            move |object_client| {
-                let guest_emails = guest_emails.clone();
-                async move {
-                    object_client
-                        .add_object_guests(server_id, guest_emails, access_level)
-                        .await
-                }
-            },
-            |data, ctx| {
-                // Update UserProfiles with any new profiles returned
-                if !data.profiles.is_empty() {
-                    UserProfiles::handle(ctx).update(ctx, |user_profiles, _| {
-                        user_profiles.insert_profiles(&data.profiles);
-                    });
-                }
-                Some(data.permissions)
-            },
-            ctx,
-        );
-    }
-
-    /// Update guest access for an AI conversation.
-    pub fn update_ai_conversation_guests(
-        &mut self,
-        server_id: ServerId,
-        conversation_id: AIConversationId,
-        guest_emails: Vec<String>,
-        access_level: AccessLevel,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.update_ai_conversation_permissions(
-            conversation_id,
-            "update guests",
-            move |object_client| {
-                let guest_emails = guest_emails.clone();
-                async move {
-                    object_client
-                        .update_object_guests(server_id, guest_emails, access_level)
-                        .await
-                }
-            },
-            |permissions, _ctx| Some(permissions),
-            ctx,
         );
     }
 
@@ -4791,6 +4663,48 @@ impl UpdateManager {
                 &hashed_sqlite_id,
             );
         }
+    }
+
+    pub fn add_object_guests(
+        &mut self,
+        _object_id: ServerId,
+        _emails: Vec<String>,
+        _access_level: SharingAccessLevel,
+        _ctx: &mut ModelContext<Self>,
+    ) {
+        todo!("GraphQL backend removed")
+    }
+
+    pub fn update_object_guests(
+        &mut self,
+        _object_id: ServerId,
+        _emails: Vec<String>,
+        _access_level: SharingAccessLevel,
+        _ctx: &mut ModelContext<Self>,
+    ) {
+        todo!("GraphQL backend removed")
+    }
+
+    pub fn add_ai_conversation_guests(
+        &mut self,
+        _server_id: ServerId,
+        _conversation_id: AIConversationId,
+        _emails: Vec<String>,
+        _access_level: SharingAccessLevel,
+        _ctx: &mut ModelContext<Self>,
+    ) {
+        todo!("GraphQL backend removed")
+    }
+
+    pub fn update_ai_conversation_guests(
+        &mut self,
+        _server_id: ServerId,
+        _conversation_id: AIConversationId,
+        _emails: Vec<String>,
+        _access_level: SharingAccessLevel,
+        _ctx: &mut ModelContext<Self>,
+    ) {
+        todo!("GraphQL backend removed")
     }
 }
 

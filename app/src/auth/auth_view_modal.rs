@@ -309,9 +309,6 @@ impl AuthView {
                 self.last_login_failure_reason = Some(LoginFailureReason::FailedUserAuthentication);
                 self.set_auth_token_input_editable(true, ctx);
             }
-            AuthManagerEvent::MintCustomTokenFailed(_err) => {
-                self.last_login_failure_reason = Some(LoginFailureReason::FailedMintCustomToken);
-            }
             _ => {}
         }
         ctx.notify();

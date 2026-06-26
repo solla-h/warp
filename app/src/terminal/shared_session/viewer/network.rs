@@ -38,8 +38,6 @@ use crate::auth::auth_state::AuthState;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::editor::{CrdtOperation, ReplicaId};
 use crate::server::iap::IapManager;
-use crate::server::server_api::auth::AuthClient;
-use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::telemetry_context;
 use crate::terminal::event_listener::ChannelEventListener;
 use crate::terminal::model::block::BlockId;
@@ -299,30 +297,24 @@ impl Network {
     }
 
     async fn get_user_id(
-        auth_client: Arc<dyn AuthClient>,
         auth_state: &AuthState,
     ) -> anyhow::Result<UserID> {
         let user_id = UserID {
             anonymous_id: auth_state.anonymous_id(),
-            access_token: auth_client
-                .get_or_refresh_access_token()
-                .await
-                .ok()
-                .and_then(|token| token.bearer_token()),
+            access_token: None,
         };
         anyhow::Ok(user_id)
     }
 
     async fn connect_websocket_and_get_user_id(
         session_id: SessionId,
-        auth_client: Arc<dyn AuthClient>,
         auth_state: Arc<AuthState>,
         iap_headers: Vec<(&'static str, String)>,
     ) -> anyhow::Result<((impl Sink, impl Stream), UserID)> {
         let Some(join_endpoint) = connect_endpoint(format!("/sessions/join/{session_id}")) else {
             bail!("This channel does not support session-sharing.");
         };
-        let user_id = Self::get_user_id(auth_client, &auth_state).await?;
+        let user_id = Self::get_user_id(&auth_state).await?;
         let socket =
             websocket::WebSocket::connect_with_headers(&join_endpoint, None::<&str>, iap_headers)
                 .await?;
@@ -395,7 +387,6 @@ impl Network {
         ws_proxy_rx: async_channel::Receiver<UpstreamMessage>,
         ctx: &mut ModelContext<Self>,
     ) {
-        let auth_client = ServerApiProvider::as_ref(ctx).get_auth_client();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
         let iap_headers: Vec<(&'static str, String)> = IapManager::as_ref(ctx)
             .iap_state()
@@ -406,7 +397,6 @@ impl Network {
         ctx.spawn(
             Self::connect_websocket_and_get_user_id(
                 session_id,
-                auth_client,
                 auth_state.clone(),
                 iap_headers,
             ),
@@ -461,14 +451,11 @@ impl Network {
             return;
         };
         let session_id = self.session_id;
-        let auth_client = ServerApiProvider::as_ref(ctx).get_auth_client();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
         let iap_state = IapManager::as_ref(ctx).iap_state();
         let abort_handle = ctx.spawn_with_retry_on_error(
             move || {
                 log::info!("Attempting to reconnect to session sharing server as viewer");
-                // Re-read the IAP header each attempt so a refresh that landed
-                // since the last try is picked up (staging only).
                 let iap_headers: Vec<(&'static str, String)> = iap_state
                     .as_ref()
                     .and_then(|state| state.proxy_auth_header())
@@ -476,7 +463,6 @@ impl Network {
                     .collect();
                 Self::connect_websocket_and_get_user_id(
                     session_id,
-                    auth_client.clone(),
                     auth_state.clone(),
                     iap_headers,
                 )
@@ -529,10 +515,9 @@ impl Network {
 
     /// Fetches the new user id and reconnectes to the websocket.
     pub fn reauthenticate_viewer(&mut self, ctx: &mut ModelContext<Self>) {
-        let auth_client = ServerApiProvider::as_ref(ctx).get_auth_client();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
         ctx.spawn(
-            async move { Self::get_user_id(auth_client, &auth_state).await },
+            async move { Self::get_user_id(&auth_state).await },
             |network, res, ctx| match res {
                 Ok(user_id) => {
                     let message = UpstreamMessage::Reauthenticated { user_id };

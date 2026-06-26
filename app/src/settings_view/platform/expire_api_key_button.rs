@@ -38,48 +38,8 @@ impl ExpireApiKeyButton {
         }
     }
 
-    fn expire_api_key(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.request_state == RequestState::Pending {
-            return;
-        }
-        self.request_state = RequestState::Pending;
-        ctx.notify();
-
-        let auth_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_auth_client();
-        let uid_for_req = self.key_uid.clone();
-        ctx.spawn(
-            async move { auth_client.expire_api_key(&uid_for_req).await },
-            move |me, res, ctx| match res {
-                Ok(
-                    warp_graphql::mutations::expire_api_key::ExpireApiKeyResult::ExpireApiKeyOutput(
-                        _output,
-                    ),
-                ) => {
-                    me.request_state = RequestState::Idle;
-                    ctx.emit(ExpireApiKeyButtonEvent::ExpireApiKeySucceeded {
-                        uid: me.key_uid.clone(),
-                    });
-                    ctx.notify();
-                }
-                Ok(
-                    warp_graphql::mutations::expire_api_key::ExpireApiKeyResult::UserFacingError(e),
-                ) => {
-                    let _msg = warp_graphql::client::get_user_facing_error_message(e);
-                    me.request_state = RequestState::Idle;
-                    ctx.emit(ExpireApiKeyButtonEvent::ExpireApiKeyFailed { message: _msg });
-                    ctx.notify();
-                }
-                Ok(warp_graphql::mutations::expire_api_key::ExpireApiKeyResult::Unknown)
-                | Err(_) => {
-                    me.request_state = RequestState::Idle;
-                    ctx.emit(ExpireApiKeyButtonEvent::ExpireApiKeyFailed {
-                        message: "Failed to delete API key. Please try again.".to_string(),
-                    });
-                    ctx.notify();
-                }
-            },
-        );
+    fn expire_api_key(&mut self, _ctx: &mut ViewContext<Self>) {
+        todo!()
     }
 }
 

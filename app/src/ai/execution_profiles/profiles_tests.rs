@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use warp_core::features::FeatureFlag;
-use warp_graphql::object_permissions::AccessLevel;
+use cloud_objects::cloud_object::AccessLevel;
 use warpui::{App, SingletonEntity};
 
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;

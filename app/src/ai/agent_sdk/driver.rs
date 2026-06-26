@@ -27,7 +27,6 @@ use warp_cli::share::ShareRequest;
 use warp_cli::skill::SkillSpec;
 use warp_core::features::FeatureFlag;
 use warp_core::{report_error, report_if_error, safe_debug, safe_error, safe_info};
-use warp_graphql::ai::AgentTaskState;
 use crate::managed_secrets::ManagedSecretValue;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::r#async::{FutureExt, TimeoutError};
@@ -46,7 +45,8 @@ use crate::ai::agent_sdk::driver::harness::{
 use crate::ai::agent_sdk::setup_observability::{SetupClientEventReporter, SetupStep};
 use crate::ai::ambient_agents::task::HarnessModelConfig;
 use crate::ai::ambient_agents::{
-    conversation_output_status_from_conversation, AmbientAgentTaskId, AmbientConversationStatus,
+    conversation_output_status_from_conversation, AmbientAgentTaskId, AmbientAgentTaskState,
+    AmbientConversationStatus,
 };
 #[cfg(feature = "aws-bedrock")]
 use crate::ai::bedrock_credentials;
@@ -856,7 +856,7 @@ impl AgentDriver {
                     if let Err(e) = server_api
                         .update_agent_task(
                             task_id,
-                            Some(AgentTaskState::InProgress),
+                            Some(AmbientAgentTaskState::InProgress),
                             None,
                             None,
                             None,

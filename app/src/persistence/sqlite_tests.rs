@@ -7,7 +7,7 @@ use diesel::connection::SimpleConnection;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
 use warp_core::features::FeatureFlag;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 
 use super::{
     app_database_file_path, database_file_path_for_scope, decode_path, deduplicate_events,

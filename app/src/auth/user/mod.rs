@@ -1,8 +1,6 @@
-use anyhow::{Result, anyhow};
 use chrono::{DateTime, FixedOffset, Local};
 use serde::{Deserialize, Serialize};
-use warp_graphql::queries::get_user::FirebaseProfile;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use cloud_objects::UserUid;
 pub use cloud_objects::auth::user_uid::{TEST_USER_EMAIL, TEST_USER_UID};
 
@@ -26,33 +24,7 @@ pub enum PrincipalType {
     ServiceAccount,
 }
 
-impl From<warp_graphql::queries::get_user::PrincipalType> for PrincipalType {
-    fn from(value: warp_graphql::queries::get_user::PrincipalType) -> Self {
-        use warp_graphql::queries::get_user::PrincipalType as GqlPrincipalType;
-        match value {
-            GqlPrincipalType::User => PrincipalType::User,
-            GqlPrincipalType::ServiceAccount => PrincipalType::ServiceAccount,
-        }
-    }
-}
 
-impl TryFrom<warp_graphql::mutations::create_anonymous_user::AnonymousUserType>
-    for AnonymousUserType
-{
-    type Error = anyhow::Error;
-    fn try_from(
-        value: warp_graphql::mutations::create_anonymous_user::AnonymousUserType,
-    ) -> Result<Self, Self::Error> {
-        match value {
-            warp_graphql::mutations::create_anonymous_user::AnonymousUserType::NativeClientAnonymousUser => Ok(AnonymousUserType::NativeClientAnonymousUser),
-            warp_graphql::mutations::create_anonymous_user::AnonymousUserType::NativeClientAnonymousUserFeatureGated => Ok(AnonymousUserType::NativeClientAnonymousUserFeatureGated),
-            warp_graphql::mutations::create_anonymous_user::AnonymousUserType::WebClientAnonymousUser => Ok(AnonymousUserType::WebClientAnonymousUser),
-            warp_graphql::mutations::create_anonymous_user::AnonymousUserType::Other(_) => {
-                Err(anyhow!("could not convert unknown anonymous user type"))
-            },
-        }
-    }
-}
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct PersonalObjectLimits {
@@ -61,20 +33,7 @@ pub struct PersonalObjectLimits {
     pub workflow_limit: usize,
 }
 
-impl TryFrom<warp_graphql::queries::get_user::AnonymousUserPersonalObjectLimits>
-    for PersonalObjectLimits
-{
-    type Error = anyhow::Error;
-    fn try_from(
-        value: warp_graphql::queries::get_user::AnonymousUserPersonalObjectLimits,
-    ) -> Result<Self, Self::Error> {
-        Ok(Self {
-            env_var_limit: value.env_var_limit as usize,
-            notebook_limit: value.notebook_limit as usize,
-            workflow_limit: value.workflow_limit as usize,
-        })
-    }
-}
+
 
 /// The in-memory representation of a logged-in User.
 /// This does not include authentication credentials, which are stored separately
@@ -205,15 +164,7 @@ impl User {
     }
 }
 
-impl From<FirebaseProfile> for UserMetadata {
-    fn from(value: FirebaseProfile) -> Self {
-        Self {
-            email: value.email.unwrap_or_default(),
-            display_name: value.display_name,
-            photo_url: value.photo_url,
-        }
-    }
-}
+
 
 #[cfg(test)]
 #[path = "user_tests.rs"]

@@ -791,7 +791,7 @@ impl Network {
             }
         }
 
-        let auth_client = ServerApiProvider::as_ref(ctx).get_auth_client();
+        let server_api = ServerApiProvider::as_ref(ctx).get();
         let anonymous_id = AuthStateProvider::as_ref(ctx).get().anonymous_id();
         let iap_headers: Vec<(&str, String)> = IapManager::as_ref(ctx)
             .iap_state()
@@ -805,7 +805,7 @@ impl Network {
                 };
                 let user_id = UserID {
                     anonymous_id,
-                    access_token: auth_client
+                    access_token: server_api
                         .get_or_refresh_access_token()
                         .await
                         .ok()
@@ -1060,7 +1060,7 @@ impl Network {
             return;
         };
 
-        let auth_client = ServerApiProvider::as_ref(ctx).get_auth_client();
+        let server_api = ServerApiProvider::as_ref(ctx).get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
         let iap_state = IapManager::as_ref(ctx).iap_state();
 
@@ -1072,7 +1072,7 @@ impl Network {
                     );
                     let reconnect_endpoint = reconnect_endpoint.clone();
                     let auth_state = auth_state.clone();
-                    let auth_client = auth_client.clone();
+                    let server_api = server_api.clone();
                     let iap_state = iap_state.clone();
                     async move {
                         // Re-read the IAP header each attempt so a refresh that
@@ -1090,7 +1090,7 @@ impl Network {
                         .await?;
                         let user_id = UserID {
                             anonymous_id: auth_state.anonymous_id(),
-                            access_token: auth_client
+                            access_token: server_api
                                 .get_or_refresh_access_token()
                                 .await
                                 .ok()

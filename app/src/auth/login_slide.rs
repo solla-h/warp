@@ -366,9 +366,6 @@ impl LoginSlideView {
             AuthManagerEvent::CreateAnonymousUserFailed => {
                 self.last_login_failure_reason = Some(LoginFailureReason::FailedUserAuthentication);
             }
-            AuthManagerEvent::MintCustomTokenFailed(_) => {
-                self.last_login_failure_reason = Some(LoginFailureReason::FailedMintCustomToken);
-            }
             _ => {}
         }
         ctx.notify();

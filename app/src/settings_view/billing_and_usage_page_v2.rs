@@ -11,7 +11,6 @@ use settings::Setting;
 use thousands::Separable;
 use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
-use warp_graphql::billing::AddonCreditsOption;
 use warpui::elements::{
     Align, Border, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty,
     Expanded, Flex, FormattedTextElement, HighlightedHyperlink, MainAxisAlignment, MainAxisSize,
@@ -27,7 +26,6 @@ use warpui::{
     ViewContext, ViewHandle,
 };
 
-use super::billing_and_usage::billing_cycle_usage_section::BillingCycleUsageSectionView;
 use super::billing_and_usage::overage_limit_modal::{SpendingLimitModal, SpendingLimitModalEvent};
 use super::billing_and_usage::usage_history_entry::UsageHistoryEntry;
 use super::billing_and_usage::usage_history_model::UsageHistoryModel;
@@ -136,7 +134,7 @@ struct TabMouseStates {
 
 struct AddonCreditsState {
     selected_denomination: usize,
-    options: Vec<AddonCreditsOption>,
+    options: Vec<crate::pricing::AddonCreditsOption>,
     denomination_buttons: Vec<ViewHandle<ActionButton>>,
     purchase_loading: bool,
 }
@@ -263,7 +261,6 @@ pub struct BillingAndUsagePageV2View {
     plan_mouse_states: PlanSectionMouseStates,
     buy_credits_mouse_states: BuyCreditsMouseStates,
     ambient_trial_mouse_states: AmbientTrialMouseStates,
-    billing_cycle_usage_section: ViewHandle<BillingCycleUsageSectionView>,
 }
 
 impl BillingAndUsagePageV2View {
@@ -290,7 +287,6 @@ impl BillingAndUsagePageV2View {
         ctx.subscribe_to_model(
             &PricingInfoModel::handle(ctx),
             |me, _handle, _event, ctx| {
-                me.update_addon_credits_options(ctx);
                 me.refresh_addon_credits_settings(ctx);
                 ctx.notify();
             },
@@ -334,9 +330,6 @@ impl BillingAndUsagePageV2View {
             })
         });
 
-        let billing_cycle_usage_section =
-            ctx.add_typed_action_view(BillingCycleUsageSectionView::new);
-
         let mut me = Self {
             auth_state,
             addon_credit_modal_state: ModalViewState::new(addon_credit_modal_view),
@@ -359,9 +352,7 @@ impl BillingAndUsagePageV2View {
             plan_mouse_states: Default::default(),
             buy_credits_mouse_states: Default::default(),
             ambient_trial_mouse_states: Default::default(),
-            billing_cycle_usage_section,
         };
-        me.update_addon_credits_options(ctx);
         me.refresh_addon_credits_settings(ctx);
         me
     }
@@ -532,30 +523,6 @@ impl BillingAndUsagePageV2View {
                 });
             });
         ctx.notify();
-    }
-
-    fn update_addon_credits_options(&mut self, ctx: &mut ViewContext<Self>) {
-        self.addon_credits.options = PricingInfoModel::as_ref(ctx)
-            .addon_credits_options()
-            .map(|options| options.to_vec())
-            .unwrap_or_default();
-        self.addon_credits.denomination_buttons = self
-            .addon_credits
-            .options
-            .iter()
-            .enumerate()
-            .map(|(i, option)| {
-                ctx.add_typed_action_view(move |_ctx| {
-                    ActionButton::new(option.credits.separate_with_commas(), SecondaryTheme)
-                        .with_icon(Icon::Credits)
-                        .on_click(move |ctx| {
-                            ctx.dispatch_typed_action(
-                                BillingAndUsagePageAction::SelectTopupDenomination(i),
-                            );
-                        })
-                })
-            })
-            .collect();
     }
 
     // ── Rendering ────────────────────────────────────────────────────────
@@ -1706,18 +1673,6 @@ impl BillingAndUsagePageV2View {
             }
         }
 
-        let mut billing_cycle_usage_section =
-            Container::new(ChildView::new(&self.billing_cycle_usage_section).finish());
-        if !content.is_empty() {
-            billing_cycle_usage_section = billing_cycle_usage_section
-                .with_margin_top(16.)
-                .with_padding_top(24.)
-                .with_border(
-                    Border::top(1.).with_border_color(appearance.theme().outline().into()),
-                );
-        }
-        content.add_child(billing_cycle_usage_section.finish());
-
         content.finish()
     }
 
@@ -1772,7 +1727,6 @@ impl BillingAndUsagePageV2View {
             list.add_child(
                 Container::new(
                     UsageHistoryEntry::new(
-                        Some(entry.clone()),
                         expanded,
                         Some(entry_mouse_state),
                         entry_tooltip_mouse_state,
@@ -1815,7 +1769,7 @@ impl BillingAndUsagePageV2View {
             let mut list = Flex::column().with_spacing(8.);
             for _ in 0..3 {
                 list.add_child(
-                    UsageHistoryEntry::new(None, false, None, MouseStateHandle::default())
+                    UsageHistoryEntry::new(false, None, MouseStateHandle::default())
                         .render(appearance, app),
                 );
             }

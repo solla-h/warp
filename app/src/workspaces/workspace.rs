@@ -4,11 +4,6 @@ use std::path::PathBuf;
 use chrono::Utc;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use warp_graphql::billing::{AddonCreditAutoReloadStatus, ServiceAgreement, ServiceAgreementType};
-pub use warp_graphql::billing::{
-    AiCreditsUsageAndCostSubjectType, AiCreditsUsageAndCostType, AiCreditsUsageBucket,
-    AiCreditsUsageSource,
-};
 
 use super::team::{MembershipRole, Team};
 use crate::ai::execution_profiles::{
@@ -45,7 +40,6 @@ pub struct Workspace {
     pub teams: Vec<Team>,
     pub billing_metadata: BillingMetadata,
     pub bonus_grants_purchased_this_month: BonusGrantsPurchased,
-    pub billing_cycle_usage: Option<BillingCycleUsageData>,
     pub has_billing_history: bool,
     pub settings: WorkspaceSettings,
     pub invite_code: Option<WorkspaceInviteCode>,
@@ -74,7 +68,6 @@ impl Workspace {
             teams: teams.unwrap_or_default(),
             billing_metadata,
             bonus_grants_purchased_this_month: Default::default(),
-            billing_cycle_usage: None,
             has_billing_history: false,
             settings: Default::default(), // TODO: persistence wrapper instead of default
             invite_code: Default::default(),
@@ -176,21 +169,19 @@ impl Workspace {
         }
     }
 
-    /// Returns the price in cents for the selected auto-reload credit denomination.
-    /// Returns None if auto-reload is not configured or if the denomination can't be found in pricing options.
+    /// Returns the price in cents for the auto-reload denomination, if configured.
     pub fn get_auto_reload_price_cents(
         &self,
-        addon_credits_options: &[warp_graphql::billing::AddonCreditsOption],
+        options: Vec<crate::pricing::AddonCreditsOption>,
     ) -> Option<i32> {
         let selected_credits = self
             .settings
             .addon_credits_settings
             .selected_auto_reload_credit_denomination?;
-
-        addon_credits_options
+        options
             .iter()
-            .find(|option| option.credits == selected_credits)
-            .map(|option| option.price_usd_cents)
+            .find(|opt| opt.credits == selected_credits)
+            .map(|opt| opt.price_usd_cents)
     }
 }
 
@@ -482,6 +473,29 @@ pub struct Tier {
     pub usage_visibility_policy: Option<UsageVisibilityPolicy>,
 }
 
+/// Placeholder for the former GraphQL `ServiceAgreementType` enum.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ServiceAgreementType {
+    SelfServe,
+    Other,
+}
+
+/// Placeholder for the former GraphQL `AddonCreditAutoReloadStatus` enum.
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+pub enum AddonCreditAutoReloadStatus {
+    Active,
+    Failed,
+}
+
+/// Placeholder for the former GraphQL `ServiceAgreement` struct.
+#[derive(Clone, Debug)]
+pub struct ServiceAgreement {
+    pub type_: ServiceAgreementType,
+    pub addon_credit_auto_reload_status: Option<AddonCreditAutoReloadStatus>,
+    pub sunsetted_to_build_ts: Option<chrono::DateTime<chrono::Utc>>,
+    pub current_period_end: chrono::DateTime<chrono::Utc>,
+}
+
 /// This struct is the rust representation of `BillingMetadata` from the GraphQL Schema.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
@@ -506,53 +520,6 @@ pub struct AiOverages {
     pub current_monthly_request_cost_cents: i32,
     pub current_monthly_requests_used: i32,
     pub current_period_end: chrono::DateTime<chrono::Utc>,
-}
-
-/// A single redacted usage entry from `Workspace.billingCycleUsageHistory`.
-///
-/// The shape of this entry depends on the viewer's resolved `UsageVisibility`:
-/// * `OwnOnly` viewers receive only their own entries with real `cost_type` /
-///   `usage_bucket` / `usage_source` values.
-/// * `TeamAggregate` viewers receive exactly one synthetic `TEAM` row per cycle
-///   carrying `Aggregate` sentinels for all three categorical fields.
-/// * `PerUserTotals` viewers receive one row per user / service account per
-///   cycle, also with `Aggregate` sentinels on the categorical fields.
-/// * `FullBreakdown` viewers receive every real row, one per
-///   `(subject, cost_type, bucket, source)` tuple. Categorical fields always
-///   carry real values — the server does **not** synthesize an aggregate team
-///   total at this granularity. Compute team-wide sums client-side if needed.
-#[derive(Clone, Debug)]
-pub struct BillingCycleUsageEntry {
-    pub subject_type: AiCreditsUsageAndCostSubjectType,
-    pub subject_uid: Option<String>,
-    pub subject_display_name: Option<String>,
-    pub cost_type: AiCreditsUsageAndCostType,
-    pub usage_bucket: AiCreditsUsageBucket,
-    pub usage_source: AiCreditsUsageSource,
-    pub credits_used: i32,
-    pub cost_cents: i32,
-}
-
-/// Per-cycle bucket of redacted usage entries with explicit period bounds.
-/// `period_end` is exclusive (e.g. a summary covering May 2026 has
-/// `period_end = 2026-06-01T00:00:00Z`).
-#[derive(Clone, Debug)]
-pub struct BillingCycleUsageSummary {
-    pub period_start: chrono::DateTime<chrono::Utc>,
-    pub period_end: chrono::DateTime<chrono::Utc>,
-    pub entries: Vec<BillingCycleUsageEntry>,
-}
-
-/// The full per-cycle usage history for a workspace, as redacted by the
-/// server's `USAGE_VISIBILITY` policy. `current_period_start` /
-/// `current_period_end` mark the cycle that's currently active; older
-/// summaries cover prior cycles and the number of them retained is governed
-/// by the policy's `max_prior_cycles`.
-#[derive(Clone, Debug)]
-pub struct BillingCycleUsageData {
-    pub current_period_start: chrono::DateTime<chrono::Utc>,
-    pub current_period_end: chrono::DateTime<chrono::Utc>,
-    pub summaries: Vec<BillingCycleUsageSummary>,
 }
 
 impl BillingMetadata {
@@ -689,7 +656,7 @@ impl BillingMetadata {
 
     pub fn has_active_subscription(&self) -> bool {
         if let Some(newest_service_agreement) = self.service_agreements.first() {
-            let not_expired = Utc::now() < newest_service_agreement.current_period_end.utc();
+            let not_expired = Utc::now() < newest_service_agreement.current_period_end;
             let not_delinquent = !self.is_delinquent_due_to_payment_issue();
             not_expired && not_delinquent
         } else {

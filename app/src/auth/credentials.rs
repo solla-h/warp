@@ -1,5 +1,3 @@
-use warp_graphql::object_permissions::OwnerType;
-
 use super::user::FirebaseAuthTokens;
 
 #[derive(Clone, Debug)]
@@ -7,7 +5,6 @@ pub enum Credentials {
     Firebase(FirebaseAuthTokens),
     ApiKey {
         key: String,
-        owner_type: Option<OwnerType>,
     },
     Bearer(String),
     SessionCookie,
@@ -30,17 +27,6 @@ impl Credentials {
     pub fn as_api_key(&self) -> Option<&str> {
         match self {
             Credentials::ApiKey { key, .. } => Some(key),
-            Credentials::Firebase(_) => None,
-            Credentials::Bearer(_) => None,
-            Credentials::SessionCookie => None,
-            #[cfg(any(test, feature = "integration_tests", feature = "skip_login"))]
-            Credentials::Test => None,
-        }
-    }
-
-    pub fn api_key_owner_type(&self) -> Option<OwnerType> {
-        match self {
-            Credentials::ApiKey { owner_type, .. } => *owner_type,
             Credentials::Firebase(_) => None,
             Credentials::Bearer(_) => None,
             Credentials::SessionCookie => None,

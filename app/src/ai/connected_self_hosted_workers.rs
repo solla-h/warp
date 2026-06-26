@@ -40,7 +40,6 @@ impl ConnectedSelfHostedWorkersModel {
             AuthManagerEvent::CreateAnonymousUserFailed
             | AuthManagerEvent::AttemptedLoginGatedFeature { .. }
             | AuthManagerEvent::LoginOverrideDetected(_)
-            | AuthManagerEvent::MintCustomTokenFailed(_)
             | AuthManagerEvent::ReceivedDeviceAuthorizationCode { .. } => {}
         });
 

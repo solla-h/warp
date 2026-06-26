@@ -11,9 +11,9 @@ local_fs = []
 test-util = []
 crash_reporting = ["dep:sentry"]
 # Cloud codebase indexing (Merkle-tree source embedding + fragment reranking
-# against Warp's backend). Requires the `warp_graphql` cloud client, so it is off
+# against Warp's backend). Requires the cloud client, so it is off
 # by default for local-first builds.
-full_source_code_embedding = ["dep:warp_graphql"]
+full_source_code_embedding = []
 
 [dependencies]
 async-channel.workspace = true
@@ -44,7 +44,6 @@ strum.workspace = true
 strum_macros.workspace = true
 warpui_core.workspace = true
 warpui_extras = { workspace = true, features = ["default"] }
-warp_graphql = { workspace = true, optional = true }
 warp_multi_agent_api.workspace = true
 dirs.workspace = true
 lazy_static.workspace = true

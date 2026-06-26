@@ -6,11 +6,16 @@ use chrono::{DateTime, Local, Utc};
 use instant::Instant;
 use serde::{Deserialize, Serialize};
 use warp_core::user_preferences::GetUserPreferences as _;
-pub use warp_graphql::billing::BonusGrantType;
-use warp_graphql::scalars::time::ServerTimestamp;
+use warp_types::ServerTimestamp;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::ai::agent::conversation::AIConversationId;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum BonusGrantType {
+    AmbientOnly,
+    Any,
+}
 use crate::ai::agent::AIAgentExchangeId;
 use crate::auth::AuthStateProvider;
 use crate::pricing::PricingInfoModel;
