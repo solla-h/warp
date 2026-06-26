@@ -7,7 +7,7 @@ use super::{
     ClipboardContent, ContextMenuAction, ContextMenuInfo, ContextMenuState, ContextMenuType,
     EntityId, FeatureFlag, ForkAIConversationParams, ForkFromExchange,
     ForkedConversationDestination, MenuItem, MenuItemFields, RichContentLink,
-    ServerConversationToken, ServerOutputId, ShareableObject, TelemetryEvent, TerminalAction,
+    ServerConversationToken, ServerOutputId, TelemetryEvent, TerminalAction,
     TerminalModel, TerminalView, Tip, TipHint, Vector2F, ViewContext, CONTEXT_MENU_WIDTH,
 };
 
@@ -320,19 +320,7 @@ impl TerminalView {
     ) -> Vec<MenuItem<TerminalAction>> {
         let mut items = Vec::new();
 
-        if FeatureFlag::CloudConversations.is_enabled()
-            && ShareableObject::AIConversation(conversation_id)
-                .link(ctx)
-                .is_some()
-        {
-            items.push(
-                MenuItemFields::new("Copy share link")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::CopyConversationShareLink { conversation_id },
-                    ))
-                    .into_item(),
-            );
-        }
+
 
         items.push(
             MenuItemFields::new("Copy conversation text")

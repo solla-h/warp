@@ -210,10 +210,8 @@ fn test_warp_web_link_notebook() {
             ))
             .unwrap()
         ),
-        Some(WarpWebLink::DriveObject(Box::new(OpenWarpDriveObjectArgs {
             object_type: ObjectType::Notebook,
 server_id: ServerId::from_string_lossy("LkDlnAe34vfYD2JXsAkssc"),
-            settings: OpenWarpDriveObjectSettings {
                 focused_folder_id: Some(ServerId::from(123)),
                 invitee_email: Some(String::from("test@example.com")),
             },
@@ -246,10 +244,8 @@ fn test_warp_web_link_workflow() {
             ))
             .unwrap()
         ),
-        Some(WarpWebLink::DriveObject(Box::new(OpenWarpDriveObjectArgs {
             object_type: ObjectType::Workflow,
 server_id: ServerId::from_string_lossy("ZCJSkai2gpwTqpBFs5HOfZ"),
-            settings: OpenWarpDriveObjectSettings::default(),
         })))
     );
 }

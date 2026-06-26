@@ -1,3 +1,6 @@
+const MIN_SIDEBAR_WIDTH: f32 = 200.0;
+const MAX_SIDEBAR_WIDTH_RATIO: f32 = 0.4;
+
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -34,7 +37,6 @@ use crate::code_review::code_review_view::{
 };
 use crate::code_review::diff_state::DiffStateModel;
 use crate::code_review::telemetry_event::CodeReviewContextDestination;
-use crate::drive::panel::{MAX_SIDEBAR_WIDTH_RATIO, MIN_SIDEBAR_WIDTH};
 use crate::pane_group::pane::view::header::components::HEADER_EDGE_PADDING;
 use crate::pane_group::pane::view::header::PANE_HEADER_HEIGHT;
 use crate::pane_group::{

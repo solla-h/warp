@@ -773,15 +773,7 @@ pub fn init(app: &mut AppContext) {
         .with_context_predicate(id!("Workspace") & id!(flags::SHOW_PROJECT_EXPLORER))
         .with_mac_key_binding("cmd-shift->")
         .with_linux_or_windows_key_binding("ctrl-shift->"),
-        EditableBinding::new(
-            LEFT_PANEL_WARP_DRIVE_BINDING_NAME,
-            BindingDescription::new("Left Panel: Warp Drive"),
-            WorkspaceAction::ToggleWarpDrive,
-        )
-        .with_group(bindings::BindingGroup::Navigation.as_str())
-        .with_context_predicate(id!("Workspace") & id!(flags::ENABLE_WARP_DRIVE))
-        .with_mac_key_binding("ctrl-4")
-        .with_linux_or_windows_key_binding("alt-4"),
+
         EditableBinding::new(
             TOGGLE_PROJECT_EXPLORER_BINDING_NAME,
             BindingDescription::new("Toggle project explorer")
@@ -799,13 +791,7 @@ pub fn init(app: &mut AppContext) {
         .with_mac_key_binding("cmd-shift-F")
         // we use alt because we use ctrl-shift-f for find because ctrl-f needs to be reserved for the shell
         .with_linux_or_windows_key_binding("alt-shift-F"),
-        EditableBinding::new(
-            TOGGLE_WARP_DRIVE_BINDING_NAME,
-            BindingDescription::new("Toggle Warp Drive")
-                .with_custom_description(bindings::MAC_MENUS_CONTEXT, "Warp Drive"),
-            WorkspaceAction::ToggleWarpDrive,
-        )
-        .with_context_predicate(id!("Workspace") & id!(flags::ENABLE_WARP_DRIVE)),
+
         EditableBinding::new(
             TOGGLE_CONVERSATION_LIST_VIEW_BINDING_NAME,
             BindingDescription::new("Toggle Agent conversation list view").with_custom_description(
@@ -1097,15 +1083,7 @@ pub fn init(app: &mut AppContext) {
         .with_custom_action(CustomAction::ToggleResourceCenter)]);
     }
 
-    if cfg!(not(target_family = "wasm")) {
-        app.register_editable_bindings([EditableBinding::new(
-            "workspace:export_all_warp_drive_objects",
-            "Export all Warp Drive objects",
-            WorkspaceAction::ExportAllWarpDriveObjects,
-        )
-        .with_group(bindings::BindingGroup::Settings.as_str())
-        .with_context_predicate(id!("Workspace") & id!(flags::ENABLE_WARP_DRIVE))]);
-    }
+
 
     // CLI install/uninstall actions (macOS only)
     #[cfg(target_os = "macos")]

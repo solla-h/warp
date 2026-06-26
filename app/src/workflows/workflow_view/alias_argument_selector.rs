@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use warp_core::ui::appearance::Appearance;
 use warp_editor::editor::NavigationKey;
@@ -10,7 +9,6 @@ use warpui::{
 };
 
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::drive::workflows::enum_creation_dialog::WorkflowEnumData;
 use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions,
@@ -106,7 +104,6 @@ impl AliasArgumentSelector {
         &mut self,
         argument_type: &ArgumentType,
         value: Option<&String>,
-        enum_data: &HashMap<SyncId, WorkflowEnumData>,
         ctx: &mut ViewContext<Self>,
     ) {
         ctx.notify();
@@ -118,16 +115,9 @@ impl AliasArgumentSelector {
             ArgumentType::Enum { enum_id } => {
                 let cloud_model = CloudModel::as_ref(ctx);
 
-                // Get the variants from the unsaved enum data, if it exists.
-                // Otherwise, pull it from the cloud model.
-                let enum_variants = enum_data
-                    .get(enum_id)
-                    .and_then(|workflow_enum| workflow_enum.new_data.clone())
-                    .or_else(|| {
-                        cloud_model.get_workflow_enum(enum_id).map(|workflow_enum| {
-                            workflow_enum.model().string_model.variants.clone()
-                        })
-                    });
+                let enum_variants = cloud_model.get_workflow_enum(enum_id).map(|workflow_enum| {
+                    workflow_enum.model().string_model.variants.clone()
+                });
 
                 match enum_variants {
                     Some(EnumVariants::Static(variants)) => {

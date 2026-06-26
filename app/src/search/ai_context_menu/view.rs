@@ -25,7 +25,6 @@ use warpui::{
 use super::styles;
 use crate::appearance::Appearance;
 use crate::debounce;
-use crate::drive::settings::WarpDriveSettings;
 #[cfg(not(target_family = "wasm"))]
 use crate::search::ai_context_menu::blocks::data_source::BlockDataSource;
 #[cfg(not(target_family = "wasm"))]
@@ -373,7 +372,7 @@ impl AIContextMenu {
         is_cli_agent_input: bool,
         app: &AppContext,
     ) -> Vec<AIContextMenuCategory> {
-        let show_warp_drive = WarpDriveSettings::is_warp_drive_enabled(app);
+        let show_warp_drive = true;
 
         // Compute once — used by CLI agent, AI-mode, and terminal-mode branches.
         let is_active_dir_in_git_repo = {

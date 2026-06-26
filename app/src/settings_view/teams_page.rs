@@ -49,11 +49,7 @@ use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::channel::ChannelState;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, Space, UpdateManager};
-use crate::drive::cloud_action_confirmation_dialog::{
-    CloudActionConfirmationDialog, CloudActionConfirmationDialogEvent,
-    CloudActionConfirmationDialogVariant,
-};
+use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
 use crate::editor::{
     EditorView, Event as EditorEvent, InteractionState, SingleLineEditorOptions, TextOptions,
 };
@@ -62,6 +58,7 @@ use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::network::NetworkStatus;
 use crate::pricing::PricingInfoModel;
 use crate::send_telemetry_from_ctx;
+use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::ServerId;
 use crate::server::telemetry::TelemetryEvent;
 use crate::themes::theme::Blend;
@@ -172,7 +169,6 @@ pub enum TeamsPageAction {
     SendEmailInvites {
         team_uid: ServerId,
     },
-    OpenWarpDrive,
     GenerateUpgradeLink {
         team_uid: ServerId,
     },
@@ -284,7 +280,6 @@ impl TryFrom<&TeamsPageAction> for TelemetryEvent {
 #[derive(Clone)]
 pub enum TeamsPageViewEvent {
     TeamsChanged,
-    OpenWarpDrive,
     ShowToast {
         message: String,
         flavor: ToastFlavor,
@@ -469,9 +464,6 @@ pub struct TeamsPageView {
     invite_view: TeamsInviteOption,
     team_members_mouse_state_handles: Vec<MouseStateHandle>,
     team_approved_domains_mouse_state_handles: Vec<MouseStateHandle>,
-    team_action_confirmation_dialog: ViewHandle<CloudActionConfirmationDialog>,
-    show_team_action_confirmation_dialog: bool,
-    pending_team_action_confirmation: Option<TeamActionConfirmationTarget>,
     transfer_ownership_modal_state: ModalViewState<Modal<TransferOwnershipConfirmationModal>>,
     clipped_scroll_state: ClippedScrollStateHandle,
     discoverable_teams_states: Vec<DiscoverableTeamState>,
@@ -510,18 +502,7 @@ impl TypedActionView for TeamsPageView {
             TeamsPageAction::LeaveTeam => self.leave_team(ctx),
             TeamsPageAction::CreateTeam => self.create_team(ctx),
             TeamsPageAction::RemoveUserFromTeam { user_uid, team_uid } => {
-                if FeatureFlag::BillingAndUsagePageV2.is_enabled() {
-                    self.show_team_action_confirmation(
-                        CloudActionConfirmationDialogVariant::RemoveTeamMemberReloadCredits,
-                        TeamActionConfirmationTarget::RemoveUser {
-                            user_uid: *user_uid,
-                            team_uid: *team_uid,
-                        },
-                        ctx,
-                    );
-                } else {
-                    self.remove_user_from_team(*user_uid, *team_uid, ctx);
-                }
+                self.remove_user_from_team(*user_uid, *team_uid, ctx);
             }
             TeamsPageAction::ChangeInviteViewOption(view_option) => {
                 self.change_invite_view_option(view_option, ctx);
@@ -530,25 +511,10 @@ impl TypedActionView for TeamsPageView {
                 self.send_email_invites(*team_uid, ctx);
                 ctx.notify();
             }
-            TeamsPageAction::OpenWarpDrive => ctx.emit(TeamsPageViewEvent::OpenWarpDrive),
             TeamsPageAction::ShowLeaveTeamConfirmationDialog => {
-                let variant = if self.should_show_reload_credits_confirmation(ctx) {
-                    CloudActionConfirmationDialogVariant::LeaveTeamReloadCredits
-                } else {
-                    CloudActionConfirmationDialogVariant::LeaveTeam
-                };
-                self.show_team_action_confirmation(
-                    variant,
-                    TeamActionConfirmationTarget::Leave,
-                    ctx,
-                );
+                self.leave_team(ctx);
             }
             TeamsPageAction::ShowDeleteTeamConfirmationDialog => {
-                self.show_team_action_confirmation(
-                    CloudActionConfirmationDialogVariant::DeleteTeam,
-                    TeamActionConfirmationTarget::Delete,
-                    ctx,
-                );
             }
             TeamsPageAction::ToggleIsInviteLinkEnabled {
                 team_uid,
@@ -787,11 +753,7 @@ impl TeamsPageView {
             ctx.notify()
         });
 
-        let team_action_confirmation_dialog =
-            ctx.add_typed_action_view(|_| CloudActionConfirmationDialog::new());
-        ctx.subscribe_to_view(&team_action_confirmation_dialog, |me, _, event, ctx| {
-            me.handle_cloud_action_confirmation_dialog_event(event, ctx);
-        });
+
 
         let transfer_ownership_modal_body =
             ctx.add_typed_action_view(|_| TransferOwnershipConfirmationModal::new());
@@ -855,9 +817,6 @@ impl TeamsPageView {
             team_members_mouse_state_handles,
             team_approved_domains_mouse_state_handles,
             clipped_scroll_state: Default::default(),
-            team_action_confirmation_dialog,
-            show_team_action_confirmation_dialog: false,
-            pending_team_action_confirmation: None,
             transfer_ownership_modal_state: ModalViewState::new(transfer_ownership_modal),
             discoverable_teams_states: Vec::new(),
             rename_team_editor,
@@ -1065,62 +1024,15 @@ impl TeamsPageView {
                 > 0
     }
 
-    fn show_team_action_confirmation(
-        &mut self,
-        variant: CloudActionConfirmationDialogVariant,
-        target: TeamActionConfirmationTarget,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.pending_team_action_confirmation = Some(target);
-        self.open_member_actions_menu_index = None;
-        self.team_action_confirmation_dialog
-            .update(ctx, |dialog, ctx| {
-                dialog.set_variant(variant);
-                dialog.set_confirmation_button_enabled(true);
-                ctx.notify();
-            });
-        self.show_team_action_confirmation_dialog = true;
-        ctx.notify();
-    }
 
-    fn hide_team_action_confirmation(&mut self, ctx: &mut ViewContext<Self>) {
-        self.pending_team_action_confirmation = None;
-        self.show_team_action_confirmation_dialog = false;
-        ctx.notify();
-    }
 
-    fn confirm_pending_team_action(&mut self, ctx: &mut ViewContext<Self>) {
-        let Some(target) = self.pending_team_action_confirmation.take() else {
-            self.hide_team_action_confirmation(ctx);
-            return;
-        };
-        self.show_team_action_confirmation_dialog = false;
-        match target {
-            TeamActionConfirmationTarget::Leave | TeamActionConfirmationTarget::Delete => {
-                self.leave_team(ctx);
-            }
-            TeamActionConfirmationTarget::RemoveUser { user_uid, team_uid } => {
-                self.remove_user_from_team(user_uid, team_uid, ctx);
-            }
-        }
-        ctx.notify();
-    }
 
-    fn should_show_delete_or_leave_team_confirmation_dialog(&self) -> bool {
-        self.show_team_action_confirmation_dialog
-            && matches!(
-                &self.pending_team_action_confirmation,
-                Some(TeamActionConfirmationTarget::Leave | TeamActionConfirmationTarget::Delete)
-            )
-    }
 
-    fn should_show_remove_user_from_team_confirmation_dialog(&self) -> bool {
-        self.show_team_action_confirmation_dialog
-            && matches!(
-                &self.pending_team_action_confirmation,
-                Some(TeamActionConfirmationTarget::RemoveUser { .. })
-            )
-    }
+
+
+
+
+
 
     /// Scroll to the team membership settings. If an email is provided, it's prepopulated in the
     /// invite editor.
@@ -1165,20 +1077,7 @@ impl TeamsPageView {
         }
     }
 
-    fn handle_cloud_action_confirmation_dialog_event(
-        &mut self,
-        event: &CloudActionConfirmationDialogEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            CloudActionConfirmationDialogEvent::Cancel => {
-                self.hide_team_action_confirmation(ctx);
-            }
-            CloudActionConfirmationDialogEvent::Confirm => {
-                self.confirm_pending_team_action(ctx);
-            }
-        }
-    }
+
 
     fn handle_transfer_ownership_modal_event(
         &mut self,
@@ -1483,7 +1382,6 @@ impl TeamsPageView {
                 ctx,
             );
         });
-        ctx.dispatch_typed_action(&WorkspaceAction::OpenWarpDrive);
     }
 
     fn set_team_member_role(
@@ -3353,17 +3251,7 @@ impl TeamsWidget {
                 .finish(),
         );
 
-        if view.should_show_delete_or_leave_team_confirmation_dialog() {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&view.team_action_confirmation_dialog).finish(),
-                OffsetPositioning::offset_from_parent(
-                    vec2f(0., 0.),
-                    ParentOffsetBounds::Unbounded,
-                    ParentAnchor::Center,
-                    ChildAnchor::BottomMiddle,
-                ),
-            );
-        }
+
 
         stack.finish()
     }
@@ -4404,17 +4292,7 @@ impl SettingsWidget for TeamsWidget {
                 ),
             );
         }
-        if view.should_show_remove_user_from_team_confirmation_dialog() {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&view.team_action_confirmation_dialog).finish(),
-                OffsetPositioning::offset_from_parent(
-                    vec2f(0., 0.),
-                    ParentOffsetBounds::WindowByPosition,
-                    ParentAnchor::Center,
-                    ChildAnchor::Center,
-                ),
-            );
-        }
+
 
         stack.finish()
     }

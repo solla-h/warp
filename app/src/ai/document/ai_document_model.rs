@@ -26,9 +26,7 @@ use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::appearance::Appearance;
 use crate::auth::auth_state::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{CloudObject, CloudObjectEventEntrypoint, Owner, UpdateManagerEvent, InitiatedBy, UpdateManager};
-use crate::drive::folders::CloudFolder;
-use crate::drive::CloudObjectTypeAndId;
+use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, CloudObjectEventEntrypoint, Owner};
 use crate::global_resource_handles::GlobalResourceHandlesProvider;
 use crate::notebooks::editor::model::{
     FileLinkResolutionContext, NotebooksEditorModel, RichTextEditorModelEvent,
@@ -37,6 +35,9 @@ use crate::notebooks::editor::rich_text_styles;
 use crate::notebooks::file::MarkdownDisplayMode;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::persistence::ModelEvent;
+use crate::server::cloud_objects::update_manager::{
+    InitiatedBy, ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
+};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::settings::FontSettings;
 use crate::terminal::model::session::active_session::ActiveSession;
@@ -465,6 +466,42 @@ impl AIDocumentModel {
         event: &UpdateManagerEvent,
         ctx: &mut ModelContext<Self>,
     ) {
+        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
+            return;
+        };
+        if !matches!(result.operation, ObjectOperation::Create { .. })
+            || result.success_type != OperationSuccessType::Success
+        {
+            return;
+        }
+        if result.server_id.is_none() {
+            return;
+        };
+
+        // If we're waiting on a Plans folder to complete creation, ensure the Plans folder exists
+        // (creating it if needed) and if it has a ServerId, process the pending document queue.
+        //
+        // NOTE: this handler runs for *all* Warp Drive object creations, so we must only create the
+        // Plans folder when we actually have a plan notebook waiting to be created.
+        if !self.pending_document_queue.is_empty() {
+            if let Some(owner) = Self::get_plan_owner(ctx) {
+                if let Some(folder_id) = self.get_or_create_plan_folder(owner, ctx).into_server() {
+                    let queue = std::mem::take(&mut self.pending_document_queue);
+
+                    for pending in queue {
+                        self.create_notebook_in_plan_folder(
+                            pending.id,
+                            &pending.title,
+                            &pending.content,
+                            owner,
+                            folder_id,
+                            ctx,
+                        );
+                        ctx.emit(AIDocumentModelEvent::DocumentSaveStatusUpdated(pending.id));
+                    }
+                }
+            }
+        }
     }
 
     /// Create a new document with default title/content and return its ID.
@@ -1191,8 +1228,8 @@ impl AIDocumentModel {
             return;
         };
         let content = doc.editor.as_ref(ctx).markdown(ctx);
-        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
-            update_manager.update_notebook_data(content, sync_id, ctx);
+        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
+            update_manager.update_notebook_data(content.into(), sync_id, ctx);
         });
     }
 
@@ -1252,12 +1289,12 @@ impl AIDocumentModel {
         let client_id = ClientId::new();
         let folder_id = SyncId::ClientId(client_id);
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
             update_manager.create_folder(
                 PLAN_FOLDER_NAME.to_string(),
                 owner,
                 client_id,
-                None::<()>,
+                None,
                 false,
                 InitiatedBy::System,
                 ctx,
@@ -1303,7 +1340,7 @@ impl AIDocumentModel {
             conversation_id: server_conversation_id,
         };
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
             update_manager.create_notebook(
                 client_id,
                 owner,

@@ -11,10 +11,10 @@ use super::notebook::NotebookView;
 use super::CloudNotebook;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::Owner;
-use crate::cloud_object::UpdateManager;
-use crate::cloud_object::UpdateManagerEvent;
-use crate::drive::OpenWarpDriveObjectSettings;
 use crate::pane_group::{NotebookPane, PaneContent};
+use crate::server::cloud_objects::update_manager::{
+    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
+};
 use crate::server::ids::SyncId;
 use crate::workspace::PaneViewLocator;
 use crate::{safe_debug, safe_warn};
@@ -174,7 +174,6 @@ impl NotebookManager {
     pub fn create_pane(
         &mut self,
         source: &NotebookSource,
-        settings: &OpenWarpDriveObjectSettings,
         window_id: WindowId,
         ctx: &mut ModelContext<Self>,
     ) -> NotebookPane {
@@ -184,11 +183,11 @@ impl NotebookManager {
             NotebookSource::Existing(notebook_id) => {
                 let notebook = CloudModel::as_ref(ctx).get_notebook(notebook_id).cloned();
                 if let Some(notebook) = notebook {
-                    view.update(ctx, |view, ctx| view.load(notebook, settings, ctx));
+                    view.update(ctx, |view, ctx| { view.load(notebook, ctx); });
                 } else {
                     // If the notebook doesn't exist yet, try waiting for initial load and check again
                     view.update(ctx, |view, ctx| {
-                        view.wait_for_initial_load_then_load(*notebook_id, settings, window_id, ctx)
+                        view.wait_for_initial_load_then_load(*notebook_id, window_id, ctx)
                     });
                 }
             }
@@ -287,6 +286,35 @@ impl NotebookManager {
         event: &UpdateManagerEvent,
         ctx: &mut ModelContext<Self>,
     ) {
+        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
+            return;
+        };
+
+        if !matches!(&result.success_type, OperationSuccessType::Success) {
+            return;
+        }
+        if let ObjectOperation::Create { .. } = result.operation {
+            let server_id = result.server_id.expect("Expect server id on success");
+            let Some(server_id) = CloudModel::as_ref(ctx)
+                .get_notebook_by_uid(&server_id.uid())
+                .and_then(|notebook| notebook.id.into_server())
+            else {
+                return;
+            };
+            let Some(client_id) = result.client_id else {
+                return;
+            };
+
+            if let Some(mut pane) = self.panes_by_hashed_id.remove(&client_id.to_string()) {
+                pane.notebook_id = SyncId::ServerId(server_id);
+                self.panes_by_hashed_id
+                    .insert(server_id.uid().clone(), pane);
+            }
+            if let Some(parse_status) = self.raw_text_by_hashed_id.remove(&client_id.to_string()) {
+                self.raw_text_by_hashed_id
+                    .insert(server_id.uid(), parse_status);
+            }
+        }
     }
 
     /// Swap the ID of the notebook open in a pane. This assumes the pane location and view are

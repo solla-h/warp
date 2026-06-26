@@ -35,7 +35,6 @@ use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::auth::UserUid;
 use crate::context_chips::ContextChipKind;
-use crate::drive::sharing::ShareableObject;
 use crate::editor::{InteractionState, ReplicaId};
 use crate::menu::{Event as MenuEvent, MenuItem, MenuItemFields};
 use crate::server::telemetry::SharingDialogSource;
@@ -413,19 +412,11 @@ impl TerminalView {
     }
 
     fn update_shared_session_pane_header(&mut self, ctx: &mut ViewContext<Self>) {
-        let self_handle = ctx.handle();
-        let Some(shared_session) = &self.shared_session else {
+        let Some(_shared_session) = &self.shared_session else {
             return;
         };
         self.pane_configuration.update(ctx, |pane_config, ctx| {
-            pane_config.set_shareable_object(
-                Some(ShareableObject::Session {
-                    handle: self_handle,
-                    session_id: *shared_session.session_id(),
-                    started_at: *shared_session.started_at(),
-                }),
-                ctx,
-            );
+            pane_config.set_shareable_object(None, ctx);
             ctx.notify();
         });
     }
@@ -637,14 +628,7 @@ impl TerminalView {
 
         self.pane_configuration.update(ctx, |pane_config, ctx| {
             pane_config.refresh_pane_header_overflow_menu_items(ctx);
-            pane_config.set_shareable_object(
-                Some(ShareableObject::Session {
-                    handle: self_handle,
-                    session_id,
-                    started_at,
-                }),
-                ctx,
-            );
+            pane_config.set_shareable_object(None, ctx);
             if !skip_sharing_dialog {
                 pane_config.toggle_sharing_dialog(SharingDialogSource::StartedSessionShare, ctx);
             }
@@ -753,14 +737,7 @@ impl TerminalView {
 
         self.pane_configuration.update(ctx, |pane_config, ctx| {
             pane_config.refresh_pane_header_overflow_menu_items(ctx);
-            pane_config.set_shareable_object(
-                Some(ShareableObject::Session {
-                    handle: self_handle,
-                    session_id,
-                    started_at,
-                }),
-                ctx,
-            );
+            pane_config.set_shareable_object(None, ctx);
             pane_config.notify_header_content_changed(ctx);
         });
 
@@ -841,19 +818,6 @@ impl TerminalView {
             self.restore_pty_to_sharer_size(ctx);
         }
 
-        // For ambient agent tasks, preserve the shareable object so the share dialog remains visible
-        let is_ambient_agent = self.is_ambient_agent_session(ctx);
-        let shareable_object_to_keep = if is_ambient_agent {
-            self.shared_session
-                .as_ref()
-                .map(|session| ShareableObject::Session {
-                    handle: ctx.handle(),
-                    session_id: *session.session_id(),
-                    started_at: *session.started_at(),
-                })
-        } else {
-            None
-        };
 
         self.shared_session = None;
         self.insert_shared_session_ended_banner(ctx);
@@ -885,7 +849,7 @@ impl TerminalView {
 
         self.pane_configuration.update(ctx, |pane_config, ctx| {
             pane_config.refresh_pane_header_overflow_menu_items(ctx);
-            pane_config.set_shareable_object(shareable_object_to_keep, ctx);
+            pane_config.set_shareable_object(None, ctx);
             pane_config.notify_header_content_changed(ctx);
             ctx.notify();
         });

@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
+use crate::cloud_object::CloudObjectTypeAndId;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -16,7 +17,7 @@ use warpui::{Entity, ModelContext, RequestState, RetryOption, SingletonEntity};
 
 use super::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
 use super::server_api::auth::UserAuthenticationError;
-use cloud_object_models::ObjectClient;
+use cloud_object_models::{CloudFolderModel, ObjectClient};
 use crate::ai::ambient_agents::scheduled::CloudScheduledAmbientAgentModel;
 use crate::ai::cloud_agent_config::CloudAgentConfigModel;
 use crate::ai::cloud_environments::CloudAmbientAgentEnvironmentModel;
@@ -35,8 +36,6 @@ use crate::cloud_object::{
     JsonObjectType, ObjectType, Owner, Revision, RevisionAndLastEditor, ServerCloudObject,
     ServerCreationInfo, UpdateCloudObjectResult,
 };
-use crate::drive::folders::CloudFolderModel;
-use crate::drive::CloudObjectTypeAndId;
 use crate::env_vars::CloudEnvVarCollectionModel;
 use crate::notebooks::CloudNotebookModel;
 use crate::settings::cloud_preferences::CloudPreferenceModel;
@@ -1052,6 +1051,8 @@ impl SyncQueue {
                                     },
                                     BulkCreateCloudObjectResult::GenericStringObjectUniqueKeyConflict => {
                                         log::warn!("Failed to bulk create generic objects because of a unique key conflict");
+use crate::cloud_object::CloudObjectTypeAndId;
+use cloud_object_models::CloudFolder;
                                         for object in bulk_request_clone.as_ref().iter() {
                                             // When adding the initiated_by parameter to this function call, InitiatedBy::User was set as a default value.
                                             // initiated_by values currently do not propagate through the sync queue for bulk create operations, but can be added in the future

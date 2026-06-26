@@ -25,14 +25,11 @@ pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{
+use crate::cloud_object::{CloudObjectTypeAndId, 
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision,
     UpdateCloudObjectResult,
 };
-use crate::drive::items::workflow::WarpDriveWorkflow;
-use crate::drive::items::WarpDriveItem;
-use crate::drive::CloudObjectTypeAndId;
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;
 use crate::server::ids::{ServerId, SyncId};
@@ -92,19 +89,7 @@ impl WorkflowViewMode {
     ///
     /// Editing is disabled if the user does not have edit permissions.
     pub fn supported_edit_mode(workflow_id: Option<SyncId>, app: &AppContext) -> Self {
-        let can_edit = workflow_id
-            .map(|id| {
-                CloudViewModel::as_ref(app)
-                    .object_editability(&id.uid(), app)
-                    .can_edit()
-            })
-            .unwrap_or(true);
-
-        if !FeatureFlag::SharedWithMe.is_enabled() || can_edit {
-            Self::Edit
-        } else {
-            Self::View
-        }
+        Self::Edit
     }
 
     /// The viewing mode supported for this workflow.
@@ -112,17 +97,7 @@ impl WorkflowViewMode {
     /// Viewing is disabled if the user is allowed to edit the workflow and in a context where
     /// running workflows is supported.
     pub fn supported_view_mode(workflow_id: Option<SyncId>, app: &AppContext) -> Self {
-        let can_edit = workflow_id
-            .map(|id| {
-                CloudViewModel::as_ref(app)
-                    .object_editability(&id.uid(), app)
-                    .can_edit()
-            })
-            .unwrap_or(true);
-
-        if FeatureFlag::SharedWithMe.is_enabled() && !can_edit {
-            Self::View
-        } else if ContextFlag::RunWorkflow.is_enabled() {
+        if ContextFlag::RunWorkflow.is_enabled() {
             Self::Edit
         } else {
             Self::View
@@ -227,6 +202,7 @@ impl CloudModelType for CloudWorkflowModel {
         ObjectType::Workflow
     }
 
+
     fn cloud_object_type_and_id(&self, id: SyncId) -> CloudObjectTypeAndId {
         CloudObjectTypeAndId::Workflow(id)
     }
@@ -280,21 +256,6 @@ impl CloudModelType for CloudWorkflowModel {
             .await
     }
 
-    fn renders_in_warp_drive(&self) -> bool {
-        true
-    }
-
-    fn to_warp_drive_item(
-        &self,
-        id: SyncId,
-        _appearance: &Appearance,
-        workflow: &CloudWorkflow,
-    ) -> Option<Box<dyn WarpDriveItem>> {
-        Some(Box::new(WarpDriveWorkflow::new(
-            self.cloud_object_type_and_id(id),
-            workflow.clone(),
-        )))
-    }
 
     fn can_export(&self) -> bool {
         true

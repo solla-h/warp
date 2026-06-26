@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use alias_bar::{AliasBar, AliasBarEvent};
@@ -12,7 +12,6 @@ use syntax_highlightable::SyntaxHighlightable;
 use url::Url;
 use warp_core::context_flag::ContextFlag;
 use warp_core::settings::Setting;
-use warp_core::ui::theme::AnsiColorIdentifier;
 use warp_editor::editor::NavigationKey;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
@@ -43,23 +42,9 @@ use crate::auth::{AuthStateProvider, UserUid};
 use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{
+use crate::cloud_object::{CloudObjectTypeAndId, 
     CloudObject, CloudObjectEventEntrypoint, ObjectType, Owner, Revision, Space,
 };
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::drive_helpers::has_feature_gated_anonymous_user_reached_workflow_limit;
-use crate::drive::items::WarpDriveItemId;
-use crate::drive::sharing::{ContentEditability, ShareableObject, SharingAccessLevel};
-use crate::drive::workflows::ai_assist::GeneratedCommandMetadataError;
-use crate::drive::workflows::arguments::ArgumentsState;
-use crate::drive::workflows::enum_creation_dialog::{
-    EnumCreationDialog, EnumCreationDialogEvent, WorkflowEnumData,
-};
-use crate::drive::workflows::workflow_arg_selector::{
-    WorkflowArgSelector, WorkflowArgSelectorEvent,
-};
-use crate::drive::workflows::workflow_arg_type_helpers::{self, ArgumentEditorRowIndex};
-use crate::drive::{CloudObjectTypeAndId, DriveObjectType, OpenWarpDriveObjectSettings};
 use crate::editor::{
     EditorOptions, EditorView, EnterAction, EnterSettings, Event as EditorEvent, InteractionState,
     PlainTextEditorViewAction as EditorAction, PropagateAndNoOpNavigationKeys,
@@ -70,7 +55,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::cloud_object::{
+use crate::server::cloud_objects::update_manager::{
     FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
     UpdateManagerEvent,
 };
@@ -210,14 +195,12 @@ impl WorkflowEditorErrorState {
 
 #[derive(Debug, Clone)]
 pub enum WorkflowAction {
-    ViewInWarpDrive(WarpDriveItemId),
     AddArgument,
     ToggleViewMode,
     RunWorkflow,
     CopyContent,
     Close,
     CloseUnsavedDialog,
-    CloseEnumDialog,
     ForceClose,
     Save,
     Cancel,
@@ -234,7 +217,6 @@ pub enum WorkflowViewEvent {
     Pane(PaneEvent),
     CreatedWorkflow(SyncId),
     UpdatedWorkflow(SyncId),
-    ViewInWarpDrive(WarpDriveItemId),
     OpenDriveObjectShareDialog {
         cloud_object_type_and_id: CloudObjectTypeAndId,
         invitee_email: Option<String>,
@@ -293,7 +275,6 @@ pub struct WorkflowView {
     content_editor_highlight_model: ModelHandle<SyntaxHighlightable>,
     view_only_content_editor: ViewHandle<EditorView>,
     view_only_content_editor_highlight_model: ModelHandle<SyntaxHighlightable>,
-    arguments_state: ArgumentsState,
     arguments_rows: Vec<ArgumentEditorRow>,
     alias_bar: ViewHandle<AliasBar>,
     env_vars_selector: ViewHandle<EnvVarSelector>,
@@ -315,11 +296,6 @@ pub struct WorkflowView {
     initial_folder_id: Option<SyncId>,
 
     command_display_data: WorkflowCommandDisplayData,
-
-    pending_argument_editor_row: Option<ArgumentEditorRowIndex>,
-    show_enum_creation_dialog: bool,
-    enum_creation_dialog: ViewHandle<EnumCreationDialog>,
-    all_workflow_enums: HashMap<SyncId, WorkflowEnumData>,
 
     /// `true` if this workflow view is for viewing/editing an AI workflow.
     ///
@@ -407,11 +383,6 @@ impl WorkflowView {
 
         let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
 
-        let enum_creation_dialog = ctx.add_typed_action_view(EnumCreationDialog::new);
-        ctx.subscribe_to_view(&enum_creation_dialog, |me, _, event, ctx| {
-            me.handle_enum_creation_dialog_event(event, ctx);
-        });
-
         let content_editor_highlight_model =
             ctx.add_model(|ctx| SyntaxHighlightable::new(content_editor.clone(), ctx));
 
@@ -441,7 +412,6 @@ impl WorkflowView {
             content_editor_highlight_model,
             view_only_content_editor,
             view_only_content_editor_highlight_model,
-            arguments_state: Default::default(),
             arguments_rows: Vec::new(),
             alias_bar,
             env_vars_selector,
@@ -458,10 +428,6 @@ impl WorkflowView {
             command_display_data: WorkflowCommandDisplayData::new_empty(),
             auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             ai_client,
-            pending_argument_editor_row: None,
-            show_enum_creation_dialog: false,
-            enum_creation_dialog,
-            all_workflow_enums: Default::default(),
             is_for_agent_mode: false,
         };
 
@@ -505,8 +471,6 @@ impl WorkflowView {
         }
 
         self.owner = Some(owner);
-        self.all_workflow_enums =
-            workflow_arg_type_helpers::load_workflow_enums_with_owner(owner, ctx);
 
         if is_for_agent_mode {
             self.content_editor.update(ctx, |editor, ctx| {
@@ -576,7 +540,6 @@ impl WorkflowView {
                 {
                     self.load(
                         workflow.clone(),
-                        &OpenWarpDriveObjectSettings::default(),
                         self.workflow_view_mode,
                         ctx,
                     );
@@ -596,7 +559,6 @@ impl WorkflowView {
                 {
                     self.load(
                         workflow,
-                        &OpenWarpDriveObjectSettings::default(),
                         self.workflow_view_mode,
                         ctx,
                     );
@@ -614,7 +576,6 @@ impl WorkflowView {
         if let Some(workflow) = cloud_workflow {
             self.load(
                 workflow,
-                &OpenWarpDriveObjectSettings::default(),
                 self.workflow_view_mode,
                 ctx,
             );
@@ -624,31 +585,24 @@ impl WorkflowView {
     pub fn wait_for_initial_load_then_load(
         &mut self,
         workflow_id: SyncId,
-        settings: &OpenWarpDriveObjectSettings,
         mode: WorkflowViewMode,
         window_id: WindowId,
         ctx: &mut ViewContext<Self>,
     ) {
         let initial_load_complete = UpdateManager::as_ref(ctx).initial_load_complete();
         // TODO @ianhodge CLD-2002: it could be nice to have a loading screen here while we wait for the load
-        let settings = settings.clone();
         ctx.spawn(initial_load_complete, move |me, _, ctx| {
             let workflow = CloudModel::as_ref(ctx).get_workflow(&workflow_id).cloned();
             // If either the focused folder or the workflow can't be found in cloudmodel, fetch the object from the server
-            let fetch_needed = workflow.is_none()
-                || settings
-                    .focused_folder_id
-                    .map(SyncId::ServerId)
-                    .map(|folder_id| CloudModel::as_ref(ctx).get_folder(&folder_id).is_none())
-                    .unwrap_or(false);
+            let fetch_needed = workflow.is_none();
             if fetch_needed {
                 if let Some(server_id) = workflow_id.into_server() {
-                    me.fetch_and_load_workflow(server_id, &settings, mode, window_id, ctx);
+                    me.fetch_and_load_workflow(server_id, mode, window_id, ctx);
                 } else {
                     log::warn!("Tried to load workflow without server id {workflow_id:?}");
                 }
             } else if let Some(workflow) = workflow {
-                me.load(workflow, &settings, mode, ctx);
+                me.load(workflow, mode, ctx);
             } else {
                 ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
                     toast_stack.add_ephemeral_toast_by_type(
@@ -665,28 +619,26 @@ impl WorkflowView {
     fn fetch_and_load_workflow(
         &mut self,
         workflow_id: ServerId,
-        settings: &OpenWarpDriveObjectSettings,
         mode: WorkflowViewMode,
         window_id: WindowId,
         ctx: &mut ViewContext<Self>,
     ) {
         // If we have a parent folder we are trying to load as a part of this workflow, fetch that instead
-        let id_to_fetch = settings.focused_folder_id.unwrap_or(workflow_id);
+        let id_to_fetch = workflow_id;
         let fetch_cloud_object_rx =
-            UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+            UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                 update_manager.fetch_single_cloud_object(
-                    id_to_fetch,
+                    &id_to_fetch,
                     FetchSingleObjectOption::None,
                     ctx,
                 )
             });
-        let settings = settings.clone();
         ctx.spawn(fetch_cloud_object_rx, move |me, _, ctx| {
             if let Some(workflow) = CloudModel::as_ref(ctx)
                 .get_workflow(&SyncId::ServerId(workflow_id))
                 .cloned()
             {
-                me.load(workflow, &settings, mode, ctx);
+                me.load(workflow, mode, ctx);
             } else {
                 ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
                     toast_stack.add_ephemeral_toast_by_type(
@@ -703,7 +655,6 @@ impl WorkflowView {
     pub fn load(
         &mut self,
         workflow: CloudWorkflow,
-        settings: &OpenWarpDriveObjectSettings,
         mode: WorkflowViewMode,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -733,8 +684,6 @@ impl WorkflowView {
 
         let owner = workflow.permissions.owner;
         self.owner = Some(owner);
-        self.all_workflow_enums =
-            workflow_arg_type_helpers::load_workflow_enums_with_owner(owner, ctx);
 
         let workflow_data = &workflow.model().data;
         let workflow_name = workflow_data.name();
@@ -746,12 +695,6 @@ impl WorkflowView {
         if let ContainerConfiguration::Pane(pane_config) = &mut self.container_configuration {
             pane_config.update(ctx, |pane_config, ctx| {
                 pane_config.set_title(workflow_name, ctx);
-                if let Some(server_id) = workflow.id.into_server() {
-                    pane_config.set_shareable_object(
-                        Some(ShareableObject::WarpDriveObject(server_id)),
-                        ctx,
-                    );
-                }
             });
         }
 
@@ -794,12 +737,6 @@ impl WorkflowView {
             editor.set_interaction_state(InteractionState::Selectable, ctx);
         });
 
-        self.arguments_state = ArgumentsState::for_command_workflow(
-            &self.arguments_state,
-            workflow_content.to_string(),
-        );
-        self.update_arguments_rows(ctx);
-        self.load_argument_data(workflow_data, ctx);
 
         if self.is_for_agent_mode {
             self.content_editor.update(ctx, |editor, ctx| {
@@ -832,25 +769,6 @@ impl WorkflowView {
         self.update_breadcrumb(ctx);
         self.update_editors_interactivity(ctx);
         self.refresh_pane_overflow_menu(ctx);
-
-        if let Some(focused_folder_id) = settings.focused_folder_id.map(SyncId::ServerId) {
-            self.view_in_warp_drive(
-                WarpDriveItemId::Object(CloudObjectTypeAndId::Folder(focused_folder_id)),
-                ctx,
-            );
-        }
-
-        if let Some(invitee_email) = settings.invitee_email.clone() {
-            let object_id_to_share = settings
-                .focused_folder_id
-                .map(|id| CloudObjectTypeAndId::Folder(SyncId::ServerId(id)))
-                .unwrap_or(CloudObjectTypeAndId::Workflow(workflow.id));
-            ctx.emit(WorkflowViewEvent::OpenDriveObjectShareDialog {
-                cloud_object_type_and_id: object_id_to_share,
-                invitee_email: Some(invitee_email),
-                source: SharingDialogSource::InviteeRequest,
-            });
-        }
 
         if matches!(mode, WorkflowViewMode::View) {
             self.focus_first_argument_value(ctx);
@@ -910,15 +828,7 @@ impl WorkflowView {
         matches!(self.owner, Some(Owner::Team { .. }))
     }
 
-    /// The current user's access level for this workflow.
-    fn access_level(&self, app: &AppContext) -> SharingAccessLevel {
-        CloudViewModel::as_ref(app).access_level(&self.workflow_id.uid(), app)
-    }
 
-    /// Whether or not the current user is allowed to edit this workflow.
-    fn editability(&self, app: &AppContext) -> ContentEditability {
-        CloudViewModel::as_ref(app).object_editability(&self.workflow_id.uid(), app)
-    }
 
     pub fn pane_configuration(&self) -> &ModelHandle<PaneConfiguration> {
         match &self.container_configuration {
@@ -963,7 +873,7 @@ impl WorkflowView {
     }
 
     fn is_save_workflow_button_disabled(&self) -> bool {
-        self.errors.has_any_error() || self.show_enum_creation_dialog
+        self.errors.has_any_error()
     }
 
     fn handle_name_editor_event(&mut self, event: &EditorEvent, ctx: &mut ViewContext<Self>) {
@@ -1008,16 +918,6 @@ impl WorkflowView {
 
                 self.errors.content_empty_error = current_content.trim().is_empty();
 
-                self.arguments_state = if self.is_for_agent_mode {
-                    ArgumentsState::for_saved_prompt(&self.arguments_state, current_content.clone())
-                } else {
-                    ArgumentsState::for_command_workflow(
-                        &self.arguments_state,
-                        current_content.clone(),
-                    )
-                };
-                self.update_arguments_rows(ctx);
-
                 self.clear_content_formatting(current_content.chars().count(), ctx);
                 self.apply_error_underlining_to_content(ctx);
                 self.apply_argument_highlighting_to_content(ctx);
@@ -1029,10 +929,7 @@ impl WorkflowView {
                         });
                 }
 
-                self.errors.invalid_argument_error = !self
-                    .arguments_state
-                    .invalid_arguments_char_ranges
-                    .is_empty();
+                self.errors.invalid_argument_error = false;
 
                 ctx.notify();
             }
@@ -1057,118 +954,7 @@ impl WorkflowView {
         }
     }
 
-    fn handle_enum_creation_dialog_event(
-        &mut self,
-        event: &EnumCreationDialogEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            EnumCreationDialogEvent::Close => {
-                self.hide_enum_creation_dialog(ctx);
-                // Reopen the dropdown after the enum dialog is closed
-                if let Some(ArgumentEditorRowIndex(index)) = self.pending_argument_editor_row.take()
-                {
-                    ctx.focus(&self.arguments_rows[index].arg_type_editor);
-                }
-            }
-            EnumCreationDialogEvent::CreateEnum(enum_data) => {
-                workflow_arg_type_helpers::create_enum(
-                    enum_data,
-                    &mut self.all_workflow_enums,
-                    &self.arguments_rows,
-                    &mut self.pending_argument_editor_row,
-                    ctx,
-                );
-            }
-            EnumCreationDialogEvent::EditEnum(enum_data, did_visibility_change) => {
-                workflow_arg_type_helpers::edit_enum(
-                    enum_data,
-                    *did_visibility_change,
-                    &mut self.all_workflow_enums,
-                    &self.arguments_rows,
-                    &mut self.pending_argument_editor_row,
-                    ctx,
-                );
-            }
-        }
-    }
 
-    fn handle_type_selector_event(
-        &mut self,
-        handle: ViewHandle<WorkflowArgSelector>,
-        event: &WorkflowArgSelectorEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            WorkflowArgSelectorEvent::NewEnum => {
-                // Find and store the row that emitted this event
-                self.pending_argument_editor_row = self
-                    .arguments_rows
-                    .iter()
-                    .position(|row| row.arg_type_editor.eq(&handle))
-                    .map(ArgumentEditorRowIndex);
-
-                // Initialize the creation dialog for new enum
-                self.enum_creation_dialog.update(ctx, |dialog, ctx| {
-                    dialog.initialize(ctx);
-                });
-
-                self.show_enum_creation_dialog(ctx);
-            }
-            WorkflowArgSelectorEvent::LoadEnum(index) => {
-                // Find and store the row that emitted this event
-                self.pending_argument_editor_row = self
-                    .arguments_rows
-                    .iter()
-                    .position(|row| row.arg_type_editor.eq(&handle))
-                    .map(ArgumentEditorRowIndex);
-
-                // Load the enum data into the enum dialog
-                let show_dialog = workflow_arg_type_helpers::load_enum(
-                    index,
-                    &self.all_workflow_enums,
-                    &self.enum_creation_dialog,
-                    ctx,
-                );
-
-                if show_dialog {
-                    self.show_enum_creation_dialog(ctx);
-                }
-            }
-            WorkflowArgSelectorEvent::Edited | WorkflowArgSelectorEvent::Close => ctx.notify(),
-            WorkflowArgSelectorEvent::ToggleExpanded => {
-                // Close all other rows
-                self.arguments_rows.iter().for_each(|row| {
-                    if !row.arg_type_editor.eq(&handle) {
-                        row.arg_type_editor.update(ctx, |editor, ctx| {
-                            editor.close(ctx);
-                        });
-                    }
-                });
-            }
-            WorkflowArgSelectorEvent::InputTab => {
-                if let Some(index) = self
-                    .arguments_rows
-                    .iter()
-                    .position(|row| row.arg_type_editor.eq(&handle))
-                {
-                    match self.arguments_rows.get(index + 1) {
-                        Some(next_row) => ctx.focus(&next_row.description_editor),
-                        None => ctx.focus(&self.name_editor),
-                    }
-                }
-            }
-            WorkflowArgSelectorEvent::InputShiftTab => {
-                if let Some(row) = self
-                    .arguments_rows
-                    .iter()
-                    .find(|row| row.arg_type_editor.eq(&handle))
-                {
-                    ctx.focus(&row.description_editor);
-                }
-            }
-        }
-    }
 
     fn handle_alias_bar_event(&mut self, event: &AliasBarEvent, ctx: &mut ViewContext<Self>) {
         if !FeatureFlag::WorkflowAliases.is_enabled() {
@@ -1177,23 +963,6 @@ impl WorkflowView {
 
         match event {
             AliasBarEvent::SelectedAliasChanged => {
-                // Clone the arguments so that we can update the argument editors.
-                let argument_values = self
-                    .alias_bar
-                    .as_ref(ctx)
-                    .current_argument_values()
-                    .cloned();
-                let arguments = self.arguments_with_metadata(ctx);
-
-                for (row, arg) in self.arguments_rows.iter_mut().zip(arguments.iter()) {
-                    row.alias_argument_selector.update(ctx, |selector, ctx| {
-                        let value = argument_values
-                            .as_ref()
-                            .and_then(|args| args.get(&row.name));
-                        selector.set_argument(&arg.arg_type, value, &self.all_workflow_enums, ctx);
-                    });
-                }
-
                 self.env_vars_selector.update(ctx, |selector, ctx| {
                     let selected_env_vars = if self.alias_bar.as_ref(ctx).has_selected_alias() {
                         self.alias_bar.as_ref(ctx).current_env_vars()
@@ -1235,73 +1004,7 @@ impl WorkflowView {
         }
     }
 
-    /// Merges the arguments from arguments_state with the descriptions/default
-    /// values that we store in the view layer.
-    fn arguments_with_metadata(&mut self, ctx: &mut ViewContext<Self>) -> Vec<Argument> {
-        self.arguments_state
-            .arguments
-            .iter()
-            .enumerate()
-            .filter_map(|(index, argument)| {
-                self.arguments_rows.get(index).map(|argument_row| {
-                    let description_editor = argument_row.description_editor.as_ref(ctx);
 
-                    let description = match description_editor.is_empty(ctx) {
-                        true => None,
-                        false => Some(description_editor.buffer_text(ctx)),
-                    };
-
-                    let type_selector = argument_row.arg_type_editor.as_ref(ctx);
-                    let text_editor = type_selector.text_editor.as_ref(ctx);
-
-                    workflow_arg_type_helpers::extract_typed_argument_from_selector(
-                        argument,
-                        description,
-                        type_selector,
-                        text_editor,
-                        ctx,
-                    )
-                })
-            })
-            .collect()
-    }
-
-    /// Iterates through the argument rows and creates/updates any relevant argument objects on the server.
-    /// Returns a mapping of argument row indices to the ID of relevant objects, to be used by `arguments_with_metadata`
-    /// when creating or updating a `Workflow` object.
-    fn save_argument_objects(&self, ctx: &mut ViewContext<Self>) {
-        let mut sent_requests: HashSet<SyncId> = HashSet::new();
-        let owner = match self.workflow_view_mode {
-            WorkflowViewMode::View => None,
-            WorkflowViewMode::Edit => CloudModel::as_ref(ctx)
-                .get_workflow(&self.workflow_id)
-                .map(|workflow| workflow.permissions().owner),
-            WorkflowViewMode::Create => self.owner,
-        };
-
-        self.arguments_rows.iter().for_each(|argument_row| {
-            let type_selector = argument_row.arg_type_editor.as_ref(ctx);
-
-            // Check to see if we have enum data for this id, then create a request for it
-            for enum_id in type_selector.get_created_enums() {
-                if !sent_requests.contains(&enum_id) {
-                    if let Some(enum_data) = self.all_workflow_enums.get(&enum_id) {
-                        if enum_data.new_data.is_some() {
-                            workflow_arg_type_helpers::save_enum(enum_data, owner, ctx);
-
-                            // Make sure we aren't sending duplicate requests.
-                            // If an enum is used in multiple arguments, we'll only save it once
-                            sent_requests.insert(enum_id);
-                        }
-                    }
-                }
-            }
-
-            argument_row.arg_type_editor.update(ctx, |selector, ctx| {
-                selector.clear_created_enums(ctx);
-            });
-        });
-    }
 
     // If the title isn't supplied by the user, we use the first two words of the command or query
     // as the title.
@@ -1334,9 +1037,7 @@ impl WorkflowView {
             row.argument_editor.update(ctx, |editor, ctx| {
                 editor.set_interaction_state(InteractionState::Editable, ctx);
             });
-            row.arg_type_editor.update(ctx, |selector, ctx| {
-                selector.enable(ctx);
-            });
+
         });
 
         self.update_editors_interactivity(ctx);
@@ -1366,9 +1067,7 @@ impl WorkflowView {
             row.argument_editor.update(ctx, |editor, ctx| {
                 editor.set_interaction_state(InteractionState::Disabled, ctx);
             });
-            row.arg_type_editor.update(ctx, |selector, ctx| {
-                selector.disable(ctx);
-            });
+
         });
     }
 
@@ -1435,9 +1134,6 @@ impl WorkflowView {
 
     // This should only be available in context where we can't run workflows
     fn toggle_view_mode(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.show_enum_creation_dialog {
-            return;
-        }
 
         if matches!(self.workflow_view_mode, WorkflowViewMode::Edit)
             && self.should_show_unsaved_changes_dialog(ctx)
@@ -1538,7 +1234,7 @@ impl WorkflowView {
             Workflow::AgentMode {
                 name: workflow_name,
                 query: content,
-                arguments: self.arguments_with_metadata(ctx),
+                arguments: vec![],
                 description: None,
             }
         } else {
@@ -1546,7 +1242,7 @@ impl WorkflowView {
                 name: workflow_name,
                 command: content,
                 description: None,
-                arguments: self.arguments_with_metadata(ctx),
+                arguments: vec![],
                 tags: vec![],
                 source_url: None,
                 author: None,
@@ -1594,11 +1290,9 @@ impl WorkflowView {
             return;
         }
 
-        self.save_argument_objects(ctx);
-
         match self.workflow_view_mode {
             WorkflowViewMode::Edit => {
-                UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+                UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                     update_manager.update_workflow(
                         workflow.clone(),
                         self.workflow_id,
@@ -1627,7 +1321,7 @@ impl WorkflowView {
                 };
 
                 if let Some(space) = self.owner {
-                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                         update_manager.create_workflow(
                             workflow.clone(),
                             space,
@@ -1697,17 +1391,7 @@ impl WorkflowView {
                 {
                     return true;
                 }
-                if !find_secrets_in_text(
-                    &arg.arg_type_editor
-                        .as_ref(app)
-                        .text_editor
-                        .as_ref(app)
-                        .buffer_text(app),
-                )
-                .is_empty()
-                {
-                    return true;
-                }
+
             }
             for value in self.alias_bar.as_ref(app).get_all_argument_values() {
                 if !find_secrets_in_text(&value).is_empty() {
@@ -1751,7 +1435,7 @@ impl WorkflowView {
     fn is_ai_assist_button_disabled(&self, app: &AppContext) -> bool {
         // Autofill button should be disabled when there is no content or when there are secrets in the workflow.
         self.content_editor.as_ref(app).is_empty(app)
-            || self.show_enum_creation_dialog
+            
             || self.workflow_contains_secrets(app)
     }
 
@@ -1767,46 +1451,9 @@ impl WorkflowView {
         });
     }
 
-    fn apply_error_underlining_to_content(&mut self, ctx: &mut ViewContext<Self>) {
-        let error_ranges = self.arguments_state.invalid_arguments_char_ranges.clone();
-        let appearance = Appearance::as_ref(ctx);
-        let theme = appearance.theme();
-        let ansi_colors = theme.terminal_colors().normal;
+    fn apply_error_underlining_to_content(&mut self, _ctx: &mut ViewContext<Self>) {}
 
-        self.content_editor.update(ctx, |editor, ctx| {
-            editor.update_buffer_styles(
-                error_ranges
-                    .iter()
-                    .map(|range| CharOffset::from(range.start)..CharOffset::from(range.end)),
-                TextStyleOperation::default().set_error_underline_color(
-                    AnsiColorIdentifier::Red.to_ansi_color(&ansi_colors).into(),
-                ),
-                ctx,
-            )
-        });
-    }
-
-    fn apply_argument_highlighting_to_content(&mut self, ctx: &mut ViewContext<Self>) {
-        let argument_ranges = self
-            .arguments_state
-            .valid_arguments_char_ranges_and_arg_index
-            .clone();
-        let appearance = Appearance::as_ref(ctx);
-        let theme = appearance.theme();
-        let ansi_colors = theme.terminal_colors().normal;
-
-        self.content_editor.update(ctx, |editor, ctx| {
-            editor.update_buffer_styles(
-                argument_ranges
-                    .iter()
-                    .map(|(range, _)| CharOffset::from(range.start)..CharOffset::from(range.end)),
-                TextStyleOperation::default().set_foreground_color(
-                    AnsiColorIdentifier::Blue.to_ansi_color(&ansi_colors).into(),
-                ),
-                ctx,
-            )
-        });
-    }
+    fn apply_argument_highlighting_to_content(&mut self, _ctx: &mut ViewContext<Self>) {}
 
     fn update_breadcrumb(&mut self, ctx: &mut ViewContext<Self>) {
         let workflow = self.get_cloud_workflow(ctx);
@@ -1858,23 +1505,11 @@ impl WorkflowView {
         ctx.notify();
     }
 
-    fn show_enum_creation_dialog(&mut self, ctx: &mut ViewContext<Self>) {
-        self.show_enum_creation_dialog = true;
-        self.disable_editors(ctx);
-        self.update_open_modal_state(ctx);
-        ctx.notify();
-    }
 
-    fn hide_enum_creation_dialog(&mut self, ctx: &mut ViewContext<Self>) {
-        self.show_enum_creation_dialog = false;
-        self.enable_editors(ctx);
-        self.update_open_modal_state(ctx);
-        ctx.notify();
-    }
 
     /// Returns whether or not any of the workflow editor dialogs are open.
     fn has_open_dialog(&self) -> bool {
-        self.show_enum_creation_dialog || self.show_unsaved_changes.is_some()
+        self.show_unsaved_changes.is_some()
     }
 
     /// Set the [`PaneConfiguration`] open modal flag based on whether or not any dialogs are open.
@@ -1910,90 +1545,12 @@ impl WorkflowView {
         });
     }
 
-    fn render_edit_toggle_button(
-        &self,
-        editability: ContentEditability,
-        appearance: &Appearance,
-    ) -> Box<dyn Element> {
-        let base_text_styles = UiComponentStyles {
-            ..Default::default()
-        };
-
-        let text_and_button = match self.workflow_view_mode {
-            WorkflowViewMode::Edit => {
-                let mode_text = appearance
-                    .ui_builder()
-                    .span("Editing")
-                    .with_style(base_text_styles)
-                    .build();
-                let edit_button = accent_icon_button(
-                    appearance,
-                    Icon::Pencil,
-                    false,
-                    self.ui_state_handles.edit_mode_button_mouse_state.clone(),
-                );
-
-                Some((mode_text, edit_button))
-            }
-            WorkflowViewMode::View => {
-                let mode_text = appearance
-                    .ui_builder()
-                    .span("Viewing")
-                    .with_style(base_text_styles)
-                    .build();
-                let edit_button = icon_button(
-                    appearance,
-                    Icon::Pencil,
-                    false,
-                    self.ui_state_handles.edit_mode_button_mouse_state.clone(),
-                );
-
-                Some((mode_text, edit_button))
-            }
-            _ => None,
-        };
-
-        if let Some((mode_text, mut edit_button)) = text_and_button {
-            if matches!(editability, ContentEditability::RequiresLogin) {
-                let ui_builder = appearance.ui_builder().clone();
-                edit_button = edit_button.with_tooltip(move || {
-                    ui_builder
-                        .tool_tip("Sign in to edit".to_string())
-                        .build()
-                        .finish()
-                });
-            }
-            let edit_button = edit_button.build();
-
-            Flex::row()
-                .with_child(
-                    Container::new(mode_text.finish())
-                        .with_margin_right(5.)
-                        .finish(),
-                )
-                .with_child(
-                    edit_button
-                        .on_click(|ctx, _, _| {
-                            ctx.dispatch_typed_action(WorkflowAction::ToggleViewMode)
-                        })
-                        .finish(),
-                )
-                .with_main_axis_size(MainAxisSize::Min)
-                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                .finish()
-        } else {
-            Flex::row().finish()
-        }
-    }
 
     fn duplicate_object(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.show_enum_creation_dialog {
-            return;
-        }
 
-        UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
             update_manager.duplicate_object(
-                CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
+                &CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,
             );
         });
@@ -2001,13 +1558,10 @@ impl WorkflowView {
     }
 
     fn trash_object(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.show_enum_creation_dialog {
-            return;
-        }
 
         self.close(ctx);
 
-        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
             update_manager.trash_object(
                 CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,
@@ -2016,11 +1570,7 @@ impl WorkflowView {
     }
 
     fn untrash_object(&self, ctx: &mut ViewContext<Self>) {
-        if has_feature_gated_anonymous_user_reached_workflow_limit(ctx) {
-            return;
-        }
-
-        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
             update_manager.untrash_object(
                 CloudObjectTypeAndId::from_id_and_type(self.workflow_id, ObjectType::Workflow),
                 ctx,
@@ -2050,15 +1600,7 @@ impl WorkflowView {
                     Icon::Workflow
                 }
                 .to_warpui_icon(
-                    warp_drive_icon_color(
-                        appearance,
-                        if self.is_for_agent_mode {
-                            DriveObjectType::AgentModeWorkflow
-                        } else {
-                            DriveObjectType::Workflow
-                        },
-                    )
-                    .into(),
+                    appearance.theme().foreground().into(),
                 )
                 .finish(),
             )
@@ -2396,9 +1938,6 @@ impl WorkflowView {
             appearance,
         );
 
-        if self.show_enum_creation_dialog {
-            cancel_button = cancel_button.disabled();
-        }
 
         let render_cancel_button = cancel_button
             .build()
@@ -2592,110 +2131,7 @@ impl WorkflowView {
         })
     }
 
-    fn view_in_warp_drive(&mut self, id: WarpDriveItemId, ctx: &mut ViewContext<Self>) {
-        ctx.emit(WorkflowViewEvent::ViewInWarpDrive(id));
-    }
 
-    fn issue_request(&mut self, ctx: &mut ViewContext<Self>) {
-        let ai_client = self.ai_client.clone();
-        let command = self.content_editor.as_ref(ctx).buffer_text(ctx);
-        let raw_request = command.trim().to_string();
-
-        ctx.spawn(
-            async move { ai_client.generate_metadata_for_command(raw_request).await },
-            move |pane, response, ctx| {
-                match response {
-                    Ok(metadata) => {
-                        pane.ai_metadata_assist_state = AiAssistState::Generated;
-                        pane.enable_editors(ctx);
-
-                        let arguments = metadata
-                            .arguments
-                            .into_iter()
-                            .map(|parameter| Argument {
-                                name: parameter.name,
-                                description: Some(parameter.description),
-                                default_value: Some(parameter.default_value),
-                                arg_type: Default::default(),
-                            })
-                            .collect_vec();
-
-                        let workflow = Workflow::Command {
-                            name: metadata.title,
-                            description: Some(metadata.description),
-                            command: metadata.command,
-                            arguments,
-                            tags: vec![],
-                            source_url: None,
-                            author: None,
-                            author_url: None,
-                            shells: vec![],
-                            environment_variables: None,
-                        };
-
-                        send_telemetry_from_ctx!(
-                            TelemetryEvent::AutoGenerateMetadataSuccess,
-                            ctx
-                        );
-
-                        pane.populate_missing_field_with_suggestion(workflow, ctx);
-                        ctx.notify();
-                    }
-                    Err(err) => {
-                        let message = err.user_facing_message();
-                        if let GeneratedCommandMetadataError::RateLimited = err {
-                            let current_user_id = pane.auth_state.user_id().unwrap_or_default();
-                            if let Some(team) = UserWorkspaces::as_ref(ctx).current_team() {
-                                let current_user_email =
-                                    pane.auth_state.user_email().unwrap_or_default();
-                                let has_admin_permissions = team.has_admin_permissions(&current_user_email);
-                                if team.billing_metadata.can_upgrade_to_higher_tier_plan() {
-                                    if has_admin_permissions {
-                                        pane.display_upgrade_error(Some(team.uid), current_user_id, ctx);
-                                    } else {
-                                        pane.display_error_toast(
-                                            "Looks like you're out of AI credits. Contact a team admin to upgrade for more credits.".to_string(),
-                                            ctx,
-                                        );
-                                    }
-                                } else {
-                                    pane.display_error_toast(
-                                        message.clone(),
-                                        ctx,
-                                    );
-                                }
-                            } else {
-                                pane.display_upgrade_error(None, current_user_id, ctx);
-                            }
-                        } else {
-                            pane.display_error_toast(
-                                message.clone(),
-                                ctx,
-                            );
-                        }
-
-                        send_telemetry_from_ctx!(
-                            TelemetryEvent::AutoGenerateMetadataError {
-                                error_payload: serde_json::json!(err)
-                            },
-                            ctx
-                        );
-
-                        pane.ai_metadata_assist_state = AiAssistState::PreRequest;
-                        pane.enable_editors(ctx);
-                        ctx.notify();
-                    }
-                }
-                AIRequestUsageModel::handle(ctx).update(ctx, |request_usage_model, ctx| {
-                    request_usage_model.refresh_request_usage_async(ctx);
-                });
-            }
-        );
-
-        self.ai_metadata_assist_state = AiAssistState::RequestInFlight;
-        self.disable_editors(ctx);
-        ctx.notify();
-    }
 
     fn display_upgrade_error(
         &mut self,
@@ -2750,8 +2186,7 @@ impl WorkflowView {
             }
         });
 
-        let content_parsed = !self.arguments_state.arguments.is_empty();
-        if !content_parsed {
+        {
             self.content_editor.update(ctx, |editor, ctx| {
                 editor.set_buffer_text(workflow.content(), ctx);
             });
@@ -2760,11 +2195,6 @@ impl WorkflowView {
             // editor's text will trigger the event that does this automatically.
             // however, that happens in a callback, yet we need to know what the args
             // are right away to populate the description/default value editors.
-            self.arguments_state = ArgumentsState::for_command_workflow(
-                &self.arguments_state,
-                workflow.content().to_string(),
-            );
-            self.update_arguments_rows(ctx);
 
             workflow
                 .arguments()
@@ -2950,11 +2380,7 @@ impl View for WorkflowView {
                 Container::new(render_breadcrumbs(
                     self.breadcrumbs.clone(),
                     appearance,
-                    |ctx, _, breadcrumb| {
-                        ctx.dispatch_typed_action(WorkflowAction::ViewInWarpDrive(
-                            breadcrumb.kind.into_item_id(),
-                        ));
-                    },
+                    |_ctx, _, _breadcrumb| {},
                 ))
                 .with_horizontal_margin(CORE_HORIZONATAL_MARGIN)
                 .with_vertical_margin(vertical_margin / 2.)
@@ -2963,26 +2389,13 @@ impl View for WorkflowView {
             .finish(),
         );
 
-        let editability = if FeatureFlag::SharedWithMe.is_enabled() {
-            self.editability(app)
-        } else {
-            ContentEditability::Editable
-        };
-        let mode_toggleable = match (ContextFlag::RunWorkflow.is_enabled(), editability) {
-            // If logging in would allow editing, show the toggle for discoverability.
-            (_, ContentEditability::RequiresLogin) => true,
-            // If workflows aren't runnable (so view mode is enabled) AND the user can edit the
-            // workflow, both view and edit modes are allowed.
-            (false, ContentEditability::Editable) => true,
-            // Otherwise, only one of view and edit mode is allowed.
-            (_, _) => false,
-        };
+        let mode_toggleable = !ContextFlag::RunWorkflow.is_enabled();
 
         if mode_toggleable {
             row.add_child(
                 Shrinkable::new(
                     1.,
-                    Container::new(self.render_edit_toggle_button(editability, appearance))
+                    Container::new(Flex::row().finish())
                         .with_margin_right(CORE_HORIZONATAL_MARGIN)
                         .finish(),
                 )
@@ -3049,17 +2462,6 @@ impl View for WorkflowView {
             .finish(),
         );
 
-        if self.show_enum_creation_dialog {
-            stack.add_positioned_overlay_child(
-                Clipped::new(ChildView::new(&self.enum_creation_dialog).finish()).finish(),
-                OffsetPositioning::offset_from_parent(
-                    vec2f(0., 0.),
-                    ParentOffsetBounds::WindowByPosition,
-                    ParentAnchor::Center,
-                    ChildAnchor::Center,
-                ),
-            )
-        }
 
         match self.show_unsaved_changes {
             Some(UnsavedChangeType::ForEdit) => stack.add_positioned_overlay_child(
@@ -3115,7 +2517,6 @@ impl TypedActionView for WorkflowView {
 
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
-            WorkflowAction::ViewInWarpDrive(id) => self.view_in_warp_drive(*id, ctx),
             WorkflowAction::AddArgument => self.add_argument(ctx),
             WorkflowAction::ToggleViewMode => self.toggle_view_mode(ctx),
             WorkflowAction::CloseUnsavedDialog => self.hide_unsaved_changes_dialog(ctx),
@@ -3128,7 +2529,7 @@ impl TypedActionView for WorkflowView {
             }
             WorkflowAction::Save => self.save(ctx),
             WorkflowAction::Cancel => {
-                if !self.show_enum_creation_dialog {
+                if !false {
                     // we reset when we toggle to the view mode so no need to call reset here
                     self.hide_unsaved_changes_dialog(ctx);
                     self.try_set_view_mode(ctx);
@@ -3136,7 +2537,7 @@ impl TypedActionView for WorkflowView {
             }
             WorkflowAction::RunWorkflow => self.copy_to_command_line(ctx),
             WorkflowAction::CopyContent => self.copy_content(ctx),
-            WorkflowAction::AiAssist => self.issue_request(ctx),
+            WorkflowAction::AiAssist => {}
             WorkflowAction::Duplicate => self.duplicate_object(ctx),
             WorkflowAction::CopyLink(link) => {
                 send_telemetry_from_ctx!(
@@ -3162,7 +2563,6 @@ impl TypedActionView for WorkflowView {
             }
             WorkflowAction::Trash => self.trash_object(ctx),
             WorkflowAction::Untrash => self.untrash_object(ctx),
-            WorkflowAction::CloseEnumDialog => self.hide_enum_creation_dialog(ctx),
         }
     }
 }
@@ -3219,10 +2619,7 @@ impl BackingView for WorkflowView {
         }
 
         // Add "Trash" to menu
-        let access_level = self.access_level(ctx);
-        if self.is_online(ctx)
-            && (!FeatureFlag::SharedWithMe.is_enabled() || access_level.can_trash())
-        {
+        if self.is_online(ctx) {
             menu_items.push(
                 MenuItemFields::new("Trash")
                     .with_on_select_action(WorkflowAction::Trash)
@@ -3235,9 +2632,6 @@ impl BackingView for WorkflowView {
     }
 
     fn close(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.show_enum_creation_dialog {
-            return;
-        }
 
         if self.should_show_unsaved_changes_dialog(ctx) {
             self.show_unsaved_changes_dialog(UnsavedChangeType::ForClose, ctx)

@@ -78,7 +78,6 @@ pub use block_banner::{WithinBlockBanner, BLOCK_BANNER_HEIGHT};
 use block_onboarding::onboarding_agentic_suggestions_block::{
     OnboardingAgenticSuggestionsBlock, OnboardingAgenticSuggestionsBlockEvent, OnboardingChipType,
 };
-use block_onboarding::onboarding_drive_sharing_block::OnboardingDriveSharingBlock;
 use bookmarks::render_floating_block_snapshot;
 use chrono::{DateTime, Local, NaiveDateTime};
 use command_corrections::rules::generic::history::History as CommandCorrectionsHistoryRule;
@@ -293,7 +292,7 @@ use crate::banner::{
 };
 use crate::cloud_object::model::actions::ObjectActionType;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObject, GenericStringObjectFormat, JsonObjectType, UpdateManager};
+use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, JsonObjectType};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code_review::comments::{
@@ -315,9 +314,6 @@ use crate::code_review::DiffSetScope;
 use crate::context_chips::prompt::{Prompt, PromptSelection};
 use crate::context_chips::prompt_type::PromptType;
 use crate::context_chips::ContextChipKind;
-use crate::drive::settings::WarpDriveSettings;
-use crate::drive::sharing::ShareableObject;
-use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{AutosuggestionType, CrdtOperation, EditorAction};
 use crate::env_vars::env_var_collection_block::{
     EnvVarCollectionBlock, EnvVarCollectionBlockEvent,
@@ -339,14 +335,15 @@ use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipHint, TipsCompleted,
 };
 use crate::search::slash_command_menu::static_commands::commands;
-use crate::server::ids::{ObjectUid, SyncId};
+use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
     self, AgentModeAttachContextMethod, AgentModeEntrypoint, AgentModeRewindEntrypoint,
     AnonymousUserSignupEntrypoint, BlockLatencyInfo, BootstrappingInfo,
     CommandCorrectionAcceptedType, CommandCorrectionEvent, InteractionSource, LinkOpenMethod,
     NotificationAgentVariant, NotificationsTurnedOnSource, PaletteSource, PromptSuggestionViewType,
-    SaveAsWorkflowModalSource, SecretInteraction, SharingDialogSource, SlowBootstrapInfo,
+    SaveAsWorkflowModalSource, SecretInteraction, SlowBootstrapInfo,
     TelemetryEvent, ToggleBlockFilterSource, WorkflowTelemetryMetadata,
 };
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
@@ -1651,7 +1648,6 @@ pub enum Event {
     OpenWorkflowModalWithCloudWorkflow(SyncId),
     // Tell the pane group to open the workflow modal with an unsaved workflow.
     OpenWorkflowModalWithTemporary(Box<Workflow>),
-    OpenWarpDriveObjectInPane(ObjectUid),
     OpenSuggestedAgentModeWorkflowModal {
         workflow_and_id: SuggestedAgentModeWorkflowAndId,
     },
@@ -4219,7 +4215,6 @@ impl TerminalView {
                 ConversationDetailsPanelEvent::OpenPlanNotebook { notebook_uid } => {
                     // Convert NotebookId -> SyncId -> ObjectUid (String)
                     let object_uid = SyncId::from(*notebook_uid).uid();
-                    ctx.emit(Event::OpenWarpDriveObjectInPane(object_uid));
                 }
             }
         });
@@ -12153,7 +12148,7 @@ impl TerminalView {
                     // If the block was a cloud workflow, record the workflow execution as an object action.
                     if let Some(cloud_workflow_id) = cloud_workflow_id {
                         let id_and_type = CloudObjectTypeAndId::Workflow(*cloud_workflow_id);
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
                             update_manager.record_object_action(
                                 id_and_type,
                                 ObjectActionType::Execute,
@@ -12171,7 +12166,7 @@ impl TerminalView {
 
                             id: *cloud_env_var_collection_id,
                         };
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
                             update_manager.record_object_action(
                                 id_and_type,
                                 ObjectActionType::Execute,
@@ -13487,32 +13482,7 @@ impl TerminalView {
         None
     }
 
-    pub fn insert_drive_sharing_onboarding_block(
-        &mut self,
-        object_id: CloudObjectTypeAndId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.reset_onboarding_blocks(ctx);
 
-        WarpDriveSettings::handle(ctx).update(ctx, |settings, ctx| {
-            report_if_error!(settings.sharing_onboarding_block_shown.set_value(true, ctx));
-        });
-
-        let block_view_handle =
-            ctx.add_view(|ctx| OnboardingDriveSharingBlock::new(object_id, ctx));
-
-        self.insert_rich_content(
-            None,
-            block_view_handle,
-            None,
-            RichContentInsertionPosition::Append {
-                insert_below_long_running_block: false,
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(TelemetryEvent::DriveSharingOnboardingBlockShown, ctx);
-    }
 
     fn should_display_vim_banner(
         &self,
@@ -16643,7 +16613,7 @@ impl TerminalView {
                     );
                 }
 
-                if WarpDriveSettings::is_warp_drive_enabled(ctx) {
+                {
                     items.push(MenuItem::Separator);
                     items.push(
                         MenuItemFields::new("Save as workflow")
@@ -17355,7 +17325,7 @@ impl TerminalView {
         }
 
         // Section 3: Teams related
-        if !all_current_input_text.is_empty() && WarpDriveSettings::is_warp_drive_enabled(ctx) {
+        if !all_current_input_text.is_empty() {
             items.extend([
                 MenuItem::Separator,
                 MenuItemFields::new("Save as workflow")
@@ -20049,7 +20019,6 @@ impl TerminalView {
             }
             AIBlockEvent::OpenCitation(citation) => match citation {
                 AIAgentCitation::WarpDriveObject { uid } => {
-                    ctx.emit(Event::OpenWarpDriveObjectInPane(uid.clone()));
                 }
                 AIAgentCitation::WarpDocumentation { path } => {
                     ctx.open_url(&format!("https://docs.warp.dev/{path}"));
@@ -20063,7 +20032,6 @@ impl TerminalView {
             }
             AIBlockEvent::OpenWorkflow { sync_id } => {
                 if let Some(object) = CloudModel::as_ref(ctx).get_workflow(sync_id) {
-                    ctx.emit(Event::OpenWarpDriveObjectInPane(object.uid()));
                 }
             }
             AIBlockEvent::OpenSuggestedAgentModeWorkflowModal { workflow_and_id } => {
@@ -24450,25 +24418,14 @@ impl TerminalView {
                     request_id.as_str().to_string(),
                 ));
             }
-            CopyConversationShareLink { conversation_id } => {
-                if let Some(link) = ShareableObject::AIConversation(*conversation_id).link(ctx) {
-                    ctx.clipboard().write(ClipboardContent::plain_text(link));
-                }
-            }
+            CopyConversationShareLink { conversation_id: _ } => {}
             CopyConversationText { conversation_id } => {
                 self.copy_conversation_text(*conversation_id, ctx);
             }
             ForkAIConversation { conversation_id } => {
                 self.fork_ai_conversation(*conversation_id, None, ctx);
             }
-            OpenConversationShareDialog { conversation_id } => {
-                // Set the shareable object and open the sharing dialog via the pane header
-                let shareable_object = ShareableObject::AIConversation(*conversation_id);
-                self.pane_configuration.update(ctx, |pane_config, ctx| {
-                    pane_config.set_shareable_object(Some(shareable_object), ctx);
-                    pane_config.toggle_sharing_dialog(SharingDialogSource::AIBlockContextMenu, ctx);
-                });
-            }
+            OpenConversationShareDialog { conversation_id: _ } => {}
             CopyAgentCommand { ai_block_view_id } => {
                 for rich_content in self.rich_content_views.iter() {
                     if let Some(ai_metadata) = rich_content.ai_block_metadata() {
@@ -25030,11 +24987,11 @@ impl TerminalView {
                         },
                     }));
 
-                    UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
                         update_manager.record_object_action(
                             cloud_object_type_and_id,
                             ObjectActionType::Execute,
-                            None::<()>,
+                            None,
                             ctx,
                         )
                     });
@@ -25236,11 +25193,11 @@ impl TerminalView {
         self.set_and_execute_subshell_command(&shell_path_string, shell_type, ctx);
 
         // Ok to update the execution record here because we auto-execute when in subshell
-        UpdateManager::handle(ctx).update(ctx, move |update_manager: &mut UpdateManager, ctx| {
+        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
             update_manager.record_object_action(
                 cloud_env_var_collection.cloud_object_type_and_id(),
                 ObjectActionType::Execute,
-                None::<()>,
+                None,
                 ctx,
             )
         });

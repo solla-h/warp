@@ -9,8 +9,6 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::DriveObjectType;
 use crate::notebooks::CloudNotebook;
 use crate::search::item::{IconLocation, SearchItem};
 use crate::search::notebook_embedding::embedded_fuzzy_match::FuzzyMatchEmbeddedObjectResult;
@@ -47,12 +45,7 @@ impl SearchItem for NotebookSearchItem {
             ConstrainedBox::new(
                 Icon::Notebook
                     .to_warpui_icon(
-                        warp_drive_icon_color(
-                            appearance,
-                            DriveObjectType::Notebook {
-                                is_ai_document: false,
-                            },
-                        )
+                        appearance.theme().foreground()
                         .into(),
                     )
                     .finish(),

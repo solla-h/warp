@@ -76,7 +76,7 @@ use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::AuthStateProvider;
 use crate::banner::{Banner, BannerEvent, BannerState, BannerTextContent, DismissalType};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::Space;
+use crate::cloud_object::{CloudObjectTypeAndId, Space};
 use crate::code::active_file::ActiveFileModel;
 use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
@@ -84,8 +84,6 @@ use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
 use crate::code_review::comments::{AttachedReviewComment, PendingImportedReviewComment};
 use crate::code_review::diff_state::DiffMode;
-use crate::drive::items::WarpDriveItemId;
-use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs};
 use crate::env_vars::EnvVarCollectionType;
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::{self, PaneMode, PaneTemplateType};
@@ -517,8 +515,6 @@ pub enum Event {
     OpenWorkflowModalWithCommand(String),
     // Tell the workspace to open the workflow for edit.
     OpenCloudWorkflowForEdit(SyncId),
-    // Tell the workspace to open the share dialog for the given drive object. The share dialog will
-    // open in the index. If the invitee email is provided, it will be added to the share dialog.
     OpenDriveObjectShareDialog {
         cloud_object_type_and_id: CloudObjectTypeAndId,
         invitee_email: Option<String>,
@@ -535,9 +531,6 @@ pub enum Event {
         path: LocalOrRemotePath,
         /// The session that the path was opened from.
         session: Arc<Session>,
-    },
-    OpenWarpDriveLink {
-        open_warp_drive_args: OpenWarpDriveObjectArgs,
     },
     #[cfg(feature = "local_fs")]
     OpenCodeInWarp {
@@ -584,7 +577,6 @@ pub enum Event {
     FocusPaneInWorkspace {
         locator: PaneViewLocator,
     },
-    ViewInWarpDrive(WarpDriveItemId),
     MoveToSpace {
         cloud_object_type_and_id: CloudObjectTypeAndId,
         space: Space,
@@ -611,7 +603,6 @@ pub enum Event {
     },
     /// Clears the hovered tab index so it no longer appears as highlighted drop target
     ClearHoveredTabIndex,
-    OpenWarpDriveObjectInPane(ObjectUid),
     /// Tell the workspace to open the given child agent conversation in a
     /// fresh tab. Bubbled up by `TerminalView::Event::OpenChildAgentInNewTab`
     /// from the orchestration pill bar's 3-dot menu.
@@ -1712,8 +1703,7 @@ impl PaneGroup {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
                     NotebookPaneSnapshot::CloudNotebook {
                         notebook_id,
-                        settings,
-                    } => Box::new(NotebookPane::restore(notebook_id, &settings, ctx)?),
+                    } => Box::new(NotebookPane::restore(notebook_id, ctx)?),
                     NotebookPaneSnapshot::LocalFileNotebook { path } => Box::new(FilePane::new(
                         path.map(LocalOrRemotePath::Local),
                         None,
@@ -1782,8 +1772,7 @@ impl PaneGroup {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
                     WorkflowPaneSnapshot::CloudWorkflow {
                         workflow_id,
-                        settings,
-                    } => Box::new(WorkflowPane::restore(workflow_id, settings, ctx)?),
+                    } => Box::new(WorkflowPane::restore(workflow_id, ctx)?),
                 };
 
                 let pane_id = pane.as_pane().id();

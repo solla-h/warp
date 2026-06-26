@@ -1618,7 +1618,6 @@ fn test_notebook_pane_tracking() {
                     owner: Owner::mock_current_user(),
                     initial_folder_id: None,
                 },
-                &OpenWarpDriveObjectSettings::default(),
                 ctx,
                 true,
             );
@@ -1658,7 +1657,6 @@ fn test_notebook_pane_tracking() {
             // Re-opening the notebook should not create a new view.
             workspace.open_notebook(
                 &NotebookSource::Existing(notebook_id),
-                &OpenWarpDriveObjectSettings::default(),
                 ctx,
                 true,
             );
@@ -1790,7 +1788,6 @@ fn test_open_or_toggle_warp_drive() {
                     .tips_completed
                     .as_ref(ctx)
                     .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
                 "Warp drive welcome tip should not be completed"
             );
 
@@ -1809,7 +1806,6 @@ fn test_open_or_toggle_warp_drive() {
                     .tips_completed
                     .as_ref(ctx)
                     .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
                 "Warp drive welcome tip should not be completed"
             );
 
@@ -1828,7 +1824,6 @@ fn test_open_or_toggle_warp_drive() {
                     .tips_completed
                     .as_ref(ctx)
                     .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
                 "Warp drive welcome tip should not be completed"
             );
         });

@@ -13,7 +13,6 @@ use crate::ai::ambient_agents::{
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::{Owner, ServerGuestSubject};
-use crate::drive::sharing::SharingAccessLevel;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -161,61 +160,51 @@ fn conversation_access(
         return ConversationAccess::Unknown;
     };
 
-    let mut access_level = SharingAccessLevel::View;
-    match metadata.permissions.space {
-        Owner::User { user_uid } => {
-            let is_current_user_owner = user_uid == current_user_uid;
-            if is_current_user_owner {
-                access_level = access_level.max(SharingAccessLevel::Full);
-            }
-        }
-        Owner::Team { team_uid } => {
-            let is_current_team_owner = UserWorkspaces::as_ref(app)
-                .team_from_uid_across_all_workspaces(team_uid)
-                .is_some();
-            if is_current_team_owner {
-                access_level = access_level.max(SharingAccessLevel::Full);
-            }
-        }
+    let is_space_owner = match metadata.permissions.space {
+        Owner::User { user_uid } => user_uid == current_user_uid,
+        Owner::Team { team_uid } => UserWorkspaces::as_ref(app)
+            .team_from_uid_across_all_workspaces(team_uid)
+            .is_some(),
+    };
+    if is_space_owner {
+        return ConversationAccess::Edit;
     }
 
-    if let Some(link_sharing) = &metadata.permissions.anyone_link_sharing {
-        access_level = access_level.max(link_sharing.access_level.into());
-    }
-
-    // Direct user and team ACLs can both apply, so use the highest matching grant.
-    for guest in &metadata.permissions.guests {
-        match &guest.subject {
-            ServerGuestSubject::User { firebase_uid } => {
-                let matches_current_user = firebase_uid == current_user_uid.as_str();
-                if matches_current_user {
-                    access_level = access_level.max(guest.access_level.into());
-                }
-            }
-            ServerGuestSubject::Team { team_uid } => {
-                let matches_current_team = UserWorkspaces::as_ref(app)
-                    .team_from_uid_across_all_workspaces(*team_uid)
-                    .is_some();
-                if matches_current_team {
-                    access_level = access_level.max(guest.access_level.into());
-                }
-            }
-            ServerGuestSubject::PendingUser { .. } => {}
-        }
-    }
     let is_creator = metadata
         .metadata
         .creator_uid
         .as_ref()
         .is_some_and(|creator_uid| creator_uid == current_user_uid.as_str());
     if is_creator {
-        access_level = access_level.max(SharingAccessLevel::Edit);
+        return ConversationAccess::Edit;
     }
-    if access_level >= SharingAccessLevel::Edit {
-        ConversationAccess::Edit
-    } else {
-        ConversationAccess::ViewOnly
+
+    let has_edit_grant = metadata.permissions.guests.iter().any(|guest| {
+        let subject_matches = match &guest.subject {
+            ServerGuestSubject::User { firebase_uid } => {
+                firebase_uid == current_user_uid.as_str()
+            }
+            ServerGuestSubject::Team { team_uid } => UserWorkspaces::as_ref(app)
+                .team_from_uid_across_all_workspaces(*team_uid)
+                .is_some(),
+            ServerGuestSubject::PendingUser { .. } => false,
+        };
+        subject_matches
+    });
+    if has_edit_grant {
+        return ConversationAccess::Edit;
     }
+
+    let link_sharing_can_edit = metadata
+        .permissions
+        .anyone_link_sharing
+        .as_ref()
+        .is_some();
+    if link_sharing_can_edit {
+        return ConversationAccess::Edit;
+    }
+
+    ConversationAccess::ViewOnly
 }
 
 fn task_creator_access(task: &AmbientAgentTask, app: &AppContext) -> ConversationAccess {

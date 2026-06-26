@@ -9,8 +9,6 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::DriveObjectType;
 use crate::search::item::{IconLocation, SearchItem};
 use crate::search::notebook_embedding::embedded_fuzzy_match::FuzzyMatchEmbeddedObjectResult;
 use crate::search::notebook_embedding::searcher::EmbeddingSearchItemAction;
@@ -44,15 +42,9 @@ impl SearchItem for WorkflowSearchItem {
         appearance: &Appearance,
     ) -> Box<dyn Element> {
         let (icon, icon_color) = if self.cloud_workflow.model().data.is_agent_mode_workflow() {
-            (
-                Icon::Prompt,
-                warp_drive_icon_color(appearance, DriveObjectType::AgentModeWorkflow),
-            )
+            (Icon::Prompt, appearance.theme().foreground())
         } else {
-            (
-                Icon::Workflow,
-                warp_drive_icon_color(appearance, DriveObjectType::Workflow),
-            )
+            (Icon::Workflow, appearance.theme().foreground())
         };
 
         Container::new(

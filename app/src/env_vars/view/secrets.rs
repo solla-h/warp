@@ -16,7 +16,6 @@ use warpui::{Element, ViewContext};
 use super::env_var_collection::{
     EnvVarCollectionAction, EnvVarCollectionView, VariableRowIndex, CORE_MAX_WIDTH, ROW_SPACING,
 };
-use crate::drive::sharing::ContentEditability;
 use crate::env_vars::active_env_var_collection_data::SavingStatus;
 use crate::env_vars::EnvVarValue;
 use crate::external_secrets::{ExternalSecretManager, SecretManager};
@@ -138,7 +137,7 @@ impl EnvVarCollectionView {
         menu_button_mouse_state: MouseStateHandle,
         row_index: usize,
         is_focused: bool,
-        editability: ContentEditability,
+        can_edit: bool,
     ) -> Box<dyn Element> {
         let (display_name, action, menu, icon) = match secret {
             EnvVarValue::Secret(sec) => (
@@ -202,7 +201,7 @@ impl EnvVarCollectionView {
             .with_hovered_styles(hovered_styles)
             .with_text_and_icon_label(text_and_icon);
 
-        if FeatureFlag::SharedWithMe.is_enabled() && !editability.can_edit() {
+        if FeatureFlag::SharedWithMe.is_enabled() && !can_edit {
             button = button.disabled();
         }
 

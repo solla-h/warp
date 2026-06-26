@@ -9,7 +9,6 @@ use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 use crate::appearance::Appearance;
-use crate::drive::DriveObjectType;
 use crate::ui_components::blended_colors;
 use crate::workspaces::workspace::{BillingMetadata, CustomerType};
 
@@ -33,7 +32,7 @@ struct MouseStateHandles {
 }
 
 pub struct SharedObjectsCreationDeniedBody {
-    object_type: Option<DriveObjectType>,
+    object_type: Option<String>,
     has_admin_permissions: bool,
     is_delinquent_due_to_payment_issue: bool,
     customer_type: CustomerType,
@@ -52,7 +51,7 @@ pub enum SharedObjectsCreationDeniedBodyEvent {
 }
 
 impl SharedObjectsCreationDeniedBody {
-    pub fn new(object_type: Option<DriveObjectType>) -> Self {
+    pub fn new(object_type: Option<String>) -> Self {
         Self {
             object_type,
             has_admin_permissions: false,
@@ -62,20 +61,7 @@ impl SharedObjectsCreationDeniedBody {
         }
     }
 
-    pub fn update_state(
-        &mut self,
-        object_type: DriveObjectType,
-        has_admin_permissions: bool,
-        is_delinquent_due_to_payment_issue: bool,
-        customer_type: CustomerType,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.object_type = Some(object_type);
-        self.has_admin_permissions = has_admin_permissions;
-        self.is_delinquent_due_to_payment_issue = is_delinquent_due_to_payment_issue;
-        self.customer_type = customer_type;
-        ctx.notify();
-    }
+
 }
 
 impl Entity for SharedObjectsCreationDeniedBody {
@@ -91,7 +77,7 @@ impl View for SharedObjectsCreationDeniedBody {
         let appearance = Appearance::as_ref(app);
         let is_stripe_paid_plan = BillingMetadata::is_stripe_paid_plan(self.customer_type);
 
-        let sub_header = match self.object_type {
+        let sub_header = match &self.object_type {
             Some(object_type) => {
                 match (self.is_delinquent_due_to_payment_issue, self.has_admin_permissions, self.customer_type) {
                     (true, true, _) => {

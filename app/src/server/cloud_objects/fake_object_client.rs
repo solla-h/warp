@@ -34,8 +34,6 @@ use crate::cloud_object::{
     Revision, RevisionAndLastEditor, ServerFolder, ServerMetadata, ServerNotebook, ServerObject,
     ServerPermissions, ServerPreference, ServerWorkflow, UpdateCloudObjectResult,
 };
-use crate::drive::folders::FolderId;
-use crate::drive::sharing::SharingAccessLevel;
 use crate::notebooks::NotebookId;
 use crate::server::cloud_objects::listener::ObjectUpdateMessage;
 use crate::server::cloud_objects::update_manager::{GetCloudObjectResponse, InitialLoadResponse};

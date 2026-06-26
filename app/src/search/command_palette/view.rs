@@ -23,7 +23,6 @@ use warpui::{
 use super::super::palette_styles as styles;
 use super::CommandPaletteMixer;
 use crate::appearance::Appearance;
-use crate::drive::CloudObjectTypeAndId;
 use crate::features::FeatureFlag;
 use crate::palette::PaletteMode;
 use crate::root_view::OpenLaunchConfigArg;
@@ -48,6 +47,7 @@ use crate::themes::theme::WarpTheme;
 use crate::view_components::DismissibleToast;
 use crate::workspace::{active_terminal_in_window, ForkedConversationDestination, WorkspaceAction};
 use crate::{send_telemetry_from_ctx, ToastStack};
+use crate::cloud_object::CloudObjectTypeAndId;
 
 lazy_static! {
     /// Set of hardcoded action names that we want to show in the command palette zero state.
@@ -95,7 +95,6 @@ pub enum Event {
     /// Open a notebook identified by `id`.
     OpenNotebook { id: SyncId },
     /// View the relevant object in the Warp Drive sidebar.
-    ViewInWarpDrive { id: CloudObjectTypeAndId },
     /// Open a file at the given path.
     OpenFile {
         path: String,
@@ -887,9 +886,6 @@ impl View {
                 ctx.emit(Event::InvokeEnvironmentVariables { id })
             }
             CommandPaletteItemAction::OpenNotebook { id } => ctx.emit(Event::OpenNotebook { id }),
-            CommandPaletteItemAction::ViewInWarpDrive { id } => {
-                ctx.emit(Event::ViewInWarpDrive { id })
-            }
             CommandPaletteItemAction::NewSession { source } => {
                 self.dispatch_typed_action_on_view(source.action().deref(), ctx);
             }

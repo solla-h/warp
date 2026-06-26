@@ -23,7 +23,6 @@ use crate::cloud_object::{
     GenericStringObjectFormat, JsonObjectType, ObjectIdType, ObjectType, Owner, Revision,
     RevisionAndLastEditor, ServerCreationInfo, UpdateCloudObjectResult,
 };
-use crate::drive::CloudObjectTypeAndId;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::server::ids::{ClientId, HashableId, ServerId, ServerIdAndType, SyncId, SyncIdExt};
 use crate::server::server_api::auth::UserAuthenticationError;

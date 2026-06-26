@@ -20,8 +20,7 @@ use super::PrivacySettings;
 use crate::auth::auth_state::AuthState;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType};
-use crate::drive::CloudObjectTypeAndId;
+use crate::cloud_object::{CloudObjectTypeAndId, CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType};
 use crate::report_if_error;
 use crate::cloud_object::{
     GenericStringObjectInput, InitiatedBy, UpdateManager, UpdateManagerEvent,

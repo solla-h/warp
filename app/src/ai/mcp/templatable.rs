@@ -10,7 +10,6 @@ use crate::cloud_object::{
     CloudObjectUuid, GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType,
     Revision, UniquePer,
 };
-use crate::drive::items::WarpDriveItem;
 use crate::server::ids::SyncId;
 
 const UNIQUENESS_KEY_PREFIX: &str = "templatable_mcp_server";
@@ -54,17 +53,9 @@ impl StringModel for TemplatableMCPServer {
         })
     }
 
+
     fn renders_in_warp_drive(&self) -> bool {
         false
-    }
-
-    fn to_warp_drive_item(
-        &self,
-        _id: SyncId,
-        _appearance: &Appearance,
-        _templatable_mcp_server: &CloudTemplatableMCPServer,
-    ) -> Option<Box<dyn WarpDriveItem>> {
-        None
     }
 }
 

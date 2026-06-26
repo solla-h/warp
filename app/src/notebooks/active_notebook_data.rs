@@ -5,9 +5,11 @@ use crate::ai::document::ai_document_model::AIDocumentId;
 use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
-use crate::cloud_object::{CloudObject, Owner, Space, UpdateManagerEvent, UpdateManager};
-use crate::drive::sharing::{ContentEditability, SharingAccessLevel};
+use crate::cloud_object::{CloudObject, Owner, Space};
 use crate::notebooks::CloudNotebook;
+use crate::server::cloud_objects::update_manager::{
+    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
+};
 use crate::server::ids::{ClientId, SyncId};
 
 #[derive(Default, Clone)]
@@ -105,6 +107,94 @@ impl ActiveNotebookData {
         event: &UpdateManagerEvent,
         ctx: &mut ModelContext<Self>,
     ) {
+        let UpdateManagerEvent::ObjectOperationComplete { result } = event else {
+            return;
+        };
+
+        match (&result.operation, &result.success_type) {
+            (ObjectOperation::Create { .. }, OperationSuccessType::Success) => {
+                if let Some(current_id) = self.id() {
+                    if current_id.into_client() == result.client_id {
+                        let server_id = result.server_id.expect("Expect server id on success");
+                        let notebook_id: NotebookId = server_id.into();
+                        self.feature_not_available = false;
+                        self.saving_status = SavingStatus::Saved;
+                        self.active_notebook =
+                            ActiveNotebook::CommittedNotebook(SyncId::ServerId(notebook_id.into()));
+                        ctx.emit(ActiveNotebookDataEvent::BreadcrumbsChanged);
+                        ctx.emit(ActiveNotebookDataEvent::CreatedOnServer);
+                        ctx.notify();
+                    }
+                }
+            }
+            (ObjectOperation::Update, OperationSuccessType::Success) => {
+                if let Some(current_id) = self.id() {
+                    let server_id = result.server_id.expect("Expect server id on success");
+                    if current_id.into_server() == Some(server_id) {
+                        self.feature_not_available = false;
+                        self.saving_status = SavingStatus::Saved;
+                        ctx.notify();
+                    }
+                }
+            }
+            (ObjectOperation::Update, OperationSuccessType::Rejection) => {
+                let current_id = self.id();
+                if let Some(id) = current_id {
+                    let server_id = result
+                        .server_id
+                        .expect("Expect server id on update rejection");
+                    if id.into_server() == Some(server_id) {
+                        self.feature_not_available = false;
+                        ctx.emit(ActiveNotebookDataEvent::EditRejected);
+                        ctx.notify();
+                    }
+                }
+            }
+            (ObjectOperation::Update, OperationSuccessType::FeatureNotAvailable) => {
+                let current_id = self.id();
+                if let Some(id) = current_id {
+                    let server_id = result
+                        .server_id
+                        .expect("Expect server id on update failure");
+                    if id.into_server() == Some(server_id) {
+                        self.feature_not_available = true;
+                        ctx.emit(ActiveNotebookDataEvent::EditRejected);
+                        ctx.notify();
+                    }
+                }
+            }
+            (ObjectOperation::TakeEditAccess, OperationSuccessType::Success) => {
+                let current_id = self.id();
+                let server_id = result.server_id.expect("Expect server id on success");
+                if let Some(id) = current_id {
+                    if id.into_server() == Some(server_id) {
+                        self.feature_not_available = false;
+                        self.mode = Mode::Editing;
+                        ctx.emit(ActiveNotebookDataEvent::SwitchedToEditMode);
+                    }
+                }
+            }
+            (ObjectOperation::Trash, OperationSuccessType::Success)
+            | (ObjectOperation::Untrash, OperationSuccessType::Success) => {
+                let current_id = self.id();
+                let server_id = result.server_id.expect("Expect server id on success");
+                if let Some(id) = current_id {
+                    if id.into_server() == Some(server_id) {
+                        ctx.emit(ActiveNotebookDataEvent::TrashStatusChanged);
+                    }
+                }
+            }
+            (ObjectOperation::MoveToDrive, OperationSuccessType::Success) => {
+                let current_id = self.id();
+                let server_id = result.server_id.expect("Expect server id on success");
+                if let Some(id) = current_id {
+                    if id.into_server() == Some(server_id) {
+                        ctx.emit(ActiveNotebookDataEvent::MovedToSpace);
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn reset(&mut self) {
@@ -257,25 +347,9 @@ impl ActiveNotebookData {
         }
     }
 
-    /// The current user's access level on the notebook.
-    pub fn access_level(&self, app: &AppContext) -> SharingAccessLevel {
-        match &self.active_notebook {
-            ActiveNotebook::CommittedNotebook(object_id) => {
-                CloudViewModel::as_ref(app).access_level(&object_id.uid(), app)
-            }
-            ActiveNotebook::None | ActiveNotebook::NewNotebook(_) => SharingAccessLevel::Full,
-        }
-    }
 
-    /// Whether or not the current user can edit the notebook.
-    pub fn editability(&self, app: &AppContext) -> ContentEditability {
-        match &self.active_notebook {
-            ActiveNotebook::CommittedNotebook(object_id) => {
-                CloudViewModel::as_ref(app).object_editability(&object_id.uid(), app)
-            }
-            ActiveNotebook::None | ActiveNotebook::NewNotebook(_) => ContentEditability::Editable,
-        }
-    }
+
+
 }
 
 pub enum ActiveNotebookDataEvent {

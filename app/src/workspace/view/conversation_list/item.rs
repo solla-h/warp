@@ -23,7 +23,6 @@ use crate::ai::agent_conversations_model::{
 };
 use crate::ai::conversation_status_ui::STATUS_ELEMENT_PADDING;
 use crate::appearance::Appearance;
-use crate::drive::sharing::dialog::SharingDialog;
 use crate::editor::EditorView;
 use crate::menu::Menu;
 use crate::ui_components::agent_icon::agent_conversation_entry_icon_variant;
@@ -97,8 +96,6 @@ pub struct ItemProps<'a> {
     pub is_renaming: bool,
     pub can_rename: bool,
     pub rename_editor: Option<&'a ViewHandle<EditorView>>,
-    pub sharing_dialog: &'a ViewHandle<SharingDialog>,
-    pub is_share_dialog_open: bool,
     pub list_position_id: &'a str,
     pub tooltip_opens_right: bool,
 }
@@ -189,8 +186,6 @@ pub fn render_item(props: ItemProps<'_>, app: &AppContext) -> Box<dyn Element> {
         is_renaming,
         can_rename,
         rename_editor,
-        sharing_dialog,
-        is_share_dialog_open,
         list_position_id,
         tooltip_opens_right,
     } = props;
@@ -437,27 +432,7 @@ pub fn render_item(props: ItemProps<'_>, app: &AppContext) -> Box<dyn Element> {
     let position_id = conversation_item_position_id(&conversation_id);
     let mut item_stack = Stack::new().with_child(event_handler);
 
-    // Add the sharing dialog as a positioned overlay when open for this item
-    if is_share_dialog_open {
-        // Position the dialog to the right of the item row
-        item_stack.add_positioned_overlay_child(
-            ChildView::new(sharing_dialog).finish(),
-            OffsetPositioning::from_axes(
-                PositioningAxis::relative_to_stack_child(
-                    &position_id,
-                    PositionedElementOffsetBounds::WindowBySize,
-                    OffsetType::Pixel(DIALOG_OFFSET_PIXELS),
-                    AnchorPair::new(XAxisAnchor::Right, XAxisAnchor::Left),
-                ),
-                PositioningAxis::relative_to_stack_child(
-                    &position_id,
-                    PositionedElementOffsetBounds::WindowByPosition,
-                    OffsetType::Pixel(DIALOG_OFFSET_PIXELS),
-                    AnchorPair::new(YAxisAnchor::Middle, YAxisAnchor::Middle),
-                ),
-            ),
-        );
-    }
+
 
     SavePosition::new(item_stack.finish(), &position_id).finish()
 }

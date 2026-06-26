@@ -12,13 +12,17 @@ use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::cloud_object::model::json_model::JsonModel;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{
+use crate::cloud_object::{CloudObjectTypeAndId, 
     CloudObjectLookup as _, GenericStringObjectFormat, GenericStringObjectUniqueKey,
-    JsonObjectType, Owner, Revision, UpdateManagerEvent, UpdateManager};
-use crate::drive::CloudObjectTypeAndId;
+    JsonObjectType, Owner, Revision,
+};
+use crate::server::cloud_objects::update_manager::{
+    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
+};
 use crate::server::ids::{ClientId, SyncId};
 use crate::server::server_api::ai::ScheduledAgentHistory;
 use crate::server::server_api::ServerApiProvider;
+use crate::server::sync_queue::QueueItem;
 
 impl StringModel for ScheduledAmbientAgent {
     type CloudObjectType = CloudScheduledAmbientAgent;
@@ -38,6 +42,19 @@ impl StringModel for ScheduledAmbientAgent {
     fn display_name(&self) -> String {
         self.name.clone()
     }
+
+    fn update_object_queue_item(
+        &self,
+        revision_ts: Option<Revision>,
+        object: &CloudScheduledAmbientAgent,
+    ) -> QueueItem {
+        QueueItem::UpdateScheduledAmbientAgent {
+            model: object.model().clone().into(),
+            id: object.id,
+            revision: revision_ts.or_else(|| object.metadata.revision.clone()),
+        }
+    }
+
     fn uniqueness_key(&self) -> Option<GenericStringObjectUniqueKey> {
         None
     }
@@ -143,6 +160,38 @@ impl ScheduledAgentManager {
         event: &UpdateManagerEvent,
         _ctx: &mut ModelContext<Self>,
     ) {
+        if let UpdateManagerEvent::ObjectOperationComplete { result } = event {
+            if let ObjectOperation::Delete { .. } = result.operation {
+                if let Some(server_id) = result.server_id {
+                    let sync_id = SyncId::ServerId(server_id);
+                    if let Some(tx) = self.pending_deletes.remove(&sync_id) {
+                        match result.success_type {
+                            OperationSuccessType::Success => {
+                                let _ = tx.send(Ok(()));
+                            }
+                            OperationSuccessType::Failure => {
+                                let _ = tx.send(Err(anyhow::anyhow!(
+                                    "Failed to delete scheduled ambient agent"
+                                )));
+                            }
+                            OperationSuccessType::Denied(ref message) => {
+                                let _ =
+                                    tx.send(Err(anyhow::anyhow!("Deletion denied: {}", message)));
+                            }
+                            OperationSuccessType::Rejection => {
+                                let _ =
+                                    tx.send(Err(anyhow::anyhow!("Deletion rejected by server")));
+                            }
+                            OperationSuccessType::FeatureNotAvailable => {
+                                let _ = tx.send(Err(anyhow::anyhow!(
+                                    "Scheduled ambient agents not available"
+                                )));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Create a new scheduled ambient agent.
@@ -153,7 +202,7 @@ impl ScheduledAgentManager {
         ctx: &mut ModelContext<Self>,
     ) -> impl Future<Output = anyhow::Result<SyncId>> + Send + 'static {
         let client_id = ClientId::default();
-        let create_future = UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        let create_future = UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
             update_manager.create_scheduled_ambient_agent_online(config, client_id, owner, ctx)
         });
         async move { create_future.await.map(SyncId::ServerId) }
@@ -180,7 +229,7 @@ impl ScheduledAgentManager {
                 let revision = schedule_obj.metadata.revision.clone();
 
                 let update_future =
-                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                         update_manager.update_scheduled_ambient_agent_online(
                             updated_config,
                             schedule_id,
@@ -327,7 +376,7 @@ impl ScheduledAgentManager {
                     )));
                 } else {
                     self.pending_deletes.insert(schedule_id, tx);
-                    UpdateManager::handle(ctx).update(ctx, |update_manager: &mut UpdateManager, ctx| {
+                    UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
                         update_manager.delete_object_by_user(id_and_type, ctx);
                     });
                 }

@@ -5,7 +5,6 @@ use warpui::{async_assert, SingletonEntity, WindowId};
 use super::open_workflow_count;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
-use crate::drive::OpenWarpDriveObjectSettings;
 use crate::integration_testing::view_getters::workspace_view;
 use crate::server::ids::{ClientId, SyncId};
 use crate::workflows::manager::WorkflowOpenSource;
@@ -67,7 +66,6 @@ pub fn open_workflow(window_key: impl Into<String>, workflow_key: impl Into<Stri
                 WindowManager::as_ref(ctx).show_window_and_focus_app(*window_id);
                 workspace.open_workflow_in_pane(
                     &WorkflowOpenSource::Existing(*workflow_id),
-                    &OpenWarpDriveObjectSettings::default(),
                     WorkflowViewMode::View,
                     ctx,
                 );

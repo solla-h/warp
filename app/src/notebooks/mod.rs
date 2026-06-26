@@ -17,14 +17,11 @@ use serde::{Deserialize, Serialize};
 use warpui::AppContext;
 
 use crate::appearance::Appearance;
-use crate::cloud_object::{
+use crate::cloud_object::{CloudObjectTypeAndId, 
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Owner, Revision,
     UpdateCloudObjectResult,
 };
-use crate::drive::items::notebook::WarpDriveNotebook;
-use crate::drive::items::WarpDriveItem;
-use crate::drive::CloudObjectTypeAndId;
 use crate::persistence::ModelEvent;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
@@ -105,26 +102,11 @@ impl CloudModelType for CloudNotebookModel {
             .await
     }
 
-    fn renders_in_warp_drive(&self) -> bool {
-        true
-    }
 
     fn can_export(&self) -> bool {
         true
     }
 
-    fn to_warp_drive_item(
-        &self,
-        id: SyncId,
-        _appearance: &Appearance,
-        notebook: &CloudNotebook,
-    ) -> Option<Box<dyn WarpDriveItem>> {
-        Some(Box::new(WarpDriveNotebook::new(
-            self.cloud_object_type_and_id(id),
-            notebook.clone(),
-            notebook.model().ai_document_id.is_some(),
-        )))
-    }
 }
 
 /// A notebook location. Mainly, this lets us distinguish between cloud and file-based notebooks.

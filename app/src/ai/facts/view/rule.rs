@@ -24,16 +24,18 @@ use super::{is_edit_allowed, is_syncing, style, AIFact, CloudAIFact, CloudAIFact
 use crate::ai::facts::AIMemory;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{
-    CloudObject, GenericStringObjectFormat, JsonObjectType, Owner, Revision, UpdateManagerEvent, UpdateManager};
-use crate::drive::CloudObjectTypeAndId;
+use crate::cloud_object::{CloudObjectTypeAndId, 
+    CloudObject, GenericStringObjectFormat, JsonObjectType, Owner, Revision,
+};
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
     TextOptions,
 };
 use crate::network::NetworkStatus;
 use crate::search_bar::SearchBar;
+use crate::server::cloud_objects::update_manager::{UpdateManager, UpdateManagerEvent};
 use crate::server::ids::{ClientId, SyncId};
+use crate::server::sync_queue::SyncQueue;
 use crate::settings::{AISettings, AISettingsChangedEvent};
 use crate::ui_components::icons::Icon;
 use crate::util::path::display_path_with_host;
@@ -322,6 +324,9 @@ impl RuleView {
         event: &UpdateManagerEvent,
         ctx: &mut ViewContext<Self>,
     ) {
+        if let UpdateManagerEvent::ObjectOperationComplete { .. } = event {
+            self.fetch_ai_rules(ctx);
+        }
     }
 
     fn handle_cloud_model_event(&mut self, event: &CloudModelEvent, ctx: &mut ViewContext<Self>) {
@@ -673,29 +678,8 @@ impl RuleView {
             return None;
         }
 
-        let item = ai_row.fact.to_warp_drive_item(appearance)?;
-        let icon = item.sync_status_icon(
-            false,
-            ai_row.mouse_states.sync_status_icon.clone(),
-            appearance,
-        )?;
-
-        Some(
-            Hoverable::new(ai_row.mouse_states.sync_status_hover.clone(), |state| {
-                let mut container = Container::new(icon)
-                    .with_border(Border::all(1.))
-                    .with_uniform_padding(4.);
-                if state.is_hovered() {
-                    container = container
-                        .with_background(appearance.theme().surface_2())
-                        .with_border(
-                            Border::all(1.).with_border_fill(appearance.theme().surface_3()),
-                        );
-                }
-                container.with_margin_right(style::ROW_ICON_MARGIN).finish()
-            })
-            .finish(),
-        )
+        let _ = appearance;
+        None
     }
 
     fn render_file_backed_row(

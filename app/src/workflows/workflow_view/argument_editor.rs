@@ -1,13 +1,11 @@
-use std::cmp::Ordering;
-
 use itertools::Itertools;
 use pathfinder_color::ColorU;
 use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
 use warp_editor::editor::NavigationKey;
 use warpui::elements::{
-    ChildView, ConstrainedBox, Container, CrossAxisAlignment, Fill, Flex, MainAxisAlignment,
-    MainAxisSize, ParentElement, Shrinkable,
+    ChildView, ConstrainedBox, Container, CrossAxisAlignment, Empty, Fill, Flex,
+    MainAxisAlignment, MainAxisSize, ParentElement, Shrinkable,
 };
 use warpui::text_layout::TextStyle;
 use warpui::ui_components::button::ButtonVariant;
@@ -20,10 +18,6 @@ use super::{
     HORIZONTAL_TEXT_INPUT_PADDING, SECTION_SPACING, VERTICAL_TEXT_INPUT_PADDING,
     WORKFLOW_PARAMETER_HIGHLIGHT_COLOR,
 };
-use crate::drive::workflows::workflow_arg_selector::{
-    WorkflowArgSelector, WorkflowArgSelectorStyles,
-};
-use crate::drive::workflows::workflow_arg_type_helpers::{self, ArgumentTypeEditor};
 use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, InteractionState,
     PlainTextEditorViewAction as EditorAction,
@@ -62,237 +56,15 @@ pub struct ArgumentEditorRow {
     pub(super) description_editor: ViewHandle<EditorView>,
     pub(super) default_value_editor: ViewHandle<EditorView>,
     pub(super) argument_editor: ViewHandle<EditorView>,
-    pub arg_type_editor: ViewHandle<WorkflowArgSelector>,
     // The editor for alias arguments.  Can be a text editor or a dropdown.
     pub alias_argument_selector: ViewHandle<AliasArgumentSelector>,
 }
 
-impl ArgumentTypeEditor for ArgumentEditorRow {
-    fn arg_type_editor(&self) -> &ViewHandle<WorkflowArgSelector> {
-        &self.arg_type_editor
-    }
-}
-
 impl WorkflowView {
-    pub(super) fn update_arguments_rows(&mut self, ctx: &mut ViewContext<Self>) {
-        let appearance = Appearance::as_ref(ctx);
-        let ui_font_family = appearance.ui_font_family();
-
-        match self
-            .arguments_rows
-            .len()
-            .cmp(&self.arguments_state.arguments.len())
-        {
-            Ordering::Equal => {
-                self.arguments_state
-                    .arguments
-                    .iter()
-                    .enumerate()
-                    .for_each(|(index, argument)| {
-                        self.arguments_rows[index].name.clone_from(&argument.name);
-                    });
-            }
-            Ordering::Less | Ordering::Greater => {
-                // first, get rid of all rows that have names not present in the updated args state
-                let argument_names = self
-                    .arguments_state
-                    .arguments
-                    .iter()
-                    .map(|argument| argument.name.clone())
-                    .collect::<Vec<_>>();
-                self.arguments_rows
-                    .retain(|row| argument_names.contains(&row.name));
-
-                // next, go over each item in the args state, and either add a row at this position,
-                // or skip over it if we've found a match
-                self.arguments_state
-                    .arguments
-                    .iter()
-                    .enumerate()
-                    .for_each(|(index, argument)| {
-                        // if we reach the end of the state struct and we still
-                        // haven't inserted a row OR we find a mismatched name,
-                        // we know to add a row at this particular index
-                        if index == self.arguments_rows.len()
-                            || !argument.name.eq(&self.arguments_rows[index].name)
-                        {
-                            let description_editor = Self::create_editor_handle(
-                                ctx,
-                                Some(EDITOR_FONT_SIZE),
-                                Some(ui_font_family),
-                                Some(ARGUMENT_DESCRIPTION_PLACEHOLDER_TEXT),
-                                false, /* vim_keybindings */
-                                true,
-                                false,
-                            );
-
-                            ctx.subscribe_to_view(
-                                &description_editor,
-                                |me, emitter, event, ctx| {
-                                    me.handle_argument_editor_event(emitter, event, ctx);
-                                },
-                            );
-
-                            let default_value_editor = Self::create_editor_handle(
-                                ctx,
-                                Some(EDITOR_FONT_SIZE),
-                                Some(ui_font_family),
-                                Some(ARGUMENT_DEFAULT_VALUE_PLACEHOLDER_TEXT),
-                                false, /* vim_keybindings */
-                                true,
-                                false,
-                            );
-
-                            ctx.subscribe_to_view(
-                                &default_value_editor,
-                                |me, emitter, event, ctx| {
-                                    me.handle_argument_editor_event(emitter, event, ctx);
-                                },
-                            );
-
-                            let argument_editor = Self::create_editor_handle(
-                                ctx,
-                                Some(EDITOR_FONT_SIZE),
-                                Some(ui_font_family),
-                                None, // none at first will be updated later
-                                false,
-                                true,
-                                false,
-                            );
-
-                            ctx.subscribe_to_view(&argument_editor, |me, emitter, event, ctx| {
-                                me.handle_argument_editor_event(emitter, event, ctx);
-                            });
-
-                            let arg_type_editor = ctx.add_typed_action_view(|ctx| {
-                                WorkflowArgSelector::new(
-                                    WorkflowArgSelectorStyles {
-                                        editor_padding: Coords {
-                                            left: HORIZONTAL_TEXT_INPUT_PADDING,
-                                            right: HORIZONTAL_TEXT_INPUT_PADDING,
-                                            top: VERTICAL_TEXT_INPUT_PADDING,
-                                            bottom: VERTICAL_TEXT_INPUT_PADDING,
-                                        },
-                                        height: Some(ARGUMENT_INPUT_HEIGHT),
-                                        width: None,
-                                        dropdown_background: |appearance| {
-                                            appearance.theme().surface_2()
-                                        },
-                                        border_color: |appearance| {
-                                            appearance.theme().foreground().with_opacity(20)
-                                        },
-                                        border_radius: BUTTON_BORDER_RADIUS,
-                                    },
-                                    &self.all_workflow_enums,
-                                    ctx,
-                                )
-                            });
-
-                            ctx.subscribe_to_view(&arg_type_editor, |me, emitter, event, ctx| {
-                                me.handle_type_selector_event(emitter, event, ctx);
-                            });
-
-                            let alias_argument_selector =
-                                ctx.add_typed_action_view(AliasArgumentSelector::new);
-
-                            ctx.subscribe_to_view(
-                                &alias_argument_selector,
-                                |me, emitter, event, ctx| {
-                                    me.handle_alias_argument_selector_event(emitter, event, ctx);
-                                },
-                            );
-
-                            self.arguments_rows.insert(
-                                index,
-                                ArgumentEditorRow {
-                                    name: argument.name.clone(),
-                                    description_editor,
-                                    default_value_editor,
-                                    argument_editor,
-                                    arg_type_editor,
-                                    alias_argument_selector,
-                                },
-                            );
-                        }
-                    });
-            }
-        }
-    }
-
-    /// Copy argument information (defaults, types, etc.) into the editors for each argument.
-    ///
-    /// This assumes that [`Self::update_arguments_rows`] has been called first.
-    pub(super) fn load_argument_data(
-        &mut self,
-        workflow_data: &Workflow,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        workflow_data
-            .arguments()
-            .iter()
-            .enumerate()
-            .for_each(|(index, argument)| {
-                if let Some(description) = &argument.description {
-                    self.arguments_rows[index]
-                        .description_editor
-                        .update(ctx, |editor, ctx| {
-                            editor.set_buffer_text_with_base_buffer(description.as_str(), ctx);
-                        });
-                }
-
-                self.arguments_rows[index]
-                    .arg_type_editor
-                    .update(ctx, |selector, ctx| {
-                        selector.set_workflow_enums(&self.all_workflow_enums, ctx);
-                        workflow_arg_type_helpers::load_argument_into_selector(
-                            selector,
-                            argument,
-                            &mut self.all_workflow_enums,
-                            ctx,
-                        );
-                    });
-
-                if let Some(default_value) = &argument.default_value {
-                    self.arguments_rows[index]
-                        .default_value_editor
-                        .update(ctx, |editor, ctx| {
-                            editor.set_buffer_text_with_base_buffer(default_value.as_str(), ctx);
-                        });
-
-                    // Argument editor is used in the view mode only. We're updating the
-                    // placeholder to reflect the default value of this argument
-                    // (when a user hasn't manually changed the argument in view mode).
-                    self.arguments_rows[index]
-                        .argument_editor
-                        .update(ctx, |editor, ctx| {
-                            editor.set_placeholder_text(default_value.as_str(), ctx);
-                        });
-                } else {
-                    // Clear the argument editor if there is no default value.
-                    self.arguments_rows[index]
-                        .argument_editor
-                        .update(ctx, |editor, _| {
-                            editor.clear_all_placeholder_text();
-                        });
-                }
-            });
-    }
 
     pub(super) fn has_dirty_argument_editor(&self, app: &AppContext) -> bool {
         self.arguments_rows.iter().any(|row| {
-            let selector_is_dirty = {
-                let editor = row.arg_type_editor.as_ref(app);
-                let editor_is_dirty = editor.is_dirty(app);
-                let enum_is_dirty = editor
-                    .get_selected_enum()
-                    .and_then(|id| self.all_workflow_enums.get(&id))
-                    .map(|enum_data| enum_data.new_data.is_some())
-                    .unwrap_or(false);
-                editor_is_dirty || enum_is_dirty
-            };
-
-            selector_is_dirty
-                || row.default_value_editor.as_ref(app).is_dirty(app)
+            row.default_value_editor.as_ref(app).is_dirty(app)
                 || row.description_editor.as_ref(app).is_dirty(app)
         })
     }
@@ -375,7 +147,7 @@ impl WorkflowView {
                         // tabbing in a description editor just means we focus
                         // the corresponding default value editor
                         if row.description_editor == handle {
-                            ctx.focus(&row.arg_type_editor);
+                            ctx.focus(&row.default_value_editor);
                         } else if row.default_value_editor == handle {
                             // if we have another row ahead of us, tabbing in the default
                             // value editor moves to the following row's description editor.
@@ -408,7 +180,7 @@ impl WorkflowView {
                             if index == 0 {
                                 ctx.focus(&self.content_editor);
                             } else {
-                                ctx.focus(&self.arguments_rows[index - 1].arg_type_editor);
+                                ctx.focus(&self.arguments_rows[index - 1].default_value_editor);
                             }
                         // shift-tabbing in a default value editor just means we
                         // focus the corresponding default value editor
@@ -618,17 +390,16 @@ impl WorkflowView {
 
     fn render_arguments_editors(&self, appearance: &Appearance) -> Box<dyn Element> {
         let children: Vec<Box<dyn Element>> = self
-            .arguments_state
-            .arguments
+            .arguments_rows
             .iter()
             .enumerate()
-            .map(|(index, argument)| {
-                let description_handle = &self.arguments_rows[index].description_editor;
-                let argument_handle = &self.arguments_rows[index].argument_editor;
+            .map(|(index, row)| {
+                let description_handle = &row.description_editor;
+                let argument_handle = &row.argument_editor;
 
                 let text_span = appearance
                     .ui_builder()
-                    .span(argument.name.clone())
+                    .span(row.name.clone())
                     .with_style(UiComponentStyles {
                         font_family_id: Some(appearance.monospace_font_family()),
                         font_size: Some(14.),
@@ -668,9 +439,8 @@ impl WorkflowView {
                     .with_height(ARGUMENT_INPUT_HEIGHT)
                     .finish();
 
-                let input = if self.is_editable() {
-                    let arg_type_selector_handle = &self.arguments_rows[index].arg_type_editor;
-                    Container::new(ChildView::new(arg_type_selector_handle).finish()).finish()
+                let input = if !self.is_editable() {
+                    Container::new(Empty::new().finish()).finish()
                 } else {
                     ConstrainedBox::new(
                         appearance
@@ -745,10 +515,10 @@ impl WorkflowView {
         let mut arguments = Flex::column();
         let theme = appearance.theme();
 
-        for (index, argument) in self.arguments_state.arguments.iter().enumerate() {
+        for (index, row) in self.arguments_rows.iter().enumerate() {
             let name = appearance
                 .ui_builder()
-                .span(argument.name.clone())
+                .span(row.name.clone())
                 .with_style(UiComponentStyles {
                     font_family_id: Some(appearance.monospace_font_family()),
                     font_size: Some(14.),

@@ -23,8 +23,6 @@ use crate::ai::blocklist::block::secret_redaction::find_secrets_in_text_with_lev
 use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{CloudObjectEventEntrypoint, Owner};
-use crate::drive::items::WarpDriveItemId;
-use crate::drive::sharing::{ContentEditability, ShareableObject};
 use crate::editor::EditorView;
 use crate::env_vars::active_env_var_collection_data::{
     ActiveEnvVarCollection, ActiveEnvVarCollectionData, ActiveEnvVarCollectionDataEvent,
@@ -55,7 +53,8 @@ use crate::util::bindings::CustomAction;
 use crate::view_components::alert::AlertConfig;
 use crate::view_components::{Alert, DismissibleToast, ToastType};
 use crate::workspace::ToastStack;
-use crate::{send_telemetry_from_ctx, Appearance, CloudObjectTypeAndId, TelemetryEvent};
+use crate::{send_telemetry_from_ctx, Appearance, TelemetryEvent};
+use crate::cloud_object::CloudObjectTypeAndId;
 
 // Universal
 pub(super) const CORE_HORIZONATAL_MARGIN: f32 = 24.;
@@ -304,7 +303,6 @@ pub struct EnvVarCollectionView {
 pub enum EnvVarCollectionEvent {
     Pane(PaneEvent),
     UpdatedEnvVarCollection(SyncId),
-    ViewInWarpDrive(WarpDriveItemId),
     Invoke(EnvVarCollectionType),
 }
 #[derive(Debug, Clone)]
@@ -340,7 +338,6 @@ pub enum EnvVarCollectionAction {
     ForceClose,
     CloseUnsavedChangesDialog,
     // Breadcrumbs action
-    ViewInWarpDrive(WarpDriveItemId),
 }
 
 /// Defines the view for a collection of environment variables
@@ -659,12 +656,6 @@ impl EnvVarCollectionView {
         let title = collection.title.clone().unwrap_or_default();
 
         self.set_pane_title(if title.is_empty() { "Untitled" } else { &title }, ctx);
-        if let Some(server_id) = env_var_collection.id.into_server() {
-            self.pane_configuration.update(ctx, |pane_config, ctx| {
-                pane_config
-                    .set_shareable_object(Some(ShareableObject::WarpDriveObject(server_id)), ctx);
-            });
-        }
 
         let description = collection.description.clone().unwrap_or_default();
 
@@ -954,14 +945,8 @@ impl EnvVarCollectionView {
                 self.update_breadcrumbs(ctx);
                 ctx.notify()
             }
-            ActiveEnvVarCollectionDataEvent::CreatedOnServer(server_id) => {
+            ActiveEnvVarCollectionDataEvent::CreatedOnServer(_server_id) => {
                 self.update_breadcrumbs(ctx);
-                self.pane_configuration.update(ctx, |pane_config, ctx| {
-                    pane_config.set_shareable_object(
-                        Some(ShareableObject::WarpDriveObject(*server_id)),
-                        ctx,
-                    );
-                });
             }
             ActiveEnvVarCollectionDataEvent::TrashStatusChanged => {
                 self.pane_configuration.update(ctx, |pane_config, ctx| {
@@ -1093,10 +1078,6 @@ impl EnvVarCollectionView {
             });
     }
 
-    fn view_in_warp_drive(&mut self, id: WarpDriveItemId, ctx: &mut ViewContext<Self>) {
-        ctx.emit(EnvVarCollectionEvent::ViewInWarpDrive(id));
-    }
-
     // This is a public re-export of close since it's a trait method
     pub(super) fn close_env_var_collection(&mut self, ctx: &mut ViewContext<Self>) {
         self.close(ctx);
@@ -1104,7 +1085,7 @@ impl EnvVarCollectionView {
 
     fn render_variable_rows(
         &self,
-        editability: ContentEditability,
+        can_edit: bool,
         appearance: &Appearance,
         app: &AppContext,
     ) -> Vec<Box<dyn Element>> {
@@ -1188,7 +1169,7 @@ impl EnvVarCollectionView {
                                 .clone(),
                             index,
                             variable_editor_row.rendered_secret_menu_is_focused,
-                            editability,
+                            can_edit,
                         ),
                         command @ EnvVarValue::Command(_) => self.render_secret_or_command_button(
                             appearance,
@@ -1198,11 +1179,11 @@ impl EnvVarCollectionView {
                                 .clone(),
                             index,
                             variable_editor_row.rendered_command_menu_is_focused,
-                            editability,
+                            can_edit,
                         ),
                     });
 
-                if !FeatureFlag::SharedWithMe.is_enabled() || editability.can_edit() {
+                if !FeatureFlag::SharedWithMe.is_enabled() || can_edit {
                     row_contents.add_child(
                         Container::new(
                             icon_button(
@@ -1285,16 +1266,9 @@ impl View for EnvVarCollectionView {
         let appearance = Appearance::as_ref(app);
         let theme = appearance.theme();
         let mut content = Flex::column();
-        let access_level = self
-            .active_env_var_collection_data
-            .as_ref(app)
-            .access_level(app);
-        let editability = self
-            .active_env_var_collection_data
-            .as_ref(app)
-            .editability(app);
+        let can_edit = true;
 
-        content.extend(self.render_trash_banner(access_level, app));
+        content.extend(self.render_trash_banner(app));
 
         content.add_child(
             Align::new(
@@ -1304,9 +1278,6 @@ impl View for EnvVarCollectionView {
                             self.breadcrumbs.clone(),
                             appearance,
                             |ctx, _, breadcrumb| {
-                                ctx.dispatch_typed_action(EnvVarCollectionAction::ViewInWarpDrive(
-                                    breadcrumb.kind.into_item_id(),
-                                ));
                             },
                         ))
                         .with_horizontal_margin(CORE_HORIZONATAL_MARGIN)
@@ -1333,7 +1304,7 @@ impl View for EnvVarCollectionView {
                 .with_main_axis_size(MainAxisSize::Max)
                 .with_main_axis_alignment(MainAxisAlignment::End)
                 .with_cross_axis_alignment(CrossAxisAlignment::Center);
-            if !FeatureFlag::SharedWithMe.is_enabled() || editability.can_edit() {
+            if !FeatureFlag::SharedWithMe.is_enabled() || can_edit {
                 buttons_row.add_child(
                     Container::new(self.render_save_button(appearance, app))
                         .with_margin_left(BUTTON_SPACING)
@@ -1372,13 +1343,13 @@ impl View for EnvVarCollectionView {
                     .finish(),
             )
             .with_child(
-                Container::new(self.render_variables_section_header(editability, appearance))
+                Container::new(self.render_variables_section_header(can_edit, appearance))
                     .with_margin_bottom(SECTION_SPACING)
                     .finish(),
             )
             .with_child(
                 Flex::column()
-                    .with_children(self.render_variable_rows(editability, appearance, app))
+                    .with_children(self.render_variable_rows(can_edit, appearance, app))
                     .finish(),
             );
         if let Some(error_element) = self.render_bottom_error_message(appearance) {
@@ -1534,7 +1505,6 @@ impl TypedActionView for EnvVarCollectionView {
                 self.update_open_modal_state(ctx);
                 ctx.notify();
             }
-            EnvVarCollectionAction::ViewInWarpDrive(id) => self.view_in_warp_drive(*id, ctx),
         }
     }
 }

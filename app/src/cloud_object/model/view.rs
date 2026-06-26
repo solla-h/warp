@@ -7,12 +7,14 @@ use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use super::persistence::{CloudModel, CloudModelEvent};
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::cloud_object::{CloudObject, CloudObjectLocation, Space, UpdateManager, UpdateManagerEvent, OperationSuccessType, ObjectOperation};
-use crate::drive::folders::CloudFolder;
-use crate::drive::sharing::{ContentEditability, SharingAccessLevel};
+use crate::cloud_object::{CloudObject, CloudObjectLocation, Space};
 use crate::safe_info;
+use crate::server::cloud_objects::update_manager::{
+    ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
+};
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::workspaces::user_profiles::UserProfiles;
+use cloud_object_models::CloudFolder;
 
 pub const EDITOR_TIMEOUT_DURATION_MINUTES: i64 = 15;
 
@@ -153,85 +155,7 @@ impl CloudViewModel {
             .map(|object| object.space(app))
     }
 
-    /// Get the current user's access level on a Warp Drive object.
-    ///
-    /// This is based on the client's current view of the object permissions, which may be stale. The
-    /// server is the source of truth for all permission data, and it may reject a request that the
-    /// client expects is allowed.
-    pub fn access_level(&self, object_uid: &ObjectUid, app: &AppContext) -> SharingAccessLevel {
-        match CloudModel::as_ref(app).get_by_uid(object_uid) {
-            Some(object) => Self::object_access_level(object, app),
-            None => SharingAccessLevel::View,
-        }
-    }
 
-    fn object_access_level(object: &dyn CloudObject, app: &AppContext) -> SharingAccessLevel {
-        match object.space(app) {
-            // For now, users have full access to all objects in their own drives. We may introduce
-            // drive-level ACLs in the future.
-            Space::Personal | Space::Team { .. } => SharingAccessLevel::Full,
-            Space::Shared => {
-                let mut access_level = SharingAccessLevel::View;
-
-                // Check the default link-based access (if set, this is *at least* View).
-                if let Some(link_settings) = &object.permissions().anyone_with_link {
-                    access_level = link_settings.access_level;
-                }
-
-                let user_uid = AuthStateProvider::as_ref(app).get().user_id();
-                if let Some(user_uid) = user_uid {
-                    for guest in object.permissions().guests.iter() {
-                        if guest.subject.is_user(user_uid) {
-                            access_level = access_level.max(guest.access_level);
-                        }
-                    }
-                }
-
-                // If the user created an object in a shared space, they will be treated as a guest and not the owner.
-                // The guest permissions aren't fetched until the object is re-fetched, and this fixes this behavior
-                // by forcing edit access if they created the object.
-                if let (Some(creator_uid), Some(user_uid)) =
-                    (object.metadata().creator_uid.clone(), user_uid)
-                {
-                    if creator_uid == user_uid.as_string() {
-                        access_level = access_level.max(SharingAccessLevel::Edit);
-                    }
-                }
-
-                access_level
-            }
-        }
-    }
-
-    /// Get the current user's editability state for a Warp Drive object.
-    pub fn object_editability(
-        &self,
-        object_uid: &ObjectUid,
-        app: &AppContext,
-    ) -> ContentEditability {
-        match CloudModel::as_ref(app).get_by_uid(object_uid) {
-            Some(object) => {
-                let access_level = Self::object_access_level(object, app);
-                if access_level < SharingAccessLevel::Edit {
-                    ContentEditability::ReadOnly
-                } else if AuthStateProvider::as_ref(app)
-                    .get()
-                    .is_anonymous_or_logged_out()
-                {
-                    // The object is editable, but the user is not logged in.
-                    if object.space(app) == Space::Personal {
-                        ContentEditability::Editable
-                    } else {
-                        ContentEditability::RequiresLogin
-                    }
-                } else {
-                    ContentEditability::Editable
-                }
-            }
-            // Assume objects not yet in CloudModel are new, and therefore editable.
-            None => ContentEditability::Editable,
-        }
-    }
 
     /// Get the timestamp to sort `object` according to `timestamp_kind`.
     pub fn object_sorting_timestamp(

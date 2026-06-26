@@ -39,7 +39,6 @@ use crate::auth::auth_state::AuthState;
 use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::completer::SessionContext;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::command_search::searcher::{CommandSearchItemAction, CommandSearchMixer};
 use crate::search::mixer::AddAsyncSourceOptions;
 use crate::search::result_renderer::{QueryResultRenderer, QueryResultRendererStyles};
@@ -244,7 +243,7 @@ impl CommandSearchView {
                 );
             }
 
-            if WarpDriveSettings::is_warp_drive_enabled(ctx) {
+            if true {
                 mixer.add_sync_source(
                     WorkflowsDataSource::new(session_context.as_ref(), ctx),
                     HashSet::from([QueryFilter::Workflows]),

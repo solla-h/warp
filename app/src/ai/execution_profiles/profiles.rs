@@ -17,8 +17,8 @@ use crate::ai::mcp::templatable_manager::TemplatableMCPServerManagerEvent;
 use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModelEvent, UpdateSource};
-use crate::cloud_object::{CloudObject as _, GenericStringObjectFormat, JsonObjectType, UpdateManager};
-use crate::drive::CloudObjectTypeAndId;
+use crate::cloud_object::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
+use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, SyncId};
 use crate::settings::AgentModeCommandExecutionPredicate;
 use crate::workspaces::user_workspaces::UserWorkspaces;
@@ -180,7 +180,7 @@ impl AIExecutionProfilesModel {
                     // execution profiles. They never reach this code path
                     // since they don't go through initialize_app, but handle
                     // exhaustively.
-                    LaunchMode::SmokeTest | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => DefaultProfileState::Unsynced {
+                    LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => DefaultProfileState::Unsynced {
                         id: ClientProfileId::new(),
                         profile: super::create_default_from_legacy_settings(ctx),
                     },
@@ -300,7 +300,7 @@ impl AIExecutionProfilesModel {
 
         let update_manager = UpdateManager::handle(ctx);
         let client_id = ClientId::default();
-        update_manager.update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        update_manager.update(ctx, |update_manager, ctx| {
             update_manager.create_ai_execution_profile(new_profile, client_id, owner, ctx);
         });
 
@@ -331,7 +331,7 @@ impl AIExecutionProfilesModel {
         self.profile_id_to_sync_id.remove(&profile_id);
 
         let update_manager = UpdateManager::handle(ctx);
-        update_manager.update(ctx, |update_manager: &mut UpdateManager, ctx| {
+        update_manager.update(ctx, |update_manager, ctx| {
             update_manager.delete_ai_execution_profile(sync_id, ctx);
         });
 
@@ -1271,7 +1271,7 @@ impl AIExecutionProfilesModel {
                 if let Some(owner) = UserWorkspaces::as_ref(ctx).personal_drive(ctx) {
                     let update_manager = UpdateManager::handle(ctx);
                     let client_id = ClientId::default();
-                    update_manager.update(ctx, |update_manager: &mut UpdateManager, ctx| {
+                    update_manager.update(ctx, |update_manager, ctx| {
                         update_manager.create_ai_execution_profile(
                             new_profile,
                             client_id,
@@ -1323,8 +1323,8 @@ impl AIExecutionProfilesModel {
                     return false;
                 }
                 let update_manager = UpdateManager::handle(ctx);
-                update_manager.update(ctx, |update_manager: &mut UpdateManager, ctx| {
-                    update_manager.update_ai_execution_profile(data, *sync_id, None::<()>, ctx);
+                update_manager.update(ctx, |update_manager, ctx| {
+                    update_manager.update_ai_execution_profile(data, *sync_id, None, ctx);
                 });
 
                 log::info!("Edited execution profile with id: {profile_id:?}");
