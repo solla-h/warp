@@ -10,6 +10,7 @@ pub use cloud_objects::ids::GenericStringObjectId;
 
 use crate::appearance::Appearance;
 use crate::cloud_object::{
+    SerializedModel,
     CloudModelType, CloudObject, CloudObjectEventEntrypoint, CreateCloudObjectResult,
     CreateObjectRequest, GenericCloudObject, GenericServerObject, GenericStringObjectFormat,
     GenericStringObjectUniqueKey, ObjectType, Revision, UpdateCloudObjectResult,
@@ -20,7 +21,6 @@ use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
-use crate::server::sync_queue::{QueueItem, SerializedModel};
 
 /// A trait that generic string-based objects should implement.
 pub trait CloudStringObject: CloudObject + Send + Sync {
@@ -99,16 +99,6 @@ pub trait StringModel: Clone + Debug + PartialEq + Send + Sync + 'static {
     ) -> Option<Box<dyn WarpDriveItem>> {
         None
     }
-
-    /// Returns a sync queue item of this object that would allow it to be updated
-    /// properly on the server.  Takes an optional revision_ts to set as the revision
-    /// in the sync queue item.
-    fn update_object_queue_item(
-        &self,
-        revision_ts: Option<Revision>,
-        object: &Self::CloudObjectType,
-    ) -> QueueItem;
-
     /// Returns whether this model type should clear on a unique key conflict.
     fn should_clear_on_unique_key_conflict(&self) -> bool {
         false
@@ -220,37 +210,6 @@ where
                 .collect(),
         )
     }
-
-    fn create_object_queue_item(
-        &self,
-        object: &GenericCloudObject<GenericStringObjectId, Self>,
-        entrypoint: CloudObjectEventEntrypoint,
-        initiated_by: InitiatedBy,
-    ) -> Option<QueueItem> {
-        if let SyncId::ClientId(client_id) = object.id {
-            return Some(QueueItem::CreateObject {
-                object_type: self.object_type(),
-                owner: object.permissions.owner,
-                id: client_id,
-                title: None,
-                serialized_model: Some(object.model().serialized().into()),
-                initial_folder_id: object.metadata.folder_id,
-                entrypoint,
-                initiated_by,
-            });
-        }
-        None
-    }
-
-    fn update_object_queue_item(
-        &self,
-        revision_ts: Option<Revision>,
-        object: &GenericCloudObject<GenericStringObjectId, Self>,
-    ) -> QueueItem {
-        self.string_model
-            .update_object_queue_item(revision_ts, object)
-    }
-
     fn should_clear_on_unique_key_conflict(&self) -> bool {
         self.string_model.should_clear_on_unique_key_conflict()
     }

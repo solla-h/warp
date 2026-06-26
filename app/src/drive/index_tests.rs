@@ -21,7 +21,6 @@ use crate::notebooks::{CloudNotebook, CloudNotebookModel};
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ClientId, ServerIdAndType, SyncId};
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::{QueueItem, SyncQueue};
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::shared_session::permissions_manager::SessionPermissionsManager;
@@ -40,7 +39,6 @@ fn initialize_app(app: &mut App) {
     app.add_singleton_model(UserWorkspaces::default_mock);
     app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(|_| Appearance::mock());
-    app.add_singleton_model(SyncQueue::mock);
     app.add_singleton_model(|_| ServerApiProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);

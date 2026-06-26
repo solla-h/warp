@@ -41,7 +41,6 @@ use crate::server::cloud_objects::listener::ObjectUpdateMessage;
 use crate::server::cloud_objects::update_manager::{GetCloudObjectResponse, InitialLoadResponse};
 use crate::server::ids::{ServerId, ServerIdAndType, SyncId};
 use cloud_object_models::{GuestIdentifier, ObjectClient};
-use crate::server::sync_queue::SerializedModel;
 use crate::settings::cloud_preferences::{CloudPreferenceModel, Platform, Preference};
 use crate::workflows::WorkflowId;
 

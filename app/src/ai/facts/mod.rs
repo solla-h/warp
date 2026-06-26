@@ -10,7 +10,6 @@ use crate::drive::items::ai_fact::WarpDriveAIFact;
 use crate::drive::items::WarpDriveItem;
 use crate::drive::CloudObjectTypeAndId;
 use crate::server::ids::SyncId;
-use crate::server::sync_queue::QueueItem;
 
 pub mod manager;
 pub mod view;
@@ -45,19 +44,6 @@ impl StringModel for AIFact {
             AIFact::Memory(memory) => memory.content.clone(),
         }
     }
-
-    fn update_object_queue_item(
-        &self,
-        revision_ts: Option<Revision>,
-        object: &Self::CloudObjectType,
-    ) -> QueueItem {
-        QueueItem::UpdateAIFact {
-            model: object.model().clone().into(),
-            id: object.id,
-            revision: revision_ts.or_else(|| object.metadata.revision.clone()),
-        }
-    }
-
     fn uniqueness_key(&self) -> Option<GenericStringObjectUniqueKey> {
         None
     }

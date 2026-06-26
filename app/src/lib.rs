@@ -309,7 +309,6 @@ use crate::server::experiments::ServerExperiments;
 #[cfg(feature = "cloud")]
 use crate::server::iap::IapManager;
 #[cfg(feature = "cloud")]
-use crate::server::sync_queue::{QueueItem, SyncQueue};
 #[cfg(feature = "cloud")]
 pub use crate::server::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
@@ -1818,48 +1817,13 @@ pub(crate) fn initialize_app(
         .cloned()
         .collect::<Vec<_>>();
 
-    {
-        let mut all_queue_items = Vec::new();
-        let objects_with_pending_changes = cloud_objects
-            .iter()
-            .filter(|object| object.metadata().has_pending_content_changes())
-            .cloned()
-            .collect::<Vec<_>>();
-        all_queue_items.extend(QueueItem::from_cached_objects(
-            objects_with_pending_changes.into_iter(),
-        ));
-
-        let cloud_model = ctx.add_singleton_model(|_ctx| {
-            CloudModel::new(
-                persistence_writer.sender(),
-                cloud_objects,
-                time_of_next_force_object_refresh,
-            )
-        });
-
-        let unsynced_actions: Vec<(CloudObjectTypeAndId, ObjectAction)> = object_actions
-            .iter()
-            .filter(|action| action.is_pending())
-            .filter_map(|action| {
-                cloud_model.read(ctx, |model, _| {
-                    let object = model.get_by_uid(&action.uid);
-                    object.map(|o| (o.cloud_object_type_and_id(), action.clone()))
-                })
-            })
-            .collect::<Vec<_>>();
-
-        all_queue_items.extend(QueueItem::from_unsynced_actions(
-            unsynced_actions.into_iter(),
-        ));
-
-        ctx.add_singleton_model(|ctx| {
-            SyncQueue::new(
-                all_queue_items,
-                server_api_provider.as_ref(ctx).get_cloud_objects_client(),
-                ctx,
-            )
-        });
-    }
+    ctx.add_singleton_model(|_ctx| {
+        CloudModel::new(
+            persistence_writer.sender(),
+            cloud_objects,
+            time_of_next_force_object_refresh,
+        )
+    });
 
     // Seed the orchestration pin set from persisted conversation data
     // before the conversations vec is consumed by the singletons below.

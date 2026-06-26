@@ -18,7 +18,7 @@ use warpui::AppContext;
 
 use crate::appearance::Appearance;
 use crate::cloud_object::{
-    CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
+    CloudModelType, SerializedModel, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, ObjectType, Owner, Revision, UpdateCloudObjectResult,
 };
 use crate::drive::items::notebook::WarpDriveNotebook;
@@ -28,7 +28,6 @@ use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
-use crate::server::sync_queue::{QueueItem, SerializedModel};
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
@@ -69,48 +68,6 @@ impl CloudModelType for CloudNotebookModel {
     fn bulk_upsert_event(objects: Vec<CloudObjectUpsertParams<Self>>) -> ModelEvent {
         ModelEvent::UpsertNotebooks(objects.into_iter().map(CloudNotebook::from).collect())
     }
-
-    fn create_object_queue_item(
-        &self,
-        notebook: &CloudNotebook,
-        entrypoint: CloudObjectEventEntrypoint,
-        initiated_by: InitiatedBy,
-    ) -> Option<QueueItem> {
-        if let SyncId::ClientId(client_id) = notebook.id {
-            let title = Some(notebook.model().display_name())
-                .filter(|name| !name.is_empty())
-                .map(Arc::new);
-
-            let serialized_model = Some(Arc::new(notebook.model().serialized()));
-
-            return Some(QueueItem::CreateObject {
-                object_type: self.object_type(),
-                owner: notebook.permissions.owner,
-                id: client_id,
-                title,
-                serialized_model,
-                initial_folder_id: notebook.metadata.folder_id,
-                entrypoint,
-                initiated_by,
-            });
-        }
-        None
-    }
-
-    fn update_object_queue_item(
-        &self,
-        revision_ts: Option<Revision>,
-        notebook: &CloudNotebook,
-    ) -> QueueItem {
-        QueueItem::UpdateNotebook {
-            // Note that this is intentionally a deep clone of the model because we are grabbing
-            // a snapshot to update at a moment in time.
-            model: notebook.model().clone().into(),
-            id: notebook.id,
-            revision: revision_ts.or_else(|| notebook.metadata.revision.clone()),
-        }
-    }
-
     fn should_update_after_server_conflict(&self) -> bool {
         true
     }

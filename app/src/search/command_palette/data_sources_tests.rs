@@ -22,7 +22,6 @@ use crate::server::ids::SyncId::{self};
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::SyncQueue;
 use crate::settings::AISettings;
 use crate::system::SystemStats;
 use crate::workflows::workflow::Workflow;
@@ -92,7 +91,6 @@ fn initialize_app(app: &mut App) {
         )
     });
     app.add_singleton_model(TeamTesterStatus::new);
-    app.add_singleton_model(SyncQueue::mock);
     app.add_singleton_model(CloudModel::mock);
     app.add_singleton_model(|ctx| UpdateManager::new(None, Arc::new(MockObjectClient::new()), ctx));
     app.add_singleton_model(|_| UserProfiles::new(Vec::new()));

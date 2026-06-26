@@ -23,7 +23,6 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::server::ids::SyncId;
-use crate::server::sync_queue::SyncQueue;
 use crate::ui_components::icons::Icon;
 
 pub mod rule;
@@ -357,13 +356,12 @@ pub fn is_edit_allowed(ai_fact: CloudAIFact, app: &AppContext) -> bool {
 }
 
 pub fn is_syncing(ai_fact: CloudAIFact, app: &AppContext) -> bool {
-    let sync_queue_is_dequeueing = SyncQueue::as_ref(app).is_dequeueing();
     let sync_status = &ai_fact.metadata().pending_changes_statuses;
     let has_in_flight_requests = matches!(
         &sync_status.content_sync_status,
         CloudObjectSyncStatus::InFlight(reqs) if reqs.0 > 0
     );
-    (has_in_flight_requests && sync_queue_is_dequeueing)
+    (has_in_flight_requests && false)
         || sync_status.has_pending_metadata_change
         || sync_status.has_pending_permissions_change
         || sync_status.pending_untrash

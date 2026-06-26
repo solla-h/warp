@@ -27,7 +27,6 @@ use crate::server::cloud_objects::test_utils::{
 };
 use crate::server::cloud_objects::update_manager::{InitialLoadResponse, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, ServerIdAndType, SyncId};
-use crate::server::sync_queue::SyncQueue;
 use crate::settings::cloud_preferences::{
     CloudPreferenceModel, CloudPreferencesSettings, Platform,
 };
