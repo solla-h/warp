@@ -2777,7 +2777,7 @@ fn build_tools_array(params: &RequestParams) -> Vec<GenaiTool> {
 // ---------------------------------------------------------------------------
 
 /// 把 `AgentProviderApiType` 一对一映射到 genai `AdapterKind`。
-fn adapter_kind_for(api_type: AgentProviderApiType) -> AdapterKind {
+pub(crate) fn adapter_kind_for(api_type: AgentProviderApiType) -> AdapterKind {
     match api_type {
         AgentProviderApiType::OpenAi => AdapterKind::OpenAI,
         AgentProviderApiType::OpenAiResp => AdapterKind::OpenAIResp,

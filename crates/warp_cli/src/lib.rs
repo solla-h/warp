@@ -158,6 +158,10 @@ pub struct AppArgs {
     #[arg(long = "finish-update", hide = true)]
     pub finish_update: bool,
 
+    /// Run headless BYOP smoke test and exit.
+    #[arg(long = "smoke-test")]
+    pub smoke_test: bool,
+
     /// Crash recovery mechanism to use if we detect the parent process terminated.
     #[cfg(enable_crash_recovery)]
     #[arg(long = "crash-recovery-mechanism", value_enum, requires = "ParentOpts")]

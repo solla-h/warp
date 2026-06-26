@@ -245,7 +245,7 @@ fn custom_endpoints_as_providers(app: &AppContext) -> Vec<(AgentProvider, String
         .collect()
 }
 
-fn parse_api_type(s: &str, models: &[CustomEndpointModel]) -> AgentProviderApiType {
+pub(crate) fn parse_api_type(s: &str, models: &[CustomEndpointModel]) -> AgentProviderApiType {
     match s {
         "anthropic" => AgentProviderApiType::Anthropic,
         "gemini" => AgentProviderApiType::Gemini,

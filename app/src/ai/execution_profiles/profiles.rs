@@ -181,7 +181,7 @@ impl AIExecutionProfilesModel {
                     // execution profiles. They never reach this code path
                     // since they don't go through initialize_app, but handle
                     // exhaustively.
-                    LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => DefaultProfileState::Unsynced {
+                    LaunchMode::SmokeTest | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => DefaultProfileState::Unsynced {
                         id: ClientProfileId::new(),
                         profile: super::create_default_from_legacy_settings(ctx),
                     },
