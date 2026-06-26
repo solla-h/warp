@@ -9,7 +9,7 @@ mod login_failure_notification;
 pub mod login_slide;
 pub mod needs_sso_link_view;
 pub mod paste_auth_token_modal;
-mod user_properties;
+pub(crate) mod user_properties;
 pub mod anonymous_id;
 pub mod auth_state;
 pub mod credentials;

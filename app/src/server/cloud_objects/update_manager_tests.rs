@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use cloud_object_client::MockObjectClient;
+use cloud_object_models::MockObjectClient;
 use cloud_object_models::JsonSerializer;
 use futures_lite::future;
 use settings::{RespectUserSyncSetting, SyncToCloud};

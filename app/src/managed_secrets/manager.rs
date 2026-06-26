@@ -4,9 +4,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use vec1::vec1;
+use warp_cli::agent::Harness;
 use warp_core::features::FeatureFlag;
-use warp_graphql::managed_secrets::ManagedSecret;
-use warp_graphql::queries::task_secrets::ManagedSecretValue as GqlManagedSecretValue;
 use warpui_core::{Entity, SingletonEntity};
 
 use super::ManagedSecretValue;
@@ -41,7 +40,7 @@ impl ManagedSecretManager {
         _name: String,
         _value: ManagedSecretValue,
         _description: Option<String>,
-    ) -> impl Future<Output = anyhow::Result<ManagedSecret>> + use<> {
+    ) -> impl Future<Output = anyhow::Result<super::client::SecretMetadata>> + use<> {
         async move {
             Err(anyhow::anyhow!("Managed secrets service is not available"))
         }
@@ -63,7 +62,7 @@ impl ManagedSecretManager {
         _name: String,
         _value: Option<ManagedSecretValue>,
         _description: Option<String>,
-    ) -> impl Future<Output = anyhow::Result<ManagedSecret>> + use<> {
+    ) -> impl Future<Output = anyhow::Result<super::client::SecretMetadata>> + use<> {
         async move {
             Err(anyhow::anyhow!("Managed secrets service is not available"))
         }
@@ -71,20 +70,16 @@ impl ManagedSecretManager {
 
     pub fn list_secrets(
         &self,
-    ) -> impl Future<Output = anyhow::Result<Vec<ManagedSecret>>> + use<> {
-        let client = self.client.clone();
+    ) -> impl Future<Output = anyhow::Result<Vec<super::SecretListEntry>>> + use<> {
         async move {
-            if !FeatureFlag::WarpManagedSecrets.is_enabled() {
-                return Err(anyhow::anyhow!("This feature is not enabled"));
-            }
-            client.list_secrets().await
+            Err(anyhow::anyhow!("Managed secrets listing: GraphQL backend removed, needs REST migration"))
         }
     }
 
     pub fn list_harness_auth_secrets(
         &self,
-        harness: warp_graphql::ai::AgentHarness,
-    ) -> impl Future<Output = anyhow::Result<Vec<ManagedSecret>>> + use<> {
+        harness: warp_cli::agent::Harness,
+    ) -> impl Future<Output = anyhow::Result<Vec<super::AuthSecretEntry>>> + use<> {
         let client = self.client.clone();
         async move {
             if !FeatureFlag::WarpManagedSecrets.is_enabled() {
@@ -96,53 +91,10 @@ impl ManagedSecretManager {
 
     pub fn get_task_secrets(
         &self,
-        task_id: String,
+        _task_id: String,
     ) -> impl Future<Output = anyhow::Result<HashMap<String, ManagedSecretValue>>> + use<> {
-        let client = self.client.clone();
         async move {
-            let workload_token =
-                warp_isolation_platform::issue_workload_token(Some(Duration::from_secs(300)))
-                    .await?;
-            let gql_secrets = client
-                .get_task_secrets(task_id, workload_token.token)
-                .await?;
-
-            let mut secrets = HashMap::new();
-            for (name, gql_value) in gql_secrets {
-                let value = match gql_value {
-                    GqlManagedSecretValue::ManagedSecretRawValue(raw) => {
-                        ManagedSecretValue::raw_value(raw.value)
-                    }
-                    GqlManagedSecretValue::ManagedSecretAnthropicApiKeyValue(v) => {
-                        ManagedSecretValue::anthropic_api_key(v.api_key)
-                    }
-                    GqlManagedSecretValue::ManagedSecretAnthropicBedrockAccessKeyValue(v) => {
-                        ManagedSecretValue::anthropic_bedrock_access_key(
-                            v.aws_access_key_id,
-                            v.aws_secret_access_key,
-                            v.aws_session_token,
-                            v.aws_region,
-                        )
-                    }
-                    GqlManagedSecretValue::ManagedSecretAnthropicBedrockApiKeyValue(v) => {
-                        ManagedSecretValue::anthropic_bedrock_api_key(
-                            v.aws_bearer_token_bedrock,
-                            v.aws_region,
-                        )
-                    }
-                    GqlManagedSecretValue::ManagedSecretOpenAiApiKeyValue(v) => {
-                        ManagedSecretValue::openai_api_key(v.api_key, v.base_url)
-                    }
-                    GqlManagedSecretValue::Unknown => {
-                        return Err(anyhow::anyhow!(
-                            "Unknown secret value type for secret: {}",
-                            name
-                        ));
-                    }
-                };
-                secrets.insert(name, value);
-            }
-            Ok(secrets)
+            Err(anyhow::anyhow!("get_task_secrets: GraphQL backend removed, needs REST migration"))
         }
     }
 

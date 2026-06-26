@@ -19,7 +19,7 @@ use crate::drive::CloudObjectTypeAndId;
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{ServerId, SyncId};
-use cloud_object_client::ObjectClient;
+use cloud_object_models::ObjectClient;
 use crate::server::sync_queue::{QueueItem, SerializedModel};
 
 /// A trait that generic string-based objects should implement.

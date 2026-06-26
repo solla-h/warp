@@ -18,14 +18,28 @@ use crate::ai::llms::LLMPreferences;
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::ai::AIRequestUsageModel;
 use crate::autoupdate::AutoupdateState;
+use crate::persistence;
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::graphql::get_user_facing_error_message;
 use crate::server::server_api::auth::{
-    AnonymousUserCreationError, AuthClient, FetchUserResult, MintCustomTokenError,
+    AnonymousUserCreationError, AuthClient, AuthClientImpl, FetchUserResult, MintCustomTokenError,
     UserAuthenticationError,
 };
+use std::result::Result as StdResult;
+use std::time::Duration;
+
+use warp_core::report_if_error;
+
+use super::credentials::LoginToken;
 use crate::server::server_api::{ServerApi, ServerApiProvider};
+use settings::Setting as _;
+use crate::terminal::general_settings::GeneralSettings;
+use crate::settings::privacy::PrivacySettings;
+use crate::settings::initializer::SettingsInitializer;
+use crate::settings::cloud_preferences_syncer::CloudPreferencesSyncer;
+use crate::global_resource_handles::GlobalResourceHandlesProvider;
+use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
+use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::server::telemetry::AnonymousUserSignupEntrypoint;
 use crate::{send_telemetry_from_ctx, TelemetryEvent};
 
@@ -70,6 +84,7 @@ type URLConstructorCallback = Box<dyn FnOnce(Option<&str>) -> String>;
 pub struct AuthManager {
     auth_state: Arc<AuthState>,
     server_api: Arc<ServerApi>,
+    auth_client: Arc<AuthClientImpl>,
     /// A generated state token that the web app must provide back to the client.
     pending_auth_state: Option<String>,
 }
@@ -82,10 +97,12 @@ impl AuthManager {
         ctx: &mut ModelContext<Self>,
     ) -> Self {
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
+        let auth_client = Arc::new(AuthClientImpl);
 
         Self {
             auth_state,
             server_api,
+            auth_client,
             pending_auth_state: None,
         }
     }
@@ -95,10 +112,12 @@ impl AuthManager {
         let server_api_provider = ServerApiProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
+        let auth_client = Arc::new(AuthClientImpl);
 
         Self {
             auth_state,
             server_api,
+            auth_client,
             pending_auth_state: None,
         }
     }
@@ -185,7 +204,6 @@ impl AuthManager {
         self.auth_state.set_credentials(None);
 
         let auth_client = self.auth_client.clone();
-        // Request a device code the user can enter in their browser.
         ctx.spawn(
             async move { auth_client.request_device_code().await },
             Self::on_device_code_received,
@@ -212,12 +230,9 @@ impl AuthManager {
                 let auth_client = self.auth_client.clone();
                 ctx.spawn(
                     async move {
-                        // Wait for the user to approve the device authorization request.
                         let token = auth_client
                             .exchange_device_access_token(&details, Duration::from_secs(600))
                             .await?;
-
-                        // Exchange the custom access token for Firebase auth tokens and fetch the user.
                         auth_client
                             .fetch_user(LoginToken::Firebase(token), false)
                             .await

@@ -26,7 +26,7 @@ pub mod manager;
 pub mod native_preference;
 mod onboarding;
 mod pane;
-mod privacy;
+pub(crate) mod privacy;
 mod same_line_prompt_block;
 mod scroll;
 mod select;

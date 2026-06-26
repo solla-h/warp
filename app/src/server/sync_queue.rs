@@ -16,7 +16,7 @@ use warpui::{Entity, ModelContext, RequestState, RetryOption, SingletonEntity};
 
 use super::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
 use super::server_api::auth::UserAuthenticationError;
-use cloud_object_client::ObjectClient;
+use cloud_object_models::ObjectClient;
 use crate::ai::ambient_agents::scheduled::CloudScheduledAmbientAgentModel;
 use crate::ai::cloud_agent_config::CloudAgentConfigModel;
 use crate::ai::cloud_environments::CloudAmbientAgentEnvironmentModel;

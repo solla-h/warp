@@ -10,6 +10,31 @@ use thiserror::Error;
 use crate::auth::credentials::{Credentials, LoginToken};
 use crate::server::ids::ApiKeyUid;
 
+use crate::auth::user::AnonymousUserType;
+use crate::auth::user_properties::UserProperties;
+
+pub type UserOutput = UserProperties;
+
+#[derive(Debug, Clone)]
+pub struct ApiKeyProperties {
+    pub uid: String,
+    pub name: String,
+    pub key_suffix: String,
+}
+
+pub struct GenerateApiKeyResult {
+    pub key: String,
+}
+
+pub struct ExpireApiKeyResult {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct UpdateUserSettingsInput {
+    pub telemetry_enabled: Option<bool>,
+}
+
 /// Authentication and authenticated-transport conditions observed by shared client code.
 #[derive(Clone)]
 pub enum AuthEvent {
@@ -56,7 +81,6 @@ pub struct SyncedUserSettings {
     pub is_telemetry_enabled: bool,
 }
 
-#[derive(Debug)]
 pub struct FetchUserResult {
     pub user_output: UserOutput,
     pub credentials: Credentials,
@@ -110,7 +134,7 @@ pub trait AuthClient: Send + Sync {
         name: String,
         team_id: Option<cynic::Id>,
         agent_uid: Option<cynic::Id>,
-        expires_at: Option<warp_graphql::scalars::Time>,
+        expires_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<GenerateApiKeyResult>;
     async fn expire_api_key(&self, uid: &ApiKeyUid) -> Result<ExpireApiKeyResult>;
     async fn fetch_user(
@@ -130,7 +154,7 @@ pub trait AuthClient: Send + Sync {
         &self,
         referral_code: Option<String>,
         anonymous_user_type: AnonymousUserType,
-    ) -> Result<warp_graphql::mutations::create_anonymous_user::CreateAnonymousUserResult>;
+    ) -> Result<CreateAnonymousUserResult>;
     async fn fetch_new_custom_token(
         &self,
     ) -> std::result::Result<String, MintCustomTokenError>;
@@ -159,7 +183,7 @@ mockall::mock! {
             name: String,
             team_id: Option<cynic::Id>,
             agent_uid: Option<cynic::Id>,
-            expires_at: Option<warp_graphql::scalars::Time>,
+            expires_at: Option<chrono::DateTime<chrono::Utc>>,
         ) -> Result<GenerateApiKeyResult>;
         async fn expire_api_key(&self, uid: &ApiKeyUid) -> Result<ExpireApiKeyResult>;
         async fn fetch_user(
@@ -179,7 +203,7 @@ mockall::mock! {
             &self,
             referral_code: Option<String>,
             anonymous_user_type: AnonymousUserType,
-        ) -> Result<warp_graphql::mutations::create_anonymous_user::CreateAnonymousUserResult>;
+        ) -> Result<CreateAnonymousUserResult>;
         async fn fetch_new_custom_token(
             &self,
         ) -> std::result::Result<String, MintCustomTokenError>;
@@ -223,7 +247,7 @@ impl AuthClient for AuthClientImpl {
         _name: String,
         _team_id: Option<cynic::Id>,
         _agent_uid: Option<cynic::Id>,
-        _expires_at: Option<warp_graphql::scalars::Time>,
+        _expires_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<GenerateApiKeyResult> {
         Err(anyhow!("API keys require cloud backend"))
     }
@@ -253,7 +277,7 @@ impl AuthClient for AuthClientImpl {
         &self,
         _referral_code: Option<String>,
         _anonymous_user_type: AnonymousUserType,
-    ) -> Result<warp_graphql::mutations::create_anonymous_user::CreateAnonymousUserResult> {
+    ) -> Result<CreateAnonymousUserResult> {
         Err(anyhow!("Anonymous user creation requires cloud backend"))
     }
     async fn fetch_new_custom_token(
@@ -309,6 +333,10 @@ impl AuthSession {
     ) -> Result<crate::auth::credentials::AuthToken> {
         Ok(crate::auth::credentials::AuthToken::NoAuth)
     }
+}
+
+pub struct CreateAnonymousUserResult {
+    pub custom_token: String,
 }
 
 #[derive(Error, Debug)]

@@ -1,5 +1,5 @@
 use chrono::Utc;
-use cloud_object_client::MockObjectClient;
+use cloud_object_models::MockObjectClient;
 use itertools::Itertools;
 use warpui::{AddSingletonModel, App};
 

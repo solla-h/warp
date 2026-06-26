@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Duration, Utc};
-use cloud_object_client::MockObjectClient;
+use cloud_object_models::MockObjectClient;
 use cloud_objects::cloud_object::ServerPermissions;
 #[cfg(feature = "cloud")]
 use warp_server_client::auth::FirebaseError;
