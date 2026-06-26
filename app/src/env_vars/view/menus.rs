@@ -4,10 +4,7 @@ use warpui::keymap::Trigger;
 use warpui::{SingletonEntity, ViewContext, ViewHandle};
 
 use super::env_var_collection::{EnvVarCollectionAction, EnvVarCollectionView, VariableRowIndex};
-use crate::cloud_object::{CloudObject, GenericStringObjectFormat, Space};
-use crate::drive::drive_helpers::has_feature_gated_anonymous_user_reached_env_var_limit;
-use crate::drive::export::ExportManager;
-use crate::drive::CloudObjectTypeAndId;
+use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, Space};
 use crate::env_vars::active_env_var_collection_data::TrashStatus;
 use crate::external_secrets::SecretManager;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
@@ -360,7 +357,6 @@ impl EnvVarCollectionView {
         let mut menu_items = Vec::new();
 
         let active_collection_data = self.active_env_var_collection_data.as_ref(ctx);
-        let access_level = active_collection_data.access_level(ctx);
         let space = active_collection_data.space(ctx);
 
         if !active_collection_data.is_on_server()
@@ -391,7 +387,7 @@ impl EnvVarCollectionView {
 
         // Add "Trash" to menu
         if self.is_online(ctx)
-            && (!FeatureFlag::SharedWithMe.is_enabled() || access_level.can_trash())
+
         {
             menu_items.push(
                 MenuItemFields::new("Trash")
@@ -420,7 +416,7 @@ impl EnvVarCollectionView {
 
     pub(super) fn untrash_env_var_collection(&self, ctx: &mut ViewContext<Self>) {
         if let Some(env_var_collection_id) = self.active_env_var_collection_data.as_ref(ctx).id() {
-            if has_feature_gated_anonymous_user_reached_env_var_limit(ctx) {
+            if false {
                 return;
             }
 
@@ -474,22 +470,5 @@ impl EnvVarCollectionView {
             ctx.notify();
         }
     }
-
-    pub(super) fn export_env_var_collection(&self, ctx: &mut ViewContext<Self>) {
-        if let Some(env_var_collection_id) = self.env_var_collection_id(ctx) {
-            let window_id = ctx.window_id();
-            ExportManager::handle(ctx).update(ctx, |export_manager, ctx| {
-                export_manager.export(
-                    window_id,
-                    &[CloudObjectTypeAndId::from_generic_string_object(
-                        GenericStringObjectFormat::Json(
-                            crate::cloud_object::JsonObjectType::EnvVarCollection,
-                        ),
-                        env_var_collection_id,
-                    )],
-                    ctx,
-                )
-            });
-        }
-    }
+    pub(super) fn export_env_var_collection(&self, _ctx: &mut ViewContext<Self>) {}
 }

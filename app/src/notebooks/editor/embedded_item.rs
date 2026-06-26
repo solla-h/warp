@@ -29,8 +29,6 @@ use warpui::{AppContext, Element, LayoutContext, SingletonEntity, SizeConstraint
 
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::DriveObjectType;
 use crate::server::ids::{HashableId, ToServerId};
 use crate::ui_components::icons::Icon;
 use crate::workflows::workflow::Workflow;
@@ -451,15 +449,9 @@ impl RenderableEmbeddedWorkflow {
         let appearance = Appearance::as_ref(ctx);
 
         let (icon, icon_color) = if is_agent_mode_prompt {
-            (
-                Icon::Prompt,
-                warp_drive_icon_color(appearance, DriveObjectType::AgentModeWorkflow),
-            )
+            (Icon::Prompt, appearance.theme().foreground())
         } else {
-            (
-                Icon::Workflow,
-                warp_drive_icon_color(appearance, DriveObjectType::Workflow),
-            )
+            (Icon::Workflow, appearance.theme().foreground())
         };
         let workflow_icon = ConstrainedBox::new(
             icon.to_warpui_icon(icon_color.into())

@@ -29,7 +29,7 @@ use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_profiles::UserProfiles;
-use crate::CloudObjectTypeAndId;
+use crate::cloud_object::CloudObjectTypeAndId;
 
 const WARP_DEV_ENVIRONMENTS_REPO: &str = "https://github.com/warpdotdev/warp-dev-environments";
 

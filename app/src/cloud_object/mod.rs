@@ -1,5 +1,5 @@
 use std::any::Any;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -9,7 +9,6 @@ use chrono::{Duration, Utc};
 use derivative::Derivative;
 use lazy_static::lazy_static;
 use regex::Regex;
-use url::Url;
 use warp_core::channel::Channel;
 use warp_core::features::FeatureFlag;
 use cloud_objects::cloud_object::UpdatedObjectInput;
@@ -26,8 +25,6 @@ use self::model::persistence::CloudModel;
 use crate::appearance::Appearance;
 use crate::auth::UserUid;
 use crate::channel::ChannelState;
-use crate::drive::items::WarpDriveItem;
-use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
 use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
@@ -44,6 +41,7 @@ pub mod model;
 pub mod toast_message;
 
 pub use cloud_objects::cloud_object::*;
+pub use cloud_objects::drive::CloudObjectTypeAndId;
 
 /// A CloudObject represents
 /// therefore shareable and editable (i.e. Notebooks and Workflows). In order
@@ -128,6 +126,9 @@ pub trait CloudObject: Debug {
         true
     }
 
+    /// Returns whether this object renders in warp drive.
+    fn renders_in_warp_drive(&self) -> bool { true }
+
     /// Returns the "upsert" event for inserting / updating this object in the SQLite DB.
     fn upsert_event(&self) -> ModelEvent;
 
@@ -152,17 +153,11 @@ pub trait CloudObject: Debug {
     /// in the sync queue item.
     fn update_object_queue_item(&self, revision_ts: Option<Revision>) -> QueueItem;
 
-    /// Returns whether this model type should render as a warp drive item.
-    fn renders_in_warp_drive(&self) -> bool;
 
     /// Returns whether this model type should show update toasts in the UI.
     fn should_show_activity_toasts(&self) -> bool {
         true
     }
-
-    /// Creates a new Warp Drive item for this object.  Returns None if this
-    /// object is not rendered in Warp Drive.
-    fn to_warp_drive_item(&self, appearance: &Appearance) -> Option<Box<dyn WarpDriveItem>>;
 
     /// Returns the web link of this object. Will return none if we do not support web links
     /// for this particular object (i.e. if it's not yet sync'd to the server, or if we don't
@@ -434,7 +429,8 @@ pub trait CloudModelType: Debug + Clone + Send + Sync {
     fn object_type(&self) -> ObjectType;
 
     /// Returns whether this model type should render as a warp drive item.
-    fn renders_in_warp_drive(&self) -> bool;
+    fn renders_in_warp_drive(&self) -> bool { true }
+
 
     /// Returns whether this model type should show update toasts in the UI.
     fn should_show_activity_toasts(&self) -> bool {
@@ -446,15 +442,6 @@ pub trait CloudModelType: Debug + Clone + Send + Sync {
     fn warn_if_unsaved_at_quit(&self) -> bool {
         true
     }
-
-    /// Creates a new warp drive item for this model type. Returns None
-    /// if this object does not render in Warp Drive.
-    fn to_warp_drive_item(
-        &self,
-        id: SyncId,
-        appearance: &Appearance,
-        object: &Self::CloudObjectType,
-    ) -> Option<Box<dyn WarpDriveItem>>;
 
     /// Returns the display name for this model (e.g. to show in the Warp Drive index)
     fn display_name(&self) -> String;
@@ -765,12 +752,9 @@ where
         self.model().update_object_queue_item(revision_ts, self)
     }
 
+
     fn renders_in_warp_drive(&self) -> bool {
         self.model().renders_in_warp_drive()
-    }
-
-    fn to_warp_drive_item(&self, appearance: &Appearance) -> Option<Box<dyn WarpDriveItem>> {
-        self.model().to_warp_drive_item(self.id, appearance, self)
     }
 
     fn can_export(&self) -> bool {
@@ -791,45 +775,6 @@ where
 }
 
 /// Extracts the server id and object type from a (caller validated) Drive link.
-/// Intended use is deriving metadata from links such that Warp objects
-/// can be opened natively in Warp with no web interaction.
-pub fn extract_server_id_and_object_type_from_warp_drive_link(
-    url: &Url,
-) -> Option<OpenWarpDriveObjectArgs> {
-    let server_id = url
-        .path_segments()
-        .and_then(|mut segments| segments.next_back())
-        .and_then(|last_segment| last_segment.split('-').next_back())
-        .map(|id| id.to_string());
-
-    let object_type = url.path_segments().and_then(|mut segments| segments.nth(1));
-
-    // Parse the object portion of the path segment (warp.dev/drive/{object})
-    // into an object type
-    let object_type = match object_type {
-        Some("notebook") => ObjectType::Notebook,
-        Some("workflow") => ObjectType::Workflow,
-        _ => return None,
-    };
-    let query_string: HashMap<_, _> = url.query_pairs().collect();
-    let focused_folder_id: Option<ServerId> = query_string
-        .get("focused_folder_id")
-        .and_then(|s| s.to_string().try_into().ok());
-
-    let invitee_email: Option<String> = query_string.get("invitee_email").map(|s| s.to_string());
-
-    Some(OpenWarpDriveObjectArgs {
-        object_type,
-        server_id: match server_id {
-            Some(server_id) => server_id.try_into().ok()?,
-            _ => return None,
-        },
-        settings: OpenWarpDriveObjectSettings {
-            focused_folder_id,
-            invitee_email,
-        },
-    })
-}
 
 impl<'a, K, M> From<&'a dyn CloudObject> for Option<&'a GenericCloudObject<K, M>>
 where
@@ -1038,5 +983,58 @@ impl From<Owner> for WorkflowSource {
             Owner::User { .. } => Self::PersonalCloud,
             Owner::Team { team_uid } => Self::Team { team_uid },
         }
+    }
+}
+
+
+// Minimal CloudModelType impl for CloudFolderModel (moved from deleted drive/folders module)
+#[cfg_attr(not(target_family = "wasm"), async_trait)]
+#[cfg_attr(target_family = "wasm", async_trait(?Send))]
+impl CloudModelType for cloud_object_models::CloudFolderModel {
+    type CloudObjectType = cloud_object_models::CloudFolder;
+    type IdType = cloud_objects::ids::FolderId;
+
+    fn model_type_name(&self) -> &'static str { "Folder" }
+
+    fn cloud_object_type_and_id(&self, id: crate::server::ids::SyncId) -> CloudObjectTypeAndId {
+        CloudObjectTypeAndId::Folder(id)
+    }
+
+    fn object_type(&self) -> ObjectType { ObjectType::Folder }
+
+    fn renders_in_warp_drive(&self) -> bool { true }
+
+    fn display_name(&self) -> String { self.name.clone() }
+
+    fn upsert_event(_params: CloudObjectUpsertParams<Self>) -> ModelEvent
+    where Self: Sized {
+        ModelEvent::UpsertFolders(vec![])
+    }
+
+    fn bulk_upsert_event(_objects: Vec<CloudObjectUpsertParams<Self>>) -> ModelEvent
+    where Self: Sized {
+        ModelEvent::UpsertFolders(vec![])
+    }
+
+    fn create_object_queue_item(&self, _object: &Self::CloudObjectType, _entrypoint: CloudObjectEventEntrypoint, _initiated_by: InitiatedBy) -> Option<crate::server::sync_queue::QueueItem> {
+        None
+    }
+
+    fn update_object_queue_item(&self, _revision_ts: Option<Revision>, _object: &Self::CloudObjectType) -> crate::server::sync_queue::QueueItem {
+        unreachable!("folder update queue item not supported after drive removal")
+    }
+
+    fn serialized(&self) -> SerializedModel {
+        String::new().into()
+    }
+
+    fn should_update_after_server_conflict(&self) -> bool { false }
+
+    async fn send_create_request(_object_client: std::sync::Arc<dyn cloud_object_models::ObjectClient>, _request: CreateObjectRequest) -> anyhow::Result<CreateCloudObjectResult> {
+        anyhow::bail!("folder creation via drive removed")
+    }
+
+    async fn send_update_request(&self, _object_client: std::sync::Arc<dyn cloud_object_models::ObjectClient>, _server_id: cloud_objects::ids::ServerId, _revision: Option<Revision>) -> anyhow::Result<UpdateCloudObjectResult<ServerFolder>> {
+        anyhow::bail!("folder update via drive removed")
     }
 }

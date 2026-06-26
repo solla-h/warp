@@ -5,8 +5,7 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::{CloudObjectTypeAndId, DriveObjectType};
+use crate::cloud_object::CloudObjectTypeAndId;
 use crate::notebooks::CloudNotebook;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;
 use crate::search::command_palette::render_util::render_search_item_icon;
@@ -37,13 +36,8 @@ impl SearchItem for NotebookSearchItem {
         highlight_state: ItemHighlightState,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
-        let color = warp_drive_icon_color(
-            appearance,
-            DriveObjectType::Notebook {
-                is_ai_document: false,
-            },
-        );
-        render_search_item_icon(appearance, Icon::Notebook, color, highlight_state)
+        let color = appearance.theme().foreground();
+        render_search_item_icon(appearance, Icon::Notebook, color.into(), highlight_state)
     }
 
     fn icon_location(&self, appearance: &Appearance) -> IconLocation {
@@ -136,8 +130,8 @@ impl SearchItem for NotebookSearchItem {
     }
 
     fn execute_result(&self) -> Self::Action {
-        CommandPaletteItemAction::ViewInWarpDrive {
-            id: CloudObjectTypeAndId::Notebook(self.cloud_notebook.id),
+        CommandPaletteItemAction::OpenNotebook {
+            id: self.cloud_notebook.id,
         }
     }
 

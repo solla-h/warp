@@ -69,7 +69,6 @@ use crate::cloud_object::model::actions::{
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::{CloudObject, ObjectIdType};
 use crate::code::editor_management::CodeSource;
-use crate::drive::OpenWarpDriveObjectSettings;
 use crate::notebooks::NotebookId;
 use crate::persistence::agent::read_agent_conversations;
 use crate::persistence::block_list::{get_all_restored_blocks, read_ai_queries};
@@ -1147,7 +1146,6 @@ fn save_pane_state(
             let (notebook_id, local_path) = match notebook_snapshot {
                 NotebookPaneSnapshot::CloudNotebook {
                     notebook_id,
-                    settings: _,
                 } => (
                     notebook_id.map(|id| id.sqlite_uid_hash(ObjectIdType::Notebook)),
                     None,
@@ -1219,7 +1217,6 @@ fn save_pane_state(
             let workflow_id = match workflow_pane_snapshot {
                 WorkflowPaneSnapshot::CloudWorkflow {
                     workflow_id,
-                    settings: _,
                 } => workflow_id.map(|id| id.sqlite_uid_hash(ObjectIdType::Workflow)),
             };
 
@@ -2121,7 +2118,6 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
                         Some(path) => NotebookPaneSnapshot::LocalFileNotebook { path: Some(path) },
                         None => NotebookPaneSnapshot::CloudNotebook {
                             notebook_id,
-                            settings: OpenWarpDriveObjectSettings::default(),
                         },
                     })
                 }
@@ -2139,7 +2135,6 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
 
                     LeafContents::Workflow(WorkflowPaneSnapshot::CloudWorkflow {
                         workflow_id,
-                        settings: OpenWarpDriveObjectSettings::default(),
                     })
                 }
                 CODE_PANE_KIND => {

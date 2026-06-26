@@ -1,3 +1,4 @@
+use cloud_object_models::CloudFolder;
 use std::collections::HashMap;
 
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -9,7 +10,6 @@ use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{
     CloudObject, CloudObjectLocation, GenericStringObjectFormat, JsonObjectType, ObjectType,
 };
-use crate::drive::folders::CloudFolder;
 use crate::env_vars::CloudEnvVarCollection;
 use crate::notebooks::CloudNotebook;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;
@@ -549,7 +549,6 @@ mod full_text_searcher {
     use crate::cloud_object::{
         CloudObject, CloudObjectLocation, GenericStringObjectFormat, JsonObjectType, ObjectType,
     };
-    use crate::drive::folders::CloudFolder;
     use crate::env_vars::CloudEnvVarCollection;
     use crate::notebooks::manager::NotebookManager;
     use crate::notebooks::CloudNotebook;
@@ -565,6 +564,7 @@ mod full_text_searcher {
     use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
     use crate::server::ids::ObjectUid;
     use crate::workflows::CloudWorkflow;
+use cloud_object_models::CloudFolder;
 
     /// Memory budget for the search index of warp drive.
     /// Warp could potentially have a lot of objects, so we increase it from the default of 50MB to 100MB

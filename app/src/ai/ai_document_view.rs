@@ -29,9 +29,6 @@ use crate::ai::document::ai_document_model::{
 };
 use crate::ai::document::orchestration_config_block::OrchestrationConfigBlockView;
 use crate::appearance::Appearance;
-use crate::drive::items::WarpDriveItemId;
-use crate::drive::sharing::ShareableObject;
-use crate::drive::CloudObjectTypeAndId;
 use crate::editor::InteractionState;
 use crate::menu::{Menu, MenuItem, MenuItemFields};
 use crate::notebooks::editor::model::NotebooksEditorModel;
@@ -111,7 +108,6 @@ pub enum AIDocumentAction {
 pub enum AIDocumentEvent {
     Pane(PaneEvent),
     CloseRequested,
-    ViewInWarpDrive(WarpDriveItemId),
     #[cfg(feature = "local_fs")]
     OpenCodeInWarp {
         source: CodeSource,
@@ -600,7 +596,7 @@ impl AIDocumentView {
             .and_then(|sync_id| sync_id.into_server());
 
         self.pane_configuration.update(ctx, |pc, ctx| {
-            pc.set_shareable_object(server_id.map(ShareableObject::WarpDriveObject), ctx);
+            pc.set_shareable_object(None, ctx);
             pc.refresh_pane_header_overflow_menu_items(ctx);
         });
         ctx.notify();
@@ -1010,7 +1006,6 @@ impl AIDocumentView {
     fn export(&self, ctx: &mut ViewContext<Self>) {
         use warpui::platform::SaveFilePickerConfiguration;
 
-        use crate::drive::export::safe_filename;
         let markdown = self.editor.as_ref(ctx).markdown_unescaped(ctx);
 
         // Get the document title from the model
@@ -1020,7 +1015,7 @@ impl AIDocumentView {
             .unwrap_or_else(|| "Untitled".to_string());
 
         // Sanitize the title for use as a filename
-        let sanitized_title = safe_filename(&title);
+        let sanitized_title = title.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_");
         let filename = if sanitized_title.is_empty() {
             "Untitled.md".to_string()
         } else {
@@ -1249,17 +1244,7 @@ impl TypedActionView for AIDocumentView {
                 // Update UI to reflect the new query
                 self.update_header_buttons(ctx);
             }
-            AIDocumentAction::ShowInWarpDrive => {
-                if let Some(document) =
-                    AIDocumentModel::as_ref(ctx).get_current_document(&self.document_id)
-                {
-                    if let Some(sync_id) = document.sync_id {
-                        ctx.emit(AIDocumentEvent::ViewInWarpDrive(WarpDriveItemId::Object(
-                            CloudObjectTypeAndId::Notebook(sync_id),
-                        )));
-                    }
-                }
-            }
+            AIDocumentAction::ShowInWarpDrive => {}
             AIDocumentAction::AttachToActiveSession => {
                 ctx.emit(AIDocumentEvent::AttachPlanAsContext(self.document_id));
             }

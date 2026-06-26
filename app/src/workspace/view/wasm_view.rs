@@ -17,7 +17,6 @@ use crate::view_components::action_button::{
 };
 use crate::wasm_nux_dialog::{WasmNUXDialog, WasmNUXDialogEvent};
 use crate::workspace::action::WorkspaceAction;
-use crate::workspace::view::{NotebookSource, OpenWarpDriveObjectSettings, Workspace};
 use crate::BlocklistAIHistoryModel;
 
 const TRANSCRIPT_PANEL_WIDTH: f32 = 280.0;
@@ -98,7 +97,6 @@ impl Workspace {
             ConversationDetailsPanelEvent::OpenPlanNotebook { notebook_uid } => {
                 me.open_notebook(
                     &NotebookSource::Existing((*notebook_uid).into()),
-                    &OpenWarpDriveObjectSettings::default(),
                     ctx,
                     true,
                 );

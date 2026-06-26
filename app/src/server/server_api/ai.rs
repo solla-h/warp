@@ -48,7 +48,6 @@ use crate::ai_assistant::execution_context::WarpAiExecutionContext;
 use crate::ai_assistant::requests::GenerateDialogueResult;
 use crate::ai_assistant::utils::TranscriptPart;
 use crate::ai_assistant::{AIGeneratedCommand, GenerateCommandsFromNaturalLanguageError};
-use crate::drive::workflows::ai_assist::{GeneratedCommandMetadata, GeneratedCommandMetadataError};
 use crate::persistence::model::ConversationUsageMetadata;
 use crate::terminal::model::block::SerializedBlock;
 #[cfg(not(feature = "agent_mode_evals"))]
@@ -957,10 +956,7 @@ pub trait AIClient: 'static + Send + Sync {
         ai_execution_context: Option<WarpAiExecutionContext>,
     ) -> anyhow::Result<GenerateDialogueResult>;
 
-    async fn generate_metadata_for_command(
-        &self,
-        command: String,
-    ) -> Result<GeneratedCommandMetadata, GeneratedCommandMetadataError>;
+
 
     async fn get_request_limit_info(&self) -> Result<RequestUsageInfo, anyhow::Error>;
 
@@ -1349,12 +1345,7 @@ impl AIClient for ServerApi {
         todo!("GraphQL backend removed")
     }
 
-    async fn generate_metadata_for_command(
-        &self,
-        _command: String,
-    ) -> Result<GeneratedCommandMetadata, GeneratedCommandMetadataError> {
-        todo!("GraphQL backend removed")
-    }
+
 
     #[cfg(feature = "agent_mode_evals")]
     async fn get_request_limit_info(&self) -> Result<RequestUsageInfo, anyhow::Error> {

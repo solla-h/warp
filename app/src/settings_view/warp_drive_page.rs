@@ -23,7 +23,6 @@ use super::{
 };
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
-use crate::drive::settings::WarpDriveSettings;
 
 #[derive(Debug, Clone)]
 pub enum WarpDriveSettingsPageAction {
@@ -86,9 +85,7 @@ impl TypedActionView for WarpDriveSettingsPageView {
     fn handle_action(&mut self, action: &Self::Action, ctx: &mut ViewContext<Self>) {
         match action {
             WarpDriveSettingsPageAction::ToggleShowWarpDrive => {
-                WarpDriveSettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(settings.enable_warp_drive.toggle_and_save_value(ctx));
-                });
+                // WarpDrive settings removed - always enabled
                 ctx.notify();
             }
             WarpDriveSettingsPageAction::SignUp => {
@@ -240,7 +237,7 @@ impl SettingsWidget for WarpDriveToggleWidget {
         appearance: &Appearance,
         app: &AppContext,
     ) -> Box<dyn Element> {
-        let settings = WarpDriveSettings::as_ref(app);
+        // WarpDrive always enabled
         let is_anonymous_or_logged_out = FeatureFlag::SkipFirebaseAnonymousUser.is_enabled()
             && AuthStateProvider::as_ref(app)
                 .get()
@@ -266,7 +263,7 @@ impl SettingsWidget for WarpDriveToggleWidget {
             appearance
                 .ui_builder()
                 .switch(self.switch_state.clone())
-                .check(*settings.enable_warp_drive && !is_anonymous_or_logged_out)
+                .check(!is_anonymous_or_logged_out)
                 .with_disabled(is_anonymous_or_logged_out)
                 .build()
                 .on_click(move |ctx, _, _| {

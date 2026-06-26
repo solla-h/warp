@@ -13,12 +13,8 @@ use warpui::{
 use super::shared_objects_creation_denied_body::{
     SharedObjectsCreationDeniedBody, SharedObjectsCreationDeniedBodyEvent,
 };
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::DriveObjectType;
 use crate::modal::{Modal, ModalEvent};
 use crate::server::ids::ServerId;
-use crate::themes::theme::Fill;
-use crate::ui_components::icons::Icon;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::CustomerType;
 
@@ -50,10 +46,10 @@ pub fn init(app: &mut AppContext) {
 }
 
 impl SharedObjectsCreationDeniedModal {
-    pub fn new(object_type: Option<DriveObjectType>, ctx: &mut ViewContext<Self>) -> Self {
+    pub fn new(ctx: &mut ViewContext<Self>) -> Self {
         let shared_objects_creation_denied_body = ctx.add_typed_action_view(
             |_ctx: &mut ViewContext<'_, SharedObjectsCreationDeniedBody>| {
-                SharedObjectsCreationDeniedBody::new(object_type)
+                SharedObjectsCreationDeniedBody::new(None)
             },
         );
 
@@ -114,58 +110,7 @@ impl SharedObjectsCreationDeniedModal {
         ctx.emit(SharedObjectsCreationDeniedModalEvent::Close);
     }
 
-    pub fn update_modal_state(
-        &mut self,
-        team_uid: ServerId,
-        object_type: DriveObjectType,
-        has_admin_permissions: bool,
-        is_delinquent_due_to_payment_issue: bool,
-        customer_type: CustomerType,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let appearance = Appearance::as_ref(ctx);
-        self.team_uid = Some(team_uid);
-        let title: Option<String> = if is_delinquent_due_to_payment_issue {
-            Some(format!("Shared {object_type}s restricted"))
-        } else {
-            Some(format!("Shared {object_type}s limit reached"))
-        };
-        let (icon, icon_color) = match object_type {
-            DriveObjectType::Notebook { is_ai_document } => (
-                Some(Icon::Notebook),
-                Some(Fill::Solid(warp_drive_icon_color(
-                    appearance,
-                    DriveObjectType::Notebook { is_ai_document },
-                ))),
-            ),
-            DriveObjectType::Workflow => (
-                Some(Icon::Workflow),
-                Some(Fill::Solid(warp_drive_icon_color(
-                    appearance,
-                    DriveObjectType::Workflow,
-                ))),
-            ),
-            _ => (None, None),
-        };
-        self.shared_objects_creation_denied_modal
-            .update(ctx, |modal, ctx| {
-                modal.set_title(title);
-                modal.set_header_icon(icon);
-                modal.set_header_icon_color(icon_color);
-                modal
-                    .body()
-                    .update(ctx, |shared_objects_creation_denied_body, ctx| {
-                        shared_objects_creation_denied_body.update_state(
-                            object_type,
-                            has_admin_permissions,
-                            is_delinquent_due_to_payment_issue,
-                            customer_type,
-                            ctx,
-                        );
-                    });
-                ctx.notify();
-            });
-    }
+
 
     fn handle_shared_objects_creation_denied_body_event(
         &mut self,

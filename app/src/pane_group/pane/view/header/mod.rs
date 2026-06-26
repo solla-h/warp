@@ -520,19 +520,7 @@ impl<P: BackingView> PaneHeader<P> {
                     );
                 }
             }
-            OpenOverlay::SharingDialog => {
-                if self.is_sharing_dialog_enabled(app) {
-                    stack.add_positioned_overlay_child(
-                        ChildView::new(self.sharing_dialog()).finish(),
-                        OffsetPositioning::offset_from_parent(
-                            vec2f(-8., 0.),
-                            ParentOffsetBounds::WindowByPosition,
-                            ParentAnchor::BottomRight,
-                            ChildAnchor::TopRight,
-                        ),
-                    );
-                }
-            }
+            OpenOverlay::SharingDialog => {}
             OpenOverlay::None => {}
         }
     }
@@ -732,7 +720,7 @@ impl<P: BackingView> View for PaneHeader<P> {
 
                 let appearance = Appearance::as_ref(app);
                 let mut row = Flex::row();
-                self.render_sharing_controls(&mut row, appearance, icon_color, button_size, app);
+                self.render_sharing_controls(&mut row, appearance, None, button_size, app);
                 Some(row.finish())
             }),
         };

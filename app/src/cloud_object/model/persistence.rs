@@ -1,3 +1,5 @@
+use cloud_object_models::CloudFolderModel;
+
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::SyncSender;
 
@@ -12,15 +14,10 @@ use super::generic_string_model::GenericStringObjectId;
 use crate::ai::execution_profiles::CloudAIExecutionProfile;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::{
-    CloudModelType, CloudObject, CloudObjectLocation, CloudObjectPermissions, GenericCloudObject,
+    CloudModelType, CloudObjectTypeAndId, CloudObject, CloudObjectLocation, CloudObjectPermissions, GenericCloudObject,
     GenericServerObject, GenericStringObjectFormat, JsonObjectType, ObjectIdType, ObjectType,
     ObjectsToUpdate, Owner, Revision, RevisionAndLastEditor, ServerCloudObject, ServerCreationInfo,
     ServerFolder, ServerMetadata, ServerNotebook, ServerPermissions, ServerWorkflow, Space,
-};
-use crate::drive::folders::{CloudFolder, CloudFolderModel};
-use crate::drive::{
-    should_auto_open_welcome_folder, write_has_auto_opened_welcome_folder_to_user_defaults,
-    CloudObjectTypeAndId, DriveIndexVariant,
 };
 use crate::env_vars::{CloudEnvVarCollection, CloudEnvVarCollectionModel, EnvVarCollection};
 use crate::notebooks::CloudNotebook;
@@ -31,6 +28,22 @@ use crate::workflows::workflow::Workflow;
 use crate::workflows::workflow_enum::{CloudWorkflowEnum, CloudWorkflowEnumModel, WorkflowEnum};
 use crate::workflows::{CloudWorkflow, CloudWorkflowModel};
 use crate::workspaces::user_workspaces::UserWorkspaces;
+
+use cloud_object_models::CloudFolder;
+
+#[derive(Clone, Copy)]
+enum DriveIndexVariant {
+    MainIndex,
+    Trash,
+}
+
+fn should_auto_open_welcome_folder(_ctx: &AppContext) -> bool {
+    false
+}
+
+fn write_has_auto_opened_welcome_folder_to_user_defaults(_ctx: &mut ModelContext<CloudModel>) {
+}
+
 
 // Equivalent to 24 hours
 const MIN_MINUTES_UNTIL_NEXT_FORCE_REFRESH: i64 = 1440;
@@ -899,12 +912,7 @@ impl CloudModel {
                 name: folder.model().name.clone(),
             });
 
-            let folder_clone = folder.clone();
-            if let Some(model_event_sender) = &self.model_event_sender {
-                if let Err(e) = model_event_sender.send(folder_clone.upsert_event()) {
-                    log::error!("Error persisting folder: {e:?}");
-                }
-            }
+            // Folder persistence via upsert_event removed (drive module deleted)
 
             ctx.notify();
         }

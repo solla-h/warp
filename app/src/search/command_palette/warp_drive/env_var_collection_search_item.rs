@@ -6,8 +6,7 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::{CloudObjectTypeAndId, DriveObjectType};
+use crate::cloud_object::CloudObjectTypeAndId;
 use crate::env_vars::CloudEnvVarCollection;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;
 use crate::search::command_palette::render_util::render_search_item_icon;
@@ -38,8 +37,8 @@ impl SearchItem for EnvVarCollectionSearchItem {
         highlight_state: ItemHighlightState,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
-        let color = warp_drive_icon_color(appearance, DriveObjectType::EnvVarCollection);
-        render_search_item_icon(appearance, Icon::EnvVarCollection, color, highlight_state)
+        let color = appearance.theme().foreground();
+        render_search_item_icon(appearance, Icon::EnvVarCollection, color.into(), highlight_state)
     }
 
     fn icon_location(&self, appearance: &Appearance) -> IconLocation {
@@ -152,13 +151,8 @@ impl SearchItem for EnvVarCollectionSearchItem {
     }
 
     fn execute_result(&self) -> Self::Action {
-        CommandPaletteItemAction::ViewInWarpDrive {
-            id: CloudObjectTypeAndId::GenericStringObject {
-                object_type: crate::cloud_object::GenericStringObjectFormat::Json(
-                    crate::cloud_object::JsonObjectType::EnvVarCollection,
-                ),
-                id: self.cloud_env_var_collection.id,
-            },
+        CommandPaletteItemAction::InvokeEnvironmentVariables {
+            id: self.cloud_env_var_collection.id,
         }
     }
 

@@ -10,7 +10,6 @@ use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlign
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::{Element, ViewContext};
 
-use crate::drive::sharing::{ContentEditability, SharingAccessLevel};
 use crate::env_vars::active_env_var_collection_data::TrashStatus;
 use crate::env_vars::view::env_var_collection::{EnvVarCollectionAction, EnvVarCollectionView};
 use crate::ui_components::breadcrumb::BreadcrumbState;
@@ -40,7 +39,6 @@ impl EnvVarCollectionView {
 
     pub(super) fn render_trash_banner(
         &self,
-        access_level: SharingAccessLevel,
         app: &AppContext,
     ) -> Option<Box<dyn Element>> {
         let deleted = match self
@@ -100,7 +98,7 @@ impl EnvVarCollectionView {
                 .with_main_axis_size(MainAxisSize::Max)
                 .with_cross_axis_alignment(CrossAxisAlignment::Center);
 
-            if !FeatureFlag::SharedWithMe.is_enabled() || access_level.can_trash() {
+            {
                 let ui_builder = appearance.ui_builder().clone();
                 action_row.add_child(
                     Align::new(
@@ -148,7 +146,7 @@ impl EnvVarCollectionView {
 
     pub(super) fn render_variables_section_header(
         &self,
-        editability: ContentEditability,
+        can_edit: bool,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
         let mut variables_section_row = Flex::row()
@@ -172,7 +170,7 @@ impl EnvVarCollectionView {
             .finish(),
         );
 
-        if !FeatureFlag::SharedWithMe.is_enabled() || editability.can_edit() {
+        if !FeatureFlag::SharedWithMe.is_enabled() || can_edit {
             variables_section_row.add_child(
                 Shrinkable::new(
                     1.,

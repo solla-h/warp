@@ -50,7 +50,6 @@ use crate::ai::facts::AIFactView;
 #[cfg(feature = "local_fs")]
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::view::CodeView;
-use crate::drive::sharing::ShareableObject;
 use crate::env_vars::view::env_var_collection::EnvVarCollectionView;
 use crate::menu::MenuItem;
 use crate::notebooks::file::FileNotebookView;
@@ -807,12 +806,9 @@ impl PaneConfiguration {
     /// Sets the shareable object in the current pane. If `None`, the share button is removed.
     pub fn set_shareable_object(
         &mut self,
-        shareable_object: Option<ShareableObject>,
-        ctx: &mut ModelContext<Self>,
+        _shareable_object: Option<()>,
+        _ctx: &mut ModelContext<Self>,
     ) {
-        ctx.emit(PaneConfigurationEvent::ShareableObjectChanged(
-            shareable_object,
-        ));
     }
 
     pub fn toggle_sharing_dialog(
@@ -854,7 +850,7 @@ pub enum PaneConfigurationEvent {
     ShowAccentBorderUpdated,
     OpenModalUpdated,
     RefreshPaneHeaderOverflowMenuItems,
-    ShareableObjectChanged(Option<ShareableObject>),
+    ShareableObjectChanged(Option<()>),
     ToggleSharingDialog(SharingDialogSource),
     OpenSharingQrCode(SharingDialogSource),
     DimEvenIfFocusedUpdated,

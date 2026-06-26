@@ -5,8 +5,7 @@ use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObject;
-use crate::drive::cloud_object_styling::warp_drive_icon_color;
-use crate::drive::{CloudObjectTypeAndId, DriveObjectType};
+use crate::cloud_object::CloudObjectTypeAndId;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;
 use crate::search::command_palette::render_util::render_search_item_icon;
 use crate::search::command_palette::styles::SEARCH_ITEM_TEXT_PADDING;
@@ -36,17 +35,11 @@ impl SearchItem for WorkflowSearchItem {
         appearance: &Appearance,
     ) -> Box<dyn Element> {
         let (icon, icon_color) = if self.cloud_workflow.model().data.is_agent_mode_workflow() {
-            (
-                Icon::Prompt,
-                warp_drive_icon_color(appearance, DriveObjectType::AgentModeWorkflow),
-            )
+            (Icon::Prompt, appearance.theme().foreground())
         } else {
-            (
-                Icon::Workflow,
-                warp_drive_icon_color(appearance, DriveObjectType::Workflow),
-            )
+            (Icon::Workflow, appearance.theme().foreground())
         };
-        render_search_item_icon(appearance, icon, icon_color, highlight_state)
+        render_search_item_icon(appearance, icon, icon_color.into(), highlight_state)
     }
 
     fn icon_location(&self, appearance: &Appearance) -> IconLocation {
@@ -143,8 +136,8 @@ impl SearchItem for WorkflowSearchItem {
     }
 
     fn execute_result(&self) -> Self::Action {
-        CommandPaletteItemAction::ViewInWarpDrive {
-            id: CloudObjectTypeAndId::Workflow(self.cloud_workflow.id),
+        CommandPaletteItemAction::ExecuteWorkflow {
+            id: self.cloud_workflow.id,
         }
     }
 

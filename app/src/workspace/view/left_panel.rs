@@ -1,3 +1,6 @@
+const MIN_SIDEBAR_WIDTH: f32 = 200.0;
+const MAX_SIDEBAR_WIDTH_RATIO: f32 = 0.4;
+
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -25,9 +28,6 @@ use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::file_tree::FileTreeEvent;
 use crate::code::file_tree::FileTreeView;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
-use crate::drive::panel::{
-    DrivePanel, DrivePanelEvent, MAX_SIDEBAR_WIDTH_RATIO, MIN_SIDEBAR_WIDTH,
-};
 use crate::pane_group::pane::view::header::components::HEADER_EDGE_PADDING;
 use crate::pane_group::pane::view::header::PANE_HEADER_HEIGHT;
 use crate::pane_group::working_directories::WorkingDirectory;
@@ -82,7 +82,6 @@ pub enum LeftPanelAction {
 pub enum LeftPanelEvent {
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     FileTree(pane_group::Event),
-    WarpDrive(DrivePanelEvent),
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     OpenFileWithTarget {
         location: LocalOrRemotePath,
@@ -168,7 +167,6 @@ pub struct LeftPanelView {
     resizable_state_handle: ResizableStateHandle,
     mouse_state_handles: MouseStateHandles,
     close_button_mouse_state: MouseStateHandle,
-    warp_drive_view: ViewHandle<DrivePanel>,
     conversation_list_view: ViewHandle<ConversationListView>,
     active_view: active_view_state::ActiveViewState,
     toolbelt_buttons: Vec<ToolbeltButtonConfig>,
@@ -212,12 +210,7 @@ impl LeftPanelView {
                 resizable_state_handle(600.0)
             }
         };
-        let warp_drive_view = ctx.add_typed_action_view(DrivePanel::new);
         let conversation_list_view = ctx.add_typed_action_view(ConversationListView::new);
-
-        ctx.subscribe_to_view(&warp_drive_view, |_me, _, event, ctx| {
-            ctx.emit(LeftPanelEvent::WarpDrive(event.clone()));
-        });
 
         ctx.subscribe_to_view(&conversation_list_view, |_me, _, event, ctx| match event {
             ConversationListViewEvent::NewConversationInNewTab => {
@@ -325,7 +318,6 @@ impl LeftPanelView {
             resizable_state_handle,
             mouse_state_handles: Default::default(),
             close_button_mouse_state: Default::default(),
-            warp_drive_view,
             conversation_list_view,
             active_view: active_view_state::new(active_view),
             toolbelt_buttons,
@@ -552,10 +544,6 @@ impl LeftPanelView {
         self.active_view.get() == ToolPanelView::ProjectExplorer
     }
 
-    pub fn warp_drive_view(&self) -> &ViewHandle<DrivePanel> {
-        &self.warp_drive_view
-    }
-
     pub(crate) fn auto_expand_active_file_tree_to_most_recent_directory(
         &mut self,
         ctx: &mut ViewContext<Self>,
@@ -706,12 +694,7 @@ impl LeftPanelView {
                     ctx,
                 );
             }
-            ToolPanelView::WarpDrive => {
-                ctx.focus(&self.warp_drive_view);
-                self.warp_drive_view.update(ctx, |view, ctx| {
-                    view.reset_focused_index_in_warp_drive(true, ctx);
-                });
-            }
+            ToolPanelView::WarpDrive => {}
             ToolPanelView::ConversationListView => {
                 self.conversation_list_view.update(ctx, |view, ctx| {
                     view.on_left_panel_focused(ctx);
@@ -1107,7 +1090,7 @@ impl View for LeftPanelView {
                         ctx.focus(&view);
                     }
                 }
-                ToolPanelView::WarpDrive => ctx.focus(&self.warp_drive_view),
+                ToolPanelView::WarpDrive => {},
                 ToolPanelView::ConversationListView => ctx.focus(&self.conversation_list_view),
             }
         }
@@ -1172,7 +1155,7 @@ impl View for LeftPanelView {
             }
             ToolPanelView::WarpDrive => Shrinkable::new(
                 1.0,
-                Container::new(ChildView::new(&self.warp_drive_view).finish())
+                Container::new(Empty::new().finish())
                     .with_padding_left(2.)
                     .with_padding_right(2.)
                     .finish(),

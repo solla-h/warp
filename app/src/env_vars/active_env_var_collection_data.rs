@@ -5,7 +5,6 @@ use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::CloudModelEvent;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{CloudObject, Owner, Revision, Space};
-use crate::drive::sharing::{ContentEditability, SharingAccessLevel};
 use crate::env_vars::CloudEnvVarCollection;
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManagerEvent,
@@ -196,28 +195,9 @@ impl ActiveEnvVarCollectionData {
         }
     }
 
-    /// The current user's access level on this env var collection.
-    pub fn access_level(&self, app: &AppContext) -> SharingAccessLevel {
-        match &self.active_env_var_collection {
-            ActiveEnvVarCollection::CommittedEnvVarCollection(sync_id) => {
-                CloudViewModel::as_ref(app).access_level(&sync_id.uid(), app)
-            }
-            ActiveEnvVarCollection::None | ActiveEnvVarCollection::NewEnvVarCollection(_) => {
-                SharingAccessLevel::Full
-            }
-        }
-    }
 
-    pub fn editability(&self, app: &AppContext) -> ContentEditability {
-        match &self.active_env_var_collection {
-            ActiveEnvVarCollection::CommittedEnvVarCollection(sync_id) => {
-                CloudViewModel::as_ref(app).object_editability(&sync_id.uid(), app)
-            }
-            ActiveEnvVarCollection::None | ActiveEnvVarCollection::NewEnvVarCollection(_) => {
-                ContentEditability::Editable
-            }
-        }
-    }
+
+
 
     /// The space that this env var collection is in.
     pub fn space(&self, app: &AppContext) -> Option<Space> {
