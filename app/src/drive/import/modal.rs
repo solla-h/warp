@@ -16,7 +16,7 @@ pub struct ImportModal;
 
 impl ImportModal {
     pub fn new(_ctx: &mut ViewContext<Self>) -> Self { Self }
-    pub fn open_with_target<A: 'static, B: 'static, C: 'static>(&mut self, _a: A, _b: B, _c: C) {}
+    pub fn open_with_target<A, B>(&mut self, _a: A, _b: B, _c: &mut ViewContext<'_, Self>) {}
 }
 
 impl Entity for ImportModal {

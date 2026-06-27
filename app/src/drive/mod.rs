@@ -41,8 +41,8 @@ impl DriveSortOrder {
 pub struct OpenWarpDriveObjectArgs {
     pub cloud_object_type_and_id: CloudObjectTypeAndId,
     pub settings: OpenWarpDriveObjectSettings,
-    pub object_type: Option<String>,
-    pub server_id: Option<ServerId>,
+    pub object_type: crate::cloud_object::ObjectType,
+    pub server_id: ServerId,
 }
 
 impl Default for OpenWarpDriveObjectArgs {
@@ -50,8 +50,8 @@ impl Default for OpenWarpDriveObjectArgs {
         Self {
             cloud_object_type_and_id: CloudObjectTypeAndId::Notebook(SyncId::ClientId(crate::server::ids::ClientId::new())),
             settings: OpenWarpDriveObjectSettings::default(),
-            object_type: None,
-            server_id: None,
+            object_type: crate::cloud_object::ObjectType::Notebook,
+            server_id: ServerId::default(),
         }
     }
 }
@@ -69,23 +69,26 @@ pub enum DriveObjectType {
     AgentModeWorkflow, AIFact, AIFactCollection, MCPServer, MCPServerCollection,
 }
 impl Default for DriveObjectType { fn default() -> Self { Self::Workflow } }
+impl std::fmt::Display for DriveObjectType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{:?}", self) }
+}
 
 #[derive(Default)]
 pub struct DrivePanel;
 impl DrivePanel {
-    pub fn open_cloud_object_dialog<A: 'static, B: 'static, C: 'static, D: 'static>(&mut self, _a: A, _b: B, _c: C, _d: D) {}
-    pub fn reset_focused_index_in_warp_drive<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn scroll_item_into_view<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn expand_section_for_drive_item_id<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn initialize_drive_section_states<A: 'static>(&mut self, _a: A) {}
-    pub fn reset_and_open_to_main_index<A: 'static>(&mut self, _a: A) {}
-    pub fn set_focused_item<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn set_focused_index<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn open_object_sharing_settings<A: 'static, B: 'static, C: 'static, D: 'static>(&mut self, _a: A, _b: B, _c: C, _d: D) {}
-    pub fn set_selected_object<A: 'static>(&mut self, _a: A) {}
-    pub fn undo_trash<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
-    pub fn create_workflow_with_content<A: 'static, B: 'static, C: 'static, D: 'static, E: 'static>(&mut self, _a: A, _b: B, _c: C, _d: D, _e: E) {}
-    pub fn move_object_to_team_owner<A: 'static, B: 'static, C: 'static>(&mut self, _a: A, _b: B, _c: C) {}
+    pub fn open_cloud_object_dialog<A, B, C>(&mut self, _a: A, _b: B, _c: C, _d: &mut ViewContext<'_, Self>) {}
+    pub fn reset_focused_index_in_warp_drive<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn scroll_item_into_view<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn expand_section_for_drive_item_id<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn initialize_drive_section_states(&mut self, _a: &mut ViewContext<'_, Self>) {}
+    pub fn reset_and_open_to_main_index(&mut self, _a: &mut ViewContext<'_, Self>) {}
+    pub fn set_focused_item<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn set_focused_index<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn open_object_sharing_settings<A, B, C>(&mut self, _a: A, _b: B, _c: C, _d: &mut ViewContext<'_, Self>) {}
+    pub fn set_selected_object<A>(&mut self, _a: A) {}
+    pub fn undo_trash<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
+    pub fn create_workflow_with_content<A, B, C, D>(&mut self, _a: A, _b: B, _c: C, _d: D, _e: &mut ViewContext<'_, Self>) {}
+    pub fn move_object_to_team_owner<A, B>(&mut self, _a: A, _b: B, _c: &mut ViewContext<'_, Self>) {}
     pub fn has_warp_drive_initialized_sections(&self, _app: &AppContext) -> impl std::future::Future<Output = ()> { async {} }
 }
 #[derive(Clone, Debug)]
@@ -102,16 +105,16 @@ impl warpui::TypedActionView for DrivePanel {
 #[derive(Debug)]
 pub enum DrivePanelEvent {
     OpenObject(CloudObjectTypeAndId),
-    RunWorkflow(Box<dyn std::any::Any + Send + Sync>),
-    InvokeEnvironmentVariables { env_var_collection: Box<dyn std::any::Any + Send + Sync>, in_subshell: bool },
+    RunWorkflow(std::sync::Arc<crate::workflows::CloudWorkflow>),
+    InvokeEnvironmentVariables { env_var_collection: std::sync::Arc<crate::env_vars::CloudEnvVarCollection>, in_subshell: bool },
     OpenTeamSettingsPage,
-    OpenImportModal { owner: Box<Owner>, initial_folder_id: Option<SyncId> },
+    OpenImportModal { owner: Owner, initial_folder_id: Option<SyncId> },
     OpenWorkflowModalWithNew { space: crate::cloud_object::Space, initial_folder_id: Option<SyncId> },
     OpenWorkflowModalWithCloudWorkflow(SyncId),
     OpenSearch,
-    OpenNotebook(Box<dyn std::any::Any + Send + Sync>),
-    OpenEnvVarCollection(Box<dyn std::any::Any + Send + Sync>),
-    OpenWorkflowInPane(Box<dyn std::any::Any + Send + Sync>, Box<dyn std::any::Any + Send + Sync>),
+    OpenNotebook(crate::notebooks::manager::NotebookSource),
+    OpenEnvVarCollection(crate::env_vars::manager::EnvVarCollectionSource),
+    OpenWorkflowInPane(crate::workflows::manager::WorkflowOpenSource, crate::workflows::WorkflowViewMode),
     OpenAIFactCollection,
     OpenMCPServerCollection,
     FocusWarpDrive,

@@ -102,6 +102,8 @@ use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipAction, TipsCompleted,
 };
 use crate::server::ids::{ObjectUid, SyncId};
+use crate::drive::items::WarpDriveItemId;
+use crate::drive::OpenWarpDriveObjectArgs;
 use crate::server::server_api::{ServerApi, ServerApiProvider};
 use crate::server::telemetry::{
     AnonymousUserSignupEntrypoint, PaletteSource, SharingDialogSource, TelemetryEvent,
@@ -740,6 +742,11 @@ pub enum Event {
     FreeTierLimitCheckTriggered,
     #[cfg(not(target_family = "wasm"))]
     OpenPluginInstructionsPane(crate::terminal::CLIAgent, PluginModalKind),
+    OpenWarpDriveLink {
+        open_warp_drive_args: OpenWarpDriveObjectArgs,
+    },
+    ViewInWarpDrive(WarpDriveItemId),
+    OpenWarpDriveObjectInPane(ObjectUid),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1703,6 +1710,7 @@ impl PaneGroup {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
                     NotebookPaneSnapshot::CloudNotebook {
                         notebook_id,
+                        settings: _,
                     } => Box::new(NotebookPane::restore(notebook_id, ctx)?),
                     NotebookPaneSnapshot::LocalFileNotebook { path } => Box::new(FilePane::new(
                         path.map(LocalOrRemotePath::Local),

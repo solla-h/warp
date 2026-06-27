@@ -142,14 +142,14 @@ impl UpdateManager {
     pub fn delete_object_by_user<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn delete_object_with_initiated_by<I: 'static>(&mut self, _id: I, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn delete_ai_execution_profile<A: 'static>(&mut self, _input: A, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn duplicate_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
+    pub fn duplicate_object<I>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn trash_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn untrash_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn empty_trash<S: 'static>(&mut self, _space: S, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn leave_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn move_object_to_location<I: 'static, L: 'static>(&mut self, _id: I, _loc: L, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn rename_folder<I: 'static>(&mut self, _id: I, _name: String, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn fetch_single_cloud_object<I: 'static>(&mut self, _id: I, _option: FetchSingleObjectOption, _ctx: &mut warpui::ModelContext<Self>) -> tokio::sync::oneshot::Receiver<()> { let (_, rx) = tokio::sync::oneshot::channel(); rx }
+    pub fn fetch_single_cloud_object<I>(&mut self, _id: I, _option: FetchSingleObjectOption, _ctx: &mut warpui::ModelContext<Self>) -> tokio::sync::oneshot::Receiver<()> { let (_, rx) = tokio::sync::oneshot::channel(); rx }
     pub fn resync_object<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn replace_object_with_conflict<I: 'static>(&mut self, _id: I, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn refresh_updated_objects(&mut self, _ctx: &mut warpui::ModelContext<Self>) {}
@@ -951,8 +951,8 @@ pub fn extract_server_id_and_object_type_from_warp_drive_link(
     let cloud_object_type_and_id = CloudObjectTypeAndId::from_id_and_type(sync_id, object_type);
     Some(OpenWarpDriveObjectArgs {
         cloud_object_type_and_id,
-        object_type: None,
-        server_id: Some(server_id),
+        object_type,
+        server_id,
         settings: OpenWarpDriveObjectSettings {
             show_in_new_pane: false,
             focused_folder_id,

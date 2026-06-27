@@ -341,7 +341,7 @@ impl AccountWidget {
             .with_cross_axis_alignment(CrossAxisAlignment::End);
         let current_user_id = auth_state.user_id().unwrap_or_default();
 
-        plan_info.add_child(render_customer_type_badge(appearance, "Free".into()));
+        plan_info.add_child(render_customer_type_badge(appearance, String::from("Free")));
         plan_info.add_child(
             Container::new(
                 appearance
@@ -555,7 +555,7 @@ impl AccountWidget {
                 }
             }
         } else {
-            let plan_badge_child = render_customer_type_badge(appearance, "Free".into());
+            let plan_badge_child = render_customer_type_badge(appearance, String::from("Free"));
             plan_info.add_child(plan_badge_child);
 
             plan_info.add_child(

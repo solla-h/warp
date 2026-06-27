@@ -232,6 +232,7 @@ pub enum SettingsViewEvent {
     OpenProjectRulesPane {
         rule_paths: Vec<PathBuf>,
     },
+    OpenWarpDrive,
 }
 
 /// Different navigation sections within the settings view

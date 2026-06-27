@@ -1148,6 +1148,7 @@ impl WorkspaceAction {
             DismissWaylandCrashRecoveryBannerAndOpenLink => false,
             #[cfg(target_family = "wasm")]
             OpenLinkOnDesktop(_) => false,
+            ViewObjectInWarpDrive(_) => false,
             // actions that are related to updating user settings or
             // managing some ui elements (like closing/opening modals)
             // that don't reflect on actual workspace and don't need to

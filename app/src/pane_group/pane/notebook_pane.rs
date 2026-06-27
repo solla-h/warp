@@ -57,7 +57,7 @@ impl NotebookPane {
         };
 
         Ok(NotebookManager::handle(ctx).update(ctx, |manager, ctx| {
-            manager.create_pane(&source, window_id, ctx)
+            manager.create_pane(&source, &Default::default(), window_id, ctx)
         }))
     }
 
@@ -75,6 +75,7 @@ impl PaneContent for NotebookPane {
         let notebook_id = self.notebook_view(app).as_ref(app).notebook_id(app);
         LeafContents::Notebook(NotebookPaneSnapshot::CloudNotebook {
             notebook_id,
+            settings: Default::default(),
         })
     }
 

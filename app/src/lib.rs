@@ -1866,7 +1866,7 @@ pub(crate) fn initialize_app(
         )
     });
 
-    ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
+    ctx.add_singleton_model(|ctx| { let _ = restored_user_profiles; UserProfiles::new(ctx) });
 
     ctx.add_singleton_model(|_| ObjectActions::new(object_actions));
 

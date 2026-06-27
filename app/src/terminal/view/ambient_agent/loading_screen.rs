@@ -139,7 +139,7 @@ fn render_tier_limits_footer(
 
     // Get tier info and billing metadata from UserWorkspaces
     let workspace = UserWorkspaces::as_ref(app).current_workspace()?;
-    let policy = workspace.billing_metadata.tier.ambient_agents_policy?;
+    let policy = workspace.billing_metadata.tier.ambient_agents_policy.clone()?;
 
     let shape = policy.instance_shape.as_ref()?;
     let specs = format!("{}CPU, {}GB", shape.vcpus, shape.memory_gb);

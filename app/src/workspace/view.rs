@@ -3138,7 +3138,7 @@ impl Workspace {
         let native_modal = Self::build_native_modal_view(ctx);
 
         let shared_objects_creation_denied_modal =
-            ctx.add_typed_action_view(|ctx| SharedObjectsCreationDeniedModal::new(None, ctx));
+            ctx.add_typed_action_view(|ctx| SharedObjectsCreationDeniedModal::new(None::<crate::server::ids::ServerId>, ctx));
         ctx.subscribe_to_view(
             &shared_objects_creation_denied_modal,
             |me, _, event, ctx| match event {
@@ -14230,8 +14230,9 @@ impl Workspace {
     /// Updates the left panel's warp drive view.
     fn update_warp_drive_view<F>(&mut self, _ctx: &mut ViewContext<Self>, _update_fn: F)
     where
-        F: FnOnce(&mut DrivePanel, &mut ViewContext<DrivePanel>),
+        F: FnOnce(&mut DrivePanel, &mut ViewContext<'_, DrivePanel>),
     {
+        drop(_update_fn);
     }
 
 
@@ -16431,7 +16432,7 @@ impl Workspace {
                         if let Some(initial_content) = initial_content {
                             drive_view.create_workflow_with_content(
                                 Space::Personal,
-                                None,
+                                None::<SyncId>,
                                 initial_content.clone(),
                                 true, // is_for_agent_mode
                                 ctx,
@@ -16440,7 +16441,7 @@ impl Workspace {
                             drive_view.open_cloud_object_dialog(
                                 DriveObjectType::AgentModeWorkflow,
                                 Space::Personal,
-                                None,
+                                None::<SyncId>,
                                 ctx,
                             );
                         }
@@ -16954,6 +16955,7 @@ impl Workspace {
 
     fn handle_warp_drive_event(&mut self, event: &DrivePanelEvent, ctx: &mut ViewContext<Self>) {
         match event {
+            DrivePanelEvent::OpenObject(_) => {}
             DrivePanelEvent::RunWorkflow(workflow) => {
                 self.run_cloud_workflow_in_active_input(
                     workflow.as_ref().clone(),
@@ -16978,7 +16980,7 @@ impl Workspace {
             DrivePanelEvent::OpenImportModal {
                 owner,
                 initial_folder_id,
-            } => self.open_import_modal(*owner, initial_folder_id, ctx),
+            } => self.open_import_modal(owner.clone(), initial_folder_id, ctx),
             DrivePanelEvent::OpenWorkflowModalWithNew {
                 space,
                 initial_folder_id,
@@ -17035,10 +17037,12 @@ impl Workspace {
                 ctx.focus(&self.left_panel_view);
             }
             DrivePanelEvent::OpenSharedObjectsCreationDeniedModal(object_type, team_uid) => {
-                self.open_shared_objects_creation_denied_modal(*object_type, *team_uid, ctx)
+                self.open_shared_objects_creation_denied_modal(object_type.clone(), *team_uid, ctx)
             }
             DrivePanelEvent::AttachPlanAsContext(id) => {
-                self.attach_plan_as_context(*id, ctx);
+                if let Ok(doc_id) = AIDocumentId::try_from(id.as_str()) {
+                    self.attach_plan_as_context(doc_id, ctx);
+                }
             }
         }
     }
@@ -17930,7 +17934,7 @@ impl Workspace {
     fn set_selected_object(&mut self, id: Option<WarpDriveItemId>, ctx: &mut ViewContext<Self>) {
         // Set Warp drive index selected state
         self.update_warp_drive_view(ctx, |drive_panel, ctx| {
-            drive_panel.set_selected_object(id, ctx);
+            drive_panel.set_selected_object(id);
         });
         // If WD open, show the highlighted object (force expand necessary ancestors)
         if self.current_workspace_state.is_warp_drive_open {
@@ -18100,7 +18104,12 @@ impl Workspace {
                 let args_state =
                     ArgumentsState::for_command_workflow(&Default::default(), command.clone());
                 let workflow = Workflow::new("Command from Warp AI", command)
-                    .with_arguments(args_state.arguments);
+                    .with_arguments(args_state.arguments.into_iter().map(|a| crate::workflows::workflow::Argument {
+                        name: a.name,
+                        arg_type: crate::workflows::workflow::ArgumentType::Text,
+                        description: Some(a.description),
+                        default_value: Some(a.default_value),
+                    }).collect());
                 self.run_workflow_in_active_input(
                     &WorkflowType::AIGenerated {
                         workflow,
@@ -18688,8 +18697,8 @@ impl Workspace {
             self.shared_objects_creation_denied_modal
                 .update(ctx, |modal, ctx| {
                     modal.update_modal_state(
-                        team_uid,
-                        object_type,
+                        Some(team_uid),
+                        Some(object_type.to_string()),
                         has_admin_permissions,
                         is_delinquent_due_to_payment_issue,
                         customer_type,
@@ -23233,7 +23242,7 @@ impl TypedActionView for Workspace {
                                 is_ai_document: false,
                             },
                             Space::Team { team_uid },
-                            None,
+                            None::<SyncId>,
                             ctx,
                         );
                     });
@@ -23261,7 +23270,7 @@ impl TypedActionView for Workspace {
                         drive_panel.open_cloud_object_dialog(
                             DriveObjectType::EnvVarCollection,
                             Space::Team { team_uid },
-                            None,
+                            None::<SyncId>,
                             ctx,
                         );
                     });
@@ -23309,7 +23318,7 @@ impl TypedActionView for Workspace {
                     drive_panel.open_cloud_object_dialog(
                         DriveObjectType::Folder,
                         Space::Personal,
-                        None,
+                        None::<SyncId>,
                         ctx,
                     );
                 });
@@ -23323,7 +23332,7 @@ impl TypedActionView for Workspace {
                         drive_panel.open_cloud_object_dialog(
                             DriveObjectType::Folder,
                             Space::Team { team_uid },
-                            None,
+                            None::<SyncId>,
                             ctx,
                         );
                     });
@@ -23992,8 +24001,10 @@ impl TypedActionView for Workspace {
             FocusLeftPanel => self.focus_left_panel(ctx),
             FocusRightPanel => self.focus_right_panel(ctx),
             ViewObjectInWarpDrive(item_id) => {
-                // Focus newly created object in WD
-                self.view_in_and_focus_warp_drive(*item_id, ctx);
+                self.view_in_and_focus_warp_drive(
+                    WarpDriveItemId::Object(CloudObjectTypeAndId::Notebook(**item_id)),
+                    ctx,
+                );
             }
             OpenObjectSharingSettings { object_id, source } => {
                 self.open_object_sharing_settings(*object_id, None, *source, ctx);

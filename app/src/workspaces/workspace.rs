@@ -9,7 +9,7 @@ pub use cloud_object_models::AgentModeCommandExecutionPredicate;
 
 pub type WorkspaceUid = String;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CustomerType { Free, Prosumer, Business, Enterprise, Turbo, Unknown }
 impl Default for CustomerType { fn default() -> Self { Self::Free } }
 impl CustomerType {
@@ -235,7 +235,7 @@ impl Workspace {
     pub fn is_at_addon_credits_monthly_limit(&self) -> bool { false }
     pub fn is_gemini_enterprise_credentials_enabled(&self) -> bool { false }
     pub fn workspaces(&self) -> &[Self] { &[] }
-    pub fn would_addon_purchase_reach_limit(&self, _amount: i32) -> bool { false }
+    pub fn would_addon_purchase_reach_limit<T: 'static>(&self, _amount: T) -> bool { false }
     pub fn to_display_string(&self) -> String { self.name.clone() }
 }
 impl std::fmt::Display for Workspace {

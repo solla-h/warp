@@ -229,7 +229,7 @@ impl ClassifiedGrants {
             }
             let in_user_scope = grant.scope == BonusGrantScope::User;
             let in_workspace_scope =
-                workspace_uid.is_some_and(|uid| grant.scope == BonusGrantScope::Workspace(uid));
+                workspace_uid.as_ref().is_some_and(|uid| grant.scope == BonusGrantScope::Workspace(uid.clone()));
             if grant.grant_type == BonusGrantType::AmbientOnly {
                 continue;
             } else if in_user_scope {
@@ -650,7 +650,7 @@ impl BillingAndUsagePageV2View {
         } else {
             let current_user_id = self.auth_state.user_id().unwrap_or_default();
             right_side.add_child(
-                Container::new(render_customer_type_badge(appearance, "Free".into()))
+                Container::new(render_customer_type_badge(appearance, String::from("Free")))
                     .with_margin_right(8.)
                     .finish(),
             );
@@ -739,7 +739,7 @@ impl BillingAndUsagePageV2View {
         let grants = ai_model.bonus_grants();
         let workspace_uid = UserWorkspaces::as_ref(app)
             .current_workspace()
-            .map(|ws| ws.uid);
+            .map(|ws| ws.uid.clone());
         let classified = ClassifiedGrants::new(grants, workspace_uid);
 
         if !has_base_credits && !classified.has_any() {
@@ -1651,7 +1651,7 @@ impl BillingAndUsagePageV2View {
             UserWorkspaces::as_ref(app).current_workspace(),
             UserWorkspaces::as_ref(app).current_team(),
         ) {
-            let workspace_bonus_credits = ai_model.total_workspace_bonus_credits_remaining(ws.uid);
+            let workspace_bonus_credits = ai_model.total_workspace_bonus_credits_remaining(ws.uid.clone());
             let is_payg_zero = ws.billing_metadata.is_enterprise_pay_as_you_go_enabled()
                 && workspace_bonus_credits == 0;
 

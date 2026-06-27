@@ -4,7 +4,7 @@ use crate::auth::UserUid;
 #[derive(Debug, Clone, Default)]
 pub struct UserProfileWithUID { pub firebase_uid: UserUid, pub display_name: Option<String>, pub email: String, pub photo_url: String }
 impl UserProfileWithUID { pub fn displayable_identifier(&self) -> String { self.display_name.clone().unwrap_or_else(|| self.email.clone()) } }
-pub fn user_profile_from_persistence<T: 'static>(_data: T) -> UserProfileWithUID { UserProfileWithUID::default() }
+pub fn user_profile_from_persistence<T: 'static>(_data: T) -> Option<UserProfileWithUID> { Some(UserProfileWithUID::default()) }
 #[derive(Default)]
 pub struct UserProfiles;
 impl UserProfiles {

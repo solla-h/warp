@@ -106,6 +106,18 @@ impl SharedObjectsCreationDeniedModal {
         }
     }
 
+    pub fn update_modal_state(
+        &mut self,
+        team_uid: Option<ServerId>,
+        _object_type: Option<String>,
+        _has_admin_permissions: bool,
+        _is_delinquent_due_to_payment_issue: bool,
+        _customer_type: CustomerType,
+        _ctx: &mut ViewContext<Self>,
+    ) {
+        self.team_uid = team_uid;
+    }
+
     pub fn close(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.emit(SharedObjectsCreationDeniedModalEvent::Close);
     }

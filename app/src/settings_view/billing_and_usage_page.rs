@@ -1528,7 +1528,7 @@ impl BillingAndUsagePageView {
 
         let (total_overages_count, total_overages_cost, total_overages_period_end) =
             if is_period_over_now {
-                (Some(0), Some(0), None)
+                (Some(0u64), Some(0.0f64), None)
             } else {
                 (
                     ai_overages.map(|o| o.current_monthly_requests_used),
@@ -2709,7 +2709,7 @@ impl BillingAndUsagePageView {
             .with_cross_axis_alignment(CrossAxisAlignment::End);
         let current_user_id = auth_state.user_id().unwrap_or_default();
 
-        plan_info.add_child(render_customer_type_badge(appearance, "Free".into()));
+        plan_info.add_child(render_customer_type_badge(appearance, String::from("Free")));
         plan_info.add_child(
             Container::new(
                 appearance
@@ -2868,7 +2868,7 @@ impl BillingAndUsagePageView {
     ) -> (Box<dyn Element>, Box<dyn Element>) {
         let current_user_id = auth_state.user_id().unwrap_or_default();
 
-        let plan_badge = render_customer_type_badge(appearance, "Free".into());
+        let plan_badge = render_customer_type_badge(appearance, String::from("Free"));
 
         let badge_element = Container::new(plan_badge).with_margin_right(16.).finish();
 

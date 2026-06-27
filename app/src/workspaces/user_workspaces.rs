@@ -59,7 +59,7 @@ impl UserWorkspaces {
     pub fn team_from_uid_across_all_workspaces<U: 'static>(&self, _uid: U) -> Option<&Team> { None }
     pub fn num_joinable_teams(&self) -> usize { 0 }
     pub fn total_teammates_in_joinable_teams(&self) -> usize { 0 }
-    pub fn owner_to_space(&self, _owner: &Owner, _ctx: &AppContext) -> Space { Space::Personal }
+    pub fn owner_to_space(&self, _owner: impl std::borrow::Borrow<Owner>, _ctx: &AppContext) -> Space { Space::Personal }
     pub fn space_to_owner(&self, _space: impl std::borrow::Borrow<crate::cloud_object::Space>, _ctx: &AppContext) -> Option<Owner> { None }
     pub fn workspaces_metadata(&self) -> Option<&WorkspacesMetadataResponse> { None }
     pub fn workspaces(&self) -> &[Workspace] { &[] }
@@ -117,7 +117,7 @@ impl UserWorkspaces {
     pub fn set_team_member_role<A: 'static, B: 'static>(&mut self, _user_uid: A, _team_uid: B, _role: MembershipRole, _ctx: &mut ModelContext<Self>) {}
     pub fn setup_test_workspace(&mut self, _ctx: &mut ModelContext<Self>) {}
     pub fn update<R: 'static>(&mut self, _response: R, _ctx: &mut ModelContext<Self>) {}
-    pub fn update_addon_credits_settings<T: 'static, A: 'static, B: 'static, C: 'static, D: 'static>(&mut self, _team_uid: T, _a: A, _b: B, _c: C, _d: D, _ctx: &mut ModelContext<Self>) {}
+    pub fn update_addon_credits_settings(&mut self, _team_uid: crate::server::ids::ServerId, _enabled: Option<bool>, _monthly_limit: Option<i32>, _credits: Option<i32>, _ctx: &mut ModelContext<Self>) {}
     pub fn update_current_workspace(&mut self, _workspace: Workspace, _ctx: &mut ModelContext<Self>) {}
     pub fn update_object_location(&mut self, _ctx: &mut ModelContext<Self>) {}
     pub fn update_session_team_permissions(&mut self, _ctx: &mut ModelContext<Self>) {}

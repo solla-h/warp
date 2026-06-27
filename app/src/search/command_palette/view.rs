@@ -95,7 +95,7 @@ pub enum Event {
     /// Open a notebook identified by `id`.
     OpenNotebook { id: SyncId },
     /// View the relevant object in the Warp Drive sidebar.
-    ViewInWarpDrive { id: SyncId },
+    ViewInWarpDrive { id: crate::cloud_object::CloudObjectTypeAndId },
     /// Open a file at the given path.
     OpenFile {
         path: String,

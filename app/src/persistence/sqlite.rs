@@ -1144,12 +1144,7 @@ fn save_pane_state(
         }
         LeafContents::Notebook(notebook_snapshot) => {
             let (notebook_id, local_path) = match notebook_snapshot {
-                NotebookPaneSnapshot::CloudNotebook {
-                    notebook_id,
-                } => (
-                    notebook_id.map(|id| id.sqlite_uid_hash(ObjectIdType::Notebook)),
-                    None,
-                ),
+                NotebookPaneSnapshot::CloudNotebook { notebook_id, settings: _ } => (notebook_id.map(|id| id.sqlite_uid_hash(ObjectIdType::Notebook)), None,),
                 NotebookPaneSnapshot::LocalFileNotebook { path } => {
                     (None, path.clone().map(encode_path))
                 }
@@ -1779,7 +1774,7 @@ fn save_workspace(conn: &mut SqliteConnection, workspace: WorkspaceMetadata) -> 
     use schema::workspaces::dsl::*;
     let new_workspace = NewWorkspace {
         name: workspace.name,
-        server_uid: workspace.uid.into(),
+        server_uid: workspace.uid.clone().into(),
         is_selected: true,
     };
 
@@ -1832,7 +1827,7 @@ fn save_workspace(conn: &mut SqliteConnection, workspace: WorkspaceMetadata) -> 
         }
 
         let new_workspace_team = NewWorkspaceTeam {
-            workspace_server_uid: workspace.uid.into(),
+            workspace_server_uid: workspace.uid.clone().into(),
             team_server_uid: team.uid.into(),
         };
         diesel::insert_into(workspace_teams)
@@ -1876,10 +1871,11 @@ fn save_workspaces(
         .clone()
         .into_iter()
         .map(|workspace| NewWorkspace {
-            server_uid: workspace.uid.into(),
+            server_uid: workspace.uid.clone().into(),
             name: workspace.name,
             is_selected: current_workspace_uid
-                .map(|current_uid| workspace.uid == current_uid)
+                .as_ref()
+                .map(|current_uid| workspace.uid == *current_uid)
                 .unwrap_or(false),
         })
         .collect();
@@ -1923,11 +1919,12 @@ fn save_workspaces(
         .clone()
         .into_iter()
         .flat_map(|workspace| {
+            let ws_uid = workspace.uid;
             workspace
                 .teams
                 .into_iter()
-                .map(|team| NewWorkspaceTeam {
-                    workspace_server_uid: workspace.uid.into(),
+                .map(move |team| NewWorkspaceTeam {
+                    workspace_server_uid: ws_uid.clone().into(),
                     team_server_uid: team.uid.into(),
                 })
                 .collect::<Vec<NewWorkspaceTeam>>()
@@ -1990,7 +1987,7 @@ fn save_workspaces(
             // the first workspace as the current workspace.
             if let Some(first_workspace) = workspaces_to_insert.first() {
                 diesel::update(workspaces.filter(
-                    schema::workspaces::dsl::server_uid.eq::<String>(first_workspace.uid.into()),
+                    schema::workspaces::dsl::server_uid.eq::<String>(first_workspace.uid.clone().into()),
                 ))
                 .set(is_selected.eq(true))
                 .execute(conn)?;
@@ -2118,6 +2115,7 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
                         Some(path) => NotebookPaneSnapshot::LocalFileNotebook { path: Some(path) },
                         None => NotebookPaneSnapshot::CloudNotebook {
                             notebook_id,
+                            settings: Default::default(),
                         },
                     })
                 }
@@ -2537,11 +2535,11 @@ fn read_sqlite_data(
     let teams: Vec<TeamMetadata> = db_teams
         .into_iter()
         .map(|team| {
-            let team_settings = settings_by_team_id
+            let team_settings: Option<serde_json::Value> = settings_by_team_id
                 .get(&team.id)
                 .and_then(|json| serde_json::from_str(json).ok());
 
-            let billing_metadata = team
+            let billing_metadata: Option<serde_json::Value> = team
                 .billing_metadata_json
                 .as_ref()
                 .and_then(|json| serde_json::from_str(json).ok());
@@ -2567,7 +2565,7 @@ fn read_sqlite_data(
         .load_iter::<model::Workspace, DefaultLoadingMode>(conn)?
         .filter_map(|workspace| {
             workspace.ok().map(|workspace| {
-                let teams_for_workspace = workspace_teams
+                let teams_for_workspace: Vec<_> = workspace_teams
                     .iter()
                     .filter_map(|workspace_team| {
                         if workspace_team.workspace_server_uid == workspace.server_uid {
@@ -2582,7 +2580,7 @@ fn read_sqlite_data(
                     .cloned()
                     .collect();
                 WorkspaceMetadata::from_local_cache(
-                    workspace.server_uid.into(),
+                    workspace.server_uid,
                     workspace.name,
                     Some(teams_for_workspace),
                 )

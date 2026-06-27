@@ -14093,7 +14093,7 @@ impl Input {
                     update_manager.record_object_action(
                         workflow.cloud_object_type_and_id(),
                         ObjectActionType::Execute,
-                        None::<()>,
+                        None,
                         ctx,
                     )
                 });

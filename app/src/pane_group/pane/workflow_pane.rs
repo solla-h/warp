@@ -57,6 +57,7 @@ impl WorkflowPane {
         Ok(WorkflowManager::handle(ctx).update(ctx, |manager, ctx| {
             manager.create_pane(
                 &source,
+                &Default::default(),
                 WorkflowViewMode::supported_view_mode(workflow_id, ctx),
                 window_id,
                 ctx,

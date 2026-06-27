@@ -13694,7 +13694,7 @@ impl TerminalView {
         }
     }
 
-    pub fn insert_drive_sharing_onboarding_block<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
+    pub fn insert_drive_sharing_onboarding_block<A>(&mut self, _a: A, _b: &mut ViewContext<'_, Self>) {}
 
     pub fn interrupt_onboarding_blocks(&mut self, ctx: &mut ViewContext<Self>) {
         if let Some(onboarding_prompt_block_handle) = &self.onboarding_prompt_block {

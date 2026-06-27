@@ -393,7 +393,7 @@ impl AIRequestUsageModel {
 
         let user_bonus_credits = self.total_user_interactive_bonus_credits_remaining() > 0;
         let workspace_bonus_credits = current_workspace
-            .map(|workspace| self.total_workspace_bonus_credits_remaining(workspace.uid) > 0)
+            .map(|workspace| self.total_workspace_bonus_credits_remaining(workspace.uid.clone()) > 0)
             .unwrap_or_default();
 
         let workspace_has_overages =
@@ -520,7 +520,7 @@ impl AIRequestUsageModel {
         let now = Utc::now();
         self.bonus_grants
             .iter()
-            .filter(|grant| grant.scope == BonusGrantScope::Workspace(uid))
+            .filter(|grant| grant.scope == BonusGrantScope::Workspace(uid.clone()))
             .filter(|grant| grant.expiration.is_none_or(|exp| now < exp))
             .map(|grant| grant.request_credits_remaining)
             .sum()
@@ -529,7 +529,7 @@ impl AIRequestUsageModel {
     pub fn total_current_workspace_bonus_credits_remaining(&self, ctx: &AppContext) -> i32 {
         UserWorkspaces::as_ref(ctx)
             .current_workspace()
-            .map(|workspace| self.total_workspace_bonus_credits_remaining(workspace.uid))
+            .map(|workspace| self.total_workspace_bonus_credits_remaining(workspace.uid.clone()))
             .unwrap_or(0)
     }
 
@@ -574,10 +574,10 @@ impl AIRequestUsageModel {
             .filter(|grant| grant.grant_type != BonusGrantType::AmbientOnly)
             .filter(|grant| grant.expiration.is_none_or(|exp| now < exp))
             .filter(|grant| grant.request_credits_remaining > 0)
-            .any(|grant| match grant.scope {
+            .any(|grant| match &grant.scope {
                 BonusGrantScope::User => true,
                 BonusGrantScope::Workspace(uid) => {
-                    current_workspace.is_some_and(|workspace| workspace.uid == uid)
+                    current_workspace.is_some_and(|workspace| workspace.uid == *uid)
                 }
             });
         if !policy_allows_purchasing
