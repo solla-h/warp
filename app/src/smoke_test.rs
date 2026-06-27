@@ -60,10 +60,12 @@ fn resolve_byop_endpoint(
 
     for provider in &providers {
         if !provider.base_url.trim().is_empty() && !provider.models.is_empty() {
-            let api_key = crate::ai::agent_providers::AgentProviderSecrets::as_ref(ctx)
-                .get(&provider.id)
-                .map(str::to_owned)
-                .unwrap_or_default();
+            let api_key = std::env::var("BYOP_API_KEY").ok().unwrap_or_else(|| {
+                crate::ai::agent_providers::AgentProviderSecrets::as_ref(ctx)
+                    .get(&provider.id)
+                    .map(str::to_owned)
+                    .unwrap_or_default()
+            });
             let model_id = provider.models[0].id.clone();
             return Some((
                 provider.base_url.clone(),
