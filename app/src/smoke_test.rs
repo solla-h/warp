@@ -81,7 +81,8 @@ fn resolve_byop_endpoint(
         }
         let api_type = crate::ai::agent_providers::parse_api_type(&ep.api_type, &ep.models);
         let model_id = ep.models[0].name.clone();
-        return Some((ep.url.clone(), ep.api_key.clone(), model_id, api_type));
+        let api_key = std::env::var("BYOP_API_KEY").ok().unwrap_or_else(|| ep.api_key.clone());
+        return Some((ep.url.clone(), api_key, model_id, api_type));
     }
 
     None
