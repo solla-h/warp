@@ -1240,6 +1240,8 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|_ctx| GPUState::new());
 
+    ctx.add_singleton_model(ai::agent_providers::AgentProviderSecrets::new);
+
     PrivacySettings::register_singleton(ctx);
 
     // If any part of sqlite initialization fails, we just don't do session restoration (i.e.

@@ -98,7 +98,7 @@ async fn execute_stream(
     let adapter_kind = adapter_kind_for(api_type);
     let model_iden = ModelIden::new(adapter_kind, model_id.to_string());
 
-    let endpoint_url = base_url.to_string();
+    let endpoint_url = if base_url.ends_with('/') { base_url.to_string() } else { format!("{}/", base_url) };
     let key = api_key.to_string();
     let resolver = ServiceTargetResolver::from_resolver_fn(
         move |service_target: ServiceTarget| -> Result<ServiceTarget, genai::resolver::Error> {
