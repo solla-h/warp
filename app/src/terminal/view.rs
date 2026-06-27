@@ -336,9 +336,9 @@ use crate::resource_center::{
 };
 use crate::search::slash_command_menu::static_commands::commands;
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::SyncId;
-use crate::server::server_api::ServerApi;
-use crate::server::telemetry::{
+use crate::ids::SyncId;
+use crate::infra::ServerApi;
+use crate::telemetry::{
     self, AgentModeAttachContextMethod, AgentModeEntrypoint, AgentModeRewindEntrypoint,
     AnonymousUserSignupEntrypoint, BlockLatencyInfo, BootstrappingInfo,
     CommandCorrectionAcceptedType, CommandCorrectionEvent, InteractionSource, LinkOpenMethod,
@@ -25520,10 +25520,10 @@ impl TerminalView {
 
     pub(super) fn toggle_file_tree(
         &mut self,
-        cli_agent: Option<crate::server::telemetry::CLIAgentType>,
+        cli_agent: Option<crate::telemetry::CLIAgentType>,
         ctx: &mut ViewContext<Self>,
     ) {
-        use crate::server::telemetry::{FileTreeSource, TelemetryEvent};
+        use crate::telemetry::{FileTreeSource, TelemetryEvent};
 
         self.toggle_left_panel_file_tree(false, ctx);
         send_telemetry_from_ctx!(

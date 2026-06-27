@@ -59,8 +59,8 @@ use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, Direction, PaneConfiguration, PaneEvent, SplitPaneState};
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::MCPServerCollectionPaneEntrypoint;
+use crate::infra::ServiceProvider;
+use crate::telemetry::MCPServerCollectionPaneEntrypoint;
 use crate::settings::{AISettings, BlockVisibilitySettings, SettingsFileError};
 use crate::settings_view::mcp_servers_page::{MCPServersSettingsPage, MCPServersSettingsPageEvent};
 use crate::terminal::model::blockgrid::BlockGrid;
@@ -1139,7 +1139,7 @@ impl SettingsView {
         });
 
         // Shared blocks page
-        let block_client = ServerApiProvider::as_ref(ctx).get_block_client();
+        let block_client = ServiceProvider::as_ref(ctx).get_block_client();
         let show_blocks_view_handle =
             ctx.add_typed_action_view(|ctx| ShowBlocksView::new(block_client, ctx));
 
@@ -1209,7 +1209,7 @@ impl SettingsView {
             me.handle_privacy_page_event(event, ctx);
         });
 
-        let referrals_client = ServerApiProvider::as_ref(ctx).get_referrals_client();
+        let referrals_client = ServiceProvider::as_ref(ctx).get_referrals_client();
         let referrals_page_handle =
             ctx.add_typed_action_view(|ctx| ReferralsPageView::new(referrals_client, ctx));
         ctx.subscribe_to_view(&referrals_page_handle, |me, _, event, ctx| {

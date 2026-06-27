@@ -45,13 +45,13 @@ use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 use crate::server::retry_strategies::{
     is_transient_http_error, OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL_RETRY_STRATEGY,
 };
-use crate::server::server_api::ai::TaskListFilter;
-use crate::server::server_api::presigned_upload::HttpStatusError;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::TaskListFilter;
+use crate::infra::presigned_upload::HttpStatusError;
+use crate::infra::ServiceProvider;
 use crate::settings::AISettings;
 use crate::ui_components::icons::Icon;
 use crate::workspace::{RestoreConversationLayout, WorkspaceAction};
@@ -789,7 +789,7 @@ impl AgentConversationsModel {
         timestamp: DateTime<Utc>,
         ctx: &mut ModelContext<Self>,
     ) {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         // Subtract 1 second to give buffer for clock differences with server
         let updated_after = timestamp - chrono::Duration::seconds(1);
@@ -861,7 +861,7 @@ impl AgentConversationsModel {
             return;
         }
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         ctx.spawn_with_retry_on_error(
             move || {
@@ -1087,7 +1087,7 @@ impl AgentConversationsModel {
             return;
         }
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let future = ctx.spawn_with_retry_on_error(
             move || {
@@ -1642,7 +1642,7 @@ impl AgentConversationsModel {
         // Otherwise, spawn a task to fetch it. Use the `_when` variant so non-transient errors
         // (e.g. 401/403/404) bail after the first attempt instead of issuing all 4 requests in
         // the retry chain before being cached.
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let task_id_clone = *task_id;
 
         self.task_fetch_state
@@ -1823,7 +1823,7 @@ impl AgentConversationsModel {
         current_user_uid: &str,
         ctx: &mut ModelContext<Self>,
     ) {
-        let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
         let task_filter = self.build_task_list_filter(filters, current_user_uid);
         let current_user_uid = current_user_uid.to_string();
 

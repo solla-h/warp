@@ -35,8 +35,8 @@ use crate::persistence::model::{
     AgentConversation, AgentConversationData, AgentConversationRecord, PersistedAutoexecuteMode,
 };
 use crate::persistence::ModelEvent;
-use crate::server::ids::ServerId;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::ids::ServerId;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::terminal::model::session::SessionId;
 use crate::test_util::settings::{
     initialize_history_persistence_for_tests, initialize_settings_for_tests,

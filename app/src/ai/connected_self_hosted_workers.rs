@@ -4,8 +4,8 @@ use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::report_error;
-use crate::server::server_api::ai::ConnectedSelfHostedWorker;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::ConnectedSelfHostedWorker;
+use crate::infra::ServiceProvider;
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 pub const WARP_WORKER_HOST: &str = "warp";
 
@@ -79,7 +79,7 @@ impl ConnectedSelfHostedWorkersModel {
             return;
         }
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         ctx.spawn(
             async move { ai_client.list_connected_self_hosted_workers().await },
             |me, result, ctx| match result {

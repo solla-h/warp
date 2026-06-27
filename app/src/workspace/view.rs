@@ -307,11 +307,11 @@ use crate::search::command_search::settings::CommandSearchSettings;
 use crate::search::command_search::view::{CommandSearchEvent, CommandSearchView};
 use crate::search::slash_command_menu::static_commands::commands;
 use crate::search::{self, QueryFilter};
-use crate::server::ids::{ObjectUid, ServerId, SyncId};
+use crate::ids::{ObjectUid, ServerId, SyncId};
 use crate::server::network_log_pane_manager::NetworkLogPaneManager;
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::{ServerApi, ServerApiProvider, ServerTime};
-use crate::server::telemetry::{
+use crate::infra::ai::AIClient;
+use crate::infra::{ServerApi, ServiceProvider, ServerTime};
+use crate::telemetry::{
     AddTabWithShellSource, AnonymousUserSignupEntrypoint, CloseTarget, EnvVarTelemetryMetadata,
     FileTreeSource, KnowledgePaneEntrypoint, LaunchConfigUiLocation,
     MCPServerCollectionPaneEntrypoint, NotificationsTurnedOnSource, OpenedWarpAISource,
@@ -2707,7 +2707,7 @@ impl Workspace {
             settings_file_error,
         } = global_resource_handles.clone();
 
-        let server_api_provider = ServerApiProvider::as_ref(ctx);
+        let server_api_provider = ServiceProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
         let ai_client = server_api_provider.get_ai_client();
 
@@ -2773,7 +2773,7 @@ impl Workspace {
             me.handle_referral_theme_status_event(event, ctx);
         });
 
-        let referrals_client = ServerApiProvider::as_ref(ctx).get_referrals_client();
+        let referrals_client = ServiceProvider::as_ref(ctx).get_referrals_client();
         // On startup, check if the user has earned a referral theme by referring other users
         referral_theme_status.update(ctx, |model, ctx| {
             model.query_referral_status(referrals_client, ctx);
@@ -3138,7 +3138,7 @@ impl Workspace {
         let native_modal = Self::build_native_modal_view(ctx);
 
         let shared_objects_creation_denied_modal =
-            ctx.add_typed_action_view(|ctx| SharedObjectsCreationDeniedModal::new(None::<crate::server::ids::ServerId>, ctx));
+            ctx.add_typed_action_view(|ctx| SharedObjectsCreationDeniedModal::new(None::<crate::ids::ServerId>, ctx));
         ctx.subscribe_to_view(
             &shared_objects_creation_denied_modal,
             |me, _, event, ctx| match event {
@@ -4256,7 +4256,7 @@ impl Workspace {
             .push(self.tabs[new_tab_index].pane_group.id());
         self.activate_tab_internal(new_tab_index, ctx);
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let server_token = conversation_id;
         let local_conversation_id =
             BlocklistAIHistoryModel::handle(ctx).update(ctx, |history, _| {
@@ -13055,7 +13055,7 @@ impl Workspace {
             let should_server_fork =
                 cloud_storage_enabled && fork_from_exchange.is_none();
             if let Some(source_token) = source_server_token.filter(|_| should_server_fork) {
-                let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+                let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
                 ctx.spawn(
                     async move {
                         ai_client
@@ -15190,7 +15190,7 @@ impl Workspace {
             return;
         };
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let source_conversation_id = source_token.as_str().to_string();
         let title_for_fork = source_conversation
             .title()

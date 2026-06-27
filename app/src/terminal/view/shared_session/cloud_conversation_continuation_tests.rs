@@ -22,9 +22,9 @@ use crate::auth::{AuthStateProvider, UserUid};
 use crate::cloud_object::{
     Owner, Revision, ServerGuestSubject, ServerMetadata, ServerObjectGuest, ServerPermissions,
 };
-use crate::server::ids::ServerId;
-use crate::server::server_api::team::MockTeamClient;
-use crate::server::server_api::workspace::MockWorkspaceClient;
+use crate::ids::ServerId;
+use crate::infra::team::MockTeamClient;
+use crate::infra::workspace::MockWorkspaceClient;
 use crate::workspaces::team::Team;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::Workspace;

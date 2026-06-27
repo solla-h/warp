@@ -1,5 +1,5 @@
 use crate::search::mixer::SearchMixer;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 pub type EmbeddingSearchMixer = SearchMixer<EmbeddingSearchItemAction>;
 

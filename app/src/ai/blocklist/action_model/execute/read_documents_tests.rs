@@ -15,7 +15,7 @@ use crate::cloud_object::{
     CloudObjectMetadata, CloudObjectPermissions, CloudObjectStatuses, CloudObjectSyncStatus, Owner,
 };
 use crate::notebooks::{CloudNotebook, CloudNotebookModel};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::test_util::settings::initialize_settings_for_tests;
 
 fn initialize_app(app: &mut App) {

@@ -20,7 +20,7 @@ use crate::ai::agent::{AIAgentActionId, AIIdentifiers};
 use crate::ai::predict::prompt_suggestions::{
     ACCEPT_PROMPT_SUGGESTION_KEYBINDING, REJECT_PROMPT_SUGGESTION_KEYSTROKE,
 };
-use crate::server::telemetry::ToggleCodeSuggestionsSettingSource;
+use crate::telemetry::ToggleCodeSuggestionsSettingSource;
 use crate::settings::AISettings;
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;

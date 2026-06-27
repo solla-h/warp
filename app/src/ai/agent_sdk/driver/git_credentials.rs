@@ -17,7 +17,7 @@ use anyhow::{Context, Result};
 // disallowed by clippy rules because it flashes a terminal window on Windows).
 use command::blocking::Command as BlockingCommand;
 
-use crate::server::server_api::ai::{AIClient, GitCredential};
+use crate::infra::ai::{AIClient, GitCredential};
 
 /// How long to wait between credential refresh attempts (~50 minutes, staying
 /// well ahead of the one-hour GitHub token expiry).

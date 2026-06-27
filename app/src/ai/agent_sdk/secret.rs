@@ -22,7 +22,7 @@ use super::output::{self, TableFormat};
 use crate::ai::auth_secret_types::ManagedSecretType;
 use crate::auth::UserUid;
 use crate::cloud_object::Owner;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 
 #[derive(Serialize)]

@@ -32,7 +32,7 @@ use crate::auth::login_failure_notification::LoginFailureReason;
 use crate::editor::{
     EditorView, InteractionState, SingleLineEditorOptions, TextColors, TextOptions,
 };
-use crate::server::server_api::auth::UserAuthenticationError;
+use crate::infra::auth::UserAuthenticationError;
 use crate::themes::theme::Fill as ThemeFill;
 use crate::util::bindings::CustomAction;
 

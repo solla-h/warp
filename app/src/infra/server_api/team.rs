@@ -5,7 +5,7 @@ use mockall::{automock, predicate::*};
 
 use crate::auth::UserUid;
 use crate::cloud_object::CloudObjectEventEntrypoint;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::workspaces::team::{DiscoverableTeam, MembershipRole};
 use crate::workspaces::user_workspaces::{CreateTeamResponse, WorkspacesMetadataWithPricing};
 

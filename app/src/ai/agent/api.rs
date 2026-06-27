@@ -17,7 +17,7 @@ pub use convert_from::{
 use futures_lite::Stream;
 #[cfg(feature = "local-only")]
 pub async fn generate_multi_agent_output(
-    _server_api: Arc<crate::server::server_api::ServerApi>,
+    _server_api: Arc<crate::infra::ServerApi>,
     _params: RequestParams,
     _cancellation: futures::channel::oneshot::Receiver<()>,
 ) -> Result<ResponseStream, ConvertToAPITypeError> {

@@ -11,7 +11,7 @@ use crate::search::data_source::{Query, QueryResult};
 use crate::search::mixer::{BoxFuture, DataSourceRunErrorWrapper};
 use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
 use crate::search::QueryFilter;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::settings::AISettings;
 use crate::workflows::{CloudWorkflowModel, WorkflowSource};
 use crate::workspaces::user_workspaces::UserWorkspaces;

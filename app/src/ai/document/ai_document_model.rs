@@ -38,7 +38,7 @@ use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::{
     InitiatedBy, ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::{ClientId, ServerId, SyncId};
+use crate::ids::{ClientId, ServerId, SyncId};
 use crate::settings::FontSettings;
 use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::model::session::Session;

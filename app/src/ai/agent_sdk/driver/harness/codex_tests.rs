@@ -10,7 +10,7 @@ use uuid::Uuid;
 use super::super::codex_transcript::CodexTranscriptEnvelope;
 use super::*;
 use crate::ai::agent::conversation::AIConversationId;
-use crate::server::server_api::harness_support::MockHarnessSupportClient;
+use crate::infra::harness_support::MockHarnessSupportClient;
 
 #[test]
 fn prepare_codex_auth_writes_fresh_file_with_api_key_mode() {

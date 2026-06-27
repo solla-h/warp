@@ -31,7 +31,7 @@ use crate::ai::blocklist::inline_action::requested_action::RenderableAction;
 use crate::ai::persisted_workspace::PersistedWorkspace;
 use crate::appearance::Appearance;
 use crate::code::lsp_telemetry::{LspEnablementSource, LspTelemetryEvent};
-use crate::server::telemetry::{
+use crate::telemetry::{
     AgentModeSetupCodebaseContextActionType, AgentModeSetupCreateEnvironmentActionType,
     AgentModeSetupProjectScopedRulesActionType,
 };
@@ -965,7 +965,7 @@ impl InitStepBlock {
         let window_id = ctx.window_id();
         let executor = lsp::CommandBuilder::new(path_env_var);
         let http_client =
-            crate::server::server_api::ServerApiProvider::as_ref(ctx).get_http_client();
+            crate::infra::ServiceProvider::as_ref(ctx).get_http_client();
 
         ctx.spawn(
             async move {

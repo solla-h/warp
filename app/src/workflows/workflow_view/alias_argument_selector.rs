@@ -13,7 +13,7 @@ use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions,
 };
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::view_components::{Dropdown, DropdownItem};
 use crate::workflows::workflow::ArgumentType;
 use crate::workflows::workflow_enum::EnumVariants;

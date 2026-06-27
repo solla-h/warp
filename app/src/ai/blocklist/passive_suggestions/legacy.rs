@@ -29,8 +29,8 @@ use crate::ai::predict::generate_am_query_suggestions::{
 use crate::ai_assistant::execution_context::WarpAiExecutionContext;
 use crate::network::NetworkStatus;
 use crate::report_error;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::PromptSuggestionFallbackReason;
+use crate::infra::ServiceProvider;
+use crate::telemetry::PromptSuggestionFallbackReason;
 use crate::settings::AISettings;
 use crate::terminal::event::{BlockType, UserBlockCompleted};
 use crate::terminal::model::block::BlockId;
@@ -280,7 +280,7 @@ impl PassiveSuggestionsModel {
             return;
         };
 
-        let server_api = ServerApiProvider::handle(ctx).as_ref(ctx).get();
+        let server_api = ServiceProvider::handle(ctx).as_ref(ctx).get();
         let request_future =
             async move { server_api.generate_am_query_suggestions(&request).await };
 

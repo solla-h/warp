@@ -44,9 +44,9 @@ use crate::pane_group::CodeSource;
 use crate::pane_group::Event::OpenConversationHistory;
 use crate::pane_group::{self, Direction, PaneGroup};
 use crate::persistence::{BlockCompleted, ModelEvent};
-use crate::server::server_api::ai::{SpawnAgentRequest, UserQueryMode};
+use crate::infra::ai::{SpawnAgentRequest, UserQueryMode};
 #[cfg(not(target_family = "wasm"))]
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::session_management::SessionNavigationData;
 use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;
 use crate::terminal::general_settings::GeneralSettings;
@@ -1617,7 +1617,7 @@ fn dispatch_start_agent_conversation(
 /// `HiddenChildAgentTaskContext` (so the agent UI reflects it). On failure
 /// the child surfaces as an error conversation instead.
 ///
-/// Gated to non-wasm because `ServerApiProvider` is `cfg(not(wasm))`-only.
+/// Gated to non-wasm because `ServiceProvider` is `cfg(not(wasm))`-only.
 /// `dispatch_start_agent_conversation`'s wasm wildcard arm routes the Oz
 /// path through `create_error_child_agent_conversation` instead.
 #[cfg(not(target_family = "wasm"))]
@@ -1628,7 +1628,7 @@ fn launch_local_no_harness_child(
     model_id: Option<String>,
     ctx: &mut ViewContext<PaneGroup>,
 ) {
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
     let request_id = request.id;
     let agent_name = normalize_orchestrator_agent_name(&request.name);
     let request_name = agent_name.clone().unwrap_or_default();
@@ -1771,7 +1771,7 @@ fn launch_local_harness_child(
     ctx: &mut ViewContext<PaneGroup>,
 ) {
     let startup_directory = group.startup_path_for_new_session(Some(terminal_pane_id), ctx);
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
     let request_id = request.id;
     let agent_name = normalize_orchestrator_agent_name(&request.name);
     let request_name = agent_name.clone().unwrap_or_default();

@@ -6,7 +6,7 @@ use warpui::{AppContext, ViewContext};
 
 use super::{PaneHeader};
 use crate::pane_group::BackingView;
-use crate::server::telemetry::SharingDialogSource;
+use crate::telemetry::SharingDialogSource;
 
 /// Pane header component for sharing the pane contents (stubbed out).
 pub struct SharedPaneContent {

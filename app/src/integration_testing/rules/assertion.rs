@@ -6,7 +6,7 @@ use crate::ai::facts::CloudAIFactModel;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::integration_testing::view_getters::workspace_view;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 /// Assert that a specific AI fact exists with the given content
 pub fn assert_rule_exists(

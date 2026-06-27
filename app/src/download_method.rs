@@ -4,7 +4,7 @@ use warpui::r#async::executor::Background;
 
 use crate::auth::auth_state::AuthState;
 use crate::send_telemetry_on_executor;
-use crate::server::telemetry::{DownloadSource, TelemetryEvent};
+use crate::telemetry::{DownloadSource, TelemetryEvent};
 
 /// Determine the Warp download method (if possible) and send a telemetry event reporting that
 /// method

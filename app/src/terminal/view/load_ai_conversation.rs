@@ -37,7 +37,7 @@ use crate::ai::blocklist::{
 use crate::ai::document::ai_document_model::AIDocumentModel;
 use crate::ai::get_relevant_files::controller::GetRelevantFilesController;
 use crate::persistence::model::AgentConversationData;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::find::TerminalFindModel;
 use crate::terminal::input::message_bar::{Message as InputMessage, MessageItem};
 use crate::terminal::model::block::SerializedBlock;
@@ -1136,7 +1136,7 @@ impl TerminalView {
 
         log::info!("Downloading conversation data from: {proto_url}");
 
-        let client = ServerApiProvider::as_ref(ctx).get_http_client();
+        let client = ServiceProvider::as_ref(ctx).get_http_client();
 
         // Download the protobuf data
         ctx.spawn(

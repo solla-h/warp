@@ -18,8 +18,8 @@ use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::NotebookPane;
 use crate::persistence::ModelEvent;
 use crate::search::files::model::FileSearchModel;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::keys::TerminalKeybindings;
@@ -78,7 +78,7 @@ fn initialize_app(app: &mut App) -> TestState {
     app.add_singleton_model(UserWorkspaces::default_mock);
     app.add_singleton_model(TeamTesterStatus::mock);
     app.add_singleton_model(|_| UserProfiles::new(vec![]));
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| ObjectActions::new(Vec::new()));
     app.add_singleton_model(|_| KeybindingChangedNotifier::new());
@@ -97,7 +97,7 @@ fn initialize_app(app: &mut App) -> TestState {
     app.add_singleton_model(voice_input::VoiceInput::new);
 
     let (sender, receiver) = mpsc::sync_channel(10);
-    let objects_client = ServerApiProvider::new_for_test().get_cloud_objects_client();
+    let objects_client = ServiceProvider::new_for_test().get_cloud_objects_client();
     let sync_queue = app
         .add_singleton_model(|ctx| SyncQueue::new(Default::default(), objects_client.clone(), ctx));
     app.add_singleton_model(|ctx| UpdateManager::new(Some(sender), objects_client.clone(), ctx));

@@ -24,8 +24,8 @@ use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions, ValidInputType,
 };
-use crate::server::ids::SyncId;
-use crate::server::telemetry::TelemetrySpace;
+use crate::ids::SyncId;
+use crate::telemetry::TelemetrySpace;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;
 use crate::workflows::aliases::{WorkflowAlias, WorkflowAliases};

@@ -7,20 +7,20 @@ use warpui::platform::WindowStyle;
 use warpui::{App, AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::*;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspace::ToastStack;
 
 fn init_modal_test_models(app: &mut App) {
     initialize_settings_for_tests(app);
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(|_| ToastStack);
 
     // The modal queries CodebaseIndexManager for locally indexed repos.
     // Register a test instance so `available_indexed_repos(...)` doesn't panic.
     app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
+        CodebaseIndexManager::new_for_test(ServiceProvider::as_ref(ctx).get(), ctx)
     });
 }
 

@@ -37,17 +37,17 @@ use crate::ai::ambient_agents::{
 use crate::ai::artifacts::Artifact;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::{
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::{
     AIClient, AgentMessageHeader, AgentRunEvent, AgentSource, ArtifactType, ExecutionLocation,
     ListAgentMessagesRequest, ReadAgentMessageResponse, RunSortBy, RunSortOrder,
     SendAgentMessageRequest, SendAgentMessageResponse, SpawnAgentRequest, TaskListFilter,
 };
-use crate::server::server_api::ServerApi;
+use crate::infra::ServerApi;
 use crate::terminal::shared_session;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::ServerApiProvider;
+use crate::ServiceProvider;
 
 const MAX_LINE_WIDTH: usize = 90;
 const STREAM_RETRY_BACKOFF_STEPS: &[u64] = &[1, 2, 5, 10];
@@ -390,7 +390,7 @@ impl AmbientAgentRunner {
                 }
             };
 
-            let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+            let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
             // Compute the upgrade link in case we hit capacity.
             let upgrade_link = AuthStateProvider::as_ref(ctx)
@@ -593,7 +593,7 @@ impl AmbientAgentRunner {
         json_output: JsonOutput,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let list_future = async move {
             if matches!(output_format, OutputFormat::Json) || json_output.force_json_output() {
@@ -621,7 +621,7 @@ impl AmbientAgentRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let status_future = async move {
             let task_id = args.task_id.parse()?;
@@ -649,7 +649,7 @@ impl AmbientAgentRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let ai_client = provider.get_ai_client();
         let server_api = provider.get();
         let scoped_task_id = task_id_for_message_send(&args.sender_run_id)?;
@@ -699,7 +699,7 @@ impl AmbientAgentRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let ai_client = provider.get_ai_client();
         let server_api = provider.get();
 
@@ -732,7 +732,7 @@ impl AmbientAgentRunner {
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
         ensure_stream_output_format(output_format)?;
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let server_api = provider.get();
         let ai_client = provider.get_ai_client();
 
@@ -748,7 +748,7 @@ impl AmbientAgentRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let ai_client = provider.get_ai_client();
         let server_api = provider.get();
         let scoped_task_id = task_id_from_oz_run_id_env()?;
@@ -776,7 +776,7 @@ impl AmbientAgentRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let ai_client = provider.get_ai_client();
         let server_api = provider.get();
         let scoped_task_id = task_id_from_oz_run_id_env()?;
@@ -1374,7 +1374,7 @@ impl AmbientAgentRunner {
         conversation_id: String,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let future = async move {
             let conversation = ai_client.get_public_conversation(&conversation_id).await?;
@@ -1392,7 +1392,7 @@ impl AmbientAgentRunner {
         run_id: String,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let future = async move {
             let conversation = ai_client.get_run_conversation(&run_id).await?;

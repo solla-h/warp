@@ -30,8 +30,8 @@ use crate::ai::agent::task::TaskId;
 use crate::ai::agent::AIAgentExchangeId;
 use crate::ai::ambient_agents::task::{AgentConfigSnapshot, AmbientAgentTask};
 use crate::ai::blocklist::orchestration_event_streamer::OrchestrationEventStreamerEvent;
-use crate::server::server_api::ai::{AIClient, MockAIClient};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{AIClient, MockAIClient};
+use crate::infra::ServiceProvider;
 use crate::test_util::add_window_with_terminal;
 use crate::test_util::terminal::initialize_app_for_terminal_view;
 
@@ -1839,6 +1839,6 @@ fn _mock_with_get_ambient_agent_task_for_child(task: AmbientAgentTask) -> Arc<dy
 }
 
 #[allow(dead_code)]
-fn _server_api_for_test() -> Arc<crate::server::server_api::ServerApi> {
-    ServerApiProvider::new_for_test().get()
+fn _server_api_for_test() -> Arc<crate::infra::ServerApi> {
+    ServiceProvider::new_for_test().get()
 }

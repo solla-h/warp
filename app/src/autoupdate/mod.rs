@@ -28,8 +28,8 @@ pub use self::changelog::get_current_changelog;
 use self::channel_versions::fetch_channel_versions;
 use crate::channel::Channel;
 use crate::features::FeatureFlag;
-use crate::server::server_api::ServerApi;
-use crate::server::telemetry::TelemetryEvent;
+use crate::infra::ServerApi;
+use crate::telemetry::TelemetryEvent;
 use crate::workspace::Workspace;
 use crate::{
     report_if_error, send_telemetry_from_ctx, send_telemetry_sync_from_app_ctx, ChannelState,

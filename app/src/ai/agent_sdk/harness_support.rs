@@ -17,7 +17,7 @@ use warpui::{AppContext, ModelHandle, SingletonEntity};
 use super::common::set_ambient_task_context_from_run_id;
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::artifacts::Artifact;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 
 /// Run harness-support commands.
 pub fn run(
@@ -58,7 +58,7 @@ fn ping(
     output_format: OutputFormat,
 ) -> Result<()> {
     runner.update(ctx, |_, ctx| {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         ctx.spawn(
             async move {
@@ -101,7 +101,7 @@ fn report_artifact(
     output_format: OutputFormat,
 ) -> Result<()> {
     runner.update(ctx, |_, ctx| {
-        let client = ServerApiProvider::as_ref(ctx).get_harness_support_client();
+        let client = ServiceProvider::as_ref(ctx).get_harness_support_client();
 
         let artifact = match args.command {
             ReportArtifactCommand::PullRequest(pr_args) => Artifact::PullRequest {
@@ -147,7 +147,7 @@ fn notify_user(
     output_format: OutputFormat,
 ) -> Result<()> {
     runner.update(ctx, |_, ctx| {
-        let client = ServerApiProvider::as_ref(ctx).get_harness_support_client();
+        let client = ServiceProvider::as_ref(ctx).get_harness_support_client();
 
         ctx.spawn(
             async move { client.notify_user(&args.message).await },
@@ -181,7 +181,7 @@ fn finish_task(
     output_format: OutputFormat,
 ) -> Result<()> {
     runner.update(ctx, |_, ctx| {
-        let client = ServerApiProvider::as_ref(ctx).get_harness_support_client();
+        let client = ServiceProvider::as_ref(ctx).get_harness_support_client();
 
         ctx.spawn(
             async move {
@@ -221,7 +221,7 @@ fn report_shutdown(
     output_format: OutputFormat,
 ) -> Result<()> {
     runner.update(ctx, |_, ctx| {
-        let client = ServerApiProvider::as_ref(ctx).get_harness_support_client();
+        let client = ServiceProvider::as_ref(ctx).get_harness_support_client();
 
         ctx.spawn(
             async move {

@@ -53,8 +53,8 @@ use crate::pricing::PricingInfoModel;
 use crate::remote_server::codebase_index_model::RemoteCodebaseIndexModel;
 use crate::resource_center::Tip;
 use crate::server::experiments::ServerExperiments;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::cloud_preferences_syncer::CloudPreferencesSyncer;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
@@ -89,13 +89,13 @@ pub(crate) fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
 
     // Add the necessary singleton models to the App
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);
     app.add_singleton_model(|_ctx| PtySpawner::new_for_test());
     app.add_singleton_model(|_| Prompt::mock());
-    app.add_singleton_model(|ctx| AutoupdateState::new(ServerApiProvider::as_ref(ctx).get()));
+    app.add_singleton_model(|ctx| AutoupdateState::new(ServiceProvider::as_ref(ctx).get()));
     app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(|_| SystemStats::new());
     app.add_singleton_model(CloudModel::mock);
@@ -113,7 +113,7 @@ pub(crate) fn initialize_app(app: &mut App) {
     app.add_singleton_model(PrivacySettings::mock);
     app.add_singleton_model(|_| KeybindingChangedNotifier::new());
     app.add_singleton_model(|_ctx| RelaunchModel::new());
-    app.add_singleton_model(|ctx| ChangelogModel::new(ServerApiProvider::as_ref(ctx).get()));
+    app.add_singleton_model(|ctx| ChangelogModel::new(ServiceProvider::as_ref(ctx).get()));
     app.add_singleton_model(|_| GitHubAuthNotifier::new());
     app.add_singleton_model(|_ctx| SyncedInputState::mock());
     app.add_singleton_model(|_| ResizableData::default());
@@ -207,13 +207,13 @@ pub(crate) fn initialize_app(app: &mut App) {
     app.update(experiments::init);
 
     app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
+        AIRequestUsageModel::new_for_test(ServiceProvider::as_ref(ctx).get_ai_client(), ctx)
     });
     app.add_singleton_model(
         crate::workspace::bonus_grant_notification_model::BonusGrantNotificationModel::new,
     );
     app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
+        CodebaseIndexManager::new_for_test(ServiceProvider::as_ref(ctx).get(), ctx)
     });
     app.add_singleton_model(|ctx| PersistedWorkspace::new(vec![], HashMap::new(), None, ctx));
     app.add_singleton_model(|_| ProjectContextModel::default());

@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use warpui::{Entity, ModelContext, SingletonEntity};
 
-use crate::server::server_api::ai::{AIClient, ConversationUsage};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{AIClient, ConversationUsage};
+use crate::infra::ServiceProvider;
 
 pub struct UsageHistoryModel {
     ai_client: Arc<dyn AIClient>,
@@ -20,7 +20,7 @@ impl SingletonEntity for UsageHistoryModel {}
 
 impl UsageHistoryModel {
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         Self {
             ai_client,
             is_loading: false,

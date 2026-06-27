@@ -10,7 +10,7 @@ use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::test_util::settings::initialize_settings_for_tests;
@@ -46,7 +46,7 @@ fn create_test_window(app: &mut App) -> WindowId {
 fn init_create_environment_modal_test_models(app: &mut App) {
     initialize_settings_for_tests(app);
 
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(CloudModel::mock);

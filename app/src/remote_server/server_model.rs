@@ -90,7 +90,7 @@ use crate::ai::skills::{bundled_skills_snapshot_protos, BundledSkill};
 use crate::auth::auth_state::{AuthState, AuthStateProvider};
 use crate::code_review::git_actions;
 use crate::features::FeatureFlag;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::model::session::command_executor::{
     ExecuteCommandOptions, LocalCommandExecutor,
 };
@@ -2776,7 +2776,7 @@ impl ServerModel {
     /// Handles `UploadHandoffSnapshot` by gathering the workspace snapshot
     /// from the daemon's local filesystem and uploading it to GCS.
     ///
-    /// Extracts the `AIClient` and HTTP client from `ServerApiProvider`, then
+    /// Extracts the `AIClient` and HTTP client from `ServiceProvider`, then
     /// spawns the async gather+upload pipeline. Returns an
     /// `UploadHandoffSnapshotResponse` with the token on success.
     fn handle_upload_handoff_snapshot(
@@ -2791,7 +2791,7 @@ impl ServerModel {
             msg.paths.len(),
         );
 
-        let server_api = ServerApiProvider::handle(ctx);
+        let server_api = ServiceProvider::handle(ctx);
         let ai_client = server_api.as_ref(ctx).get_ai_client();
         let http = server_api.as_ref(ctx).get_http_client();
 
@@ -3086,7 +3086,7 @@ impl ServerModel {
         // commit-only / commit-and-push never touch the AI path.
         let ai_client = (matches!(mode, GitCommitChainMode::CommitAndCreatePr)
             && msg.autogenerate_pr_content)
-            .then(|| ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client());
+            .then(|| ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client());
         let chain_mode = CommitChainMode::from(mode);
         let path_future = Self::interactive_path_future(ctx);
         let request_id_for_response = request_id.clone();
@@ -3228,11 +3228,11 @@ impl ServerModel {
         // Generate the PR title/body via AI only when the client asked for it
         // and didn't already supply them. Reuses the same helper the local
         // dialog uses, so local and remote PRs are produced identically
-        // (AI-with-`--fill`-fallback). The daemon's `ServerApiProvider` is
+        // (AI-with-`--fill`-fallback). The daemon's `ServiceProvider` is
         // authenticated with the user's forwarded bearer token.
         let ai_client = msg
             .autogenerate_content
-            .then(|| ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client());
+            .then(|| ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client());
         let path_future = Self::interactive_path_future(ctx);
         let request_id_for_response = request_id.clone();
         let handle = self.spawn_request_handler(
@@ -3342,7 +3342,7 @@ impl ServerModel {
         );
         let include_unstaged = msg.include_unstaged;
         let branch_name = msg.branch_name;
-        let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
         let request_id_for_response = request_id.clone();
         let handle = self.spawn_request_handler(
             request_id.clone(),

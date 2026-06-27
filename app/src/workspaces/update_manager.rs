@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_variables)]
 use warpui::{Entity, ModelContext, SingletonEntity};
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 #[derive(Debug, Clone)]
 pub enum TeamUpdateManagerEvent { LeaveError, LeaveSuccess, RenameTeamError, RenameTeamSuccess }
 #[derive(Default)]

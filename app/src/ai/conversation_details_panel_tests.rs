@@ -16,7 +16,7 @@ use crate::ai::ambient_agents::{AmbientAgentTask, AmbientAgentTaskState};
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
 use crate::auth::UserUid;
 use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::workspaces::user_profiles::UserProfileWithUID;
 
 fn create_test_task(task_id: &str) -> AmbientAgentTask {

@@ -30,7 +30,7 @@ use crate::auth::AuthStateProvider;
 use crate::channel::{Channel, ChannelState};
 use crate::menu::{Event as MenuEvent, Event, Menu, MenuItem, MenuItemFields};
 use crate::server::block::Block;
-use crate::server::server_api::block::BlockClient;
+use crate::infra::block::BlockClient;
 use crate::view_components::ToastFlavor;
 
 const SCROLLBAR_WIDTH: ScrollbarWidth = ScrollbarWidth::Auto;

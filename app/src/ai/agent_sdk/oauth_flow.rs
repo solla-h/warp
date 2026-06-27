@@ -4,7 +4,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use warpui::r#async::Timer;
 
-use crate::server::server_api::integrations::{IntegrationsClient, OauthConnectTxStatus};
+use crate::infra::integrations::{IntegrationsClient, OauthConnectTxStatus};
 
 /// Shared helpers for OAuth-based connect flows (txId + polling).
 ///

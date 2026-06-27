@@ -13,9 +13,9 @@ use crate::cloud_object::model::persistence::CloudModel;
 use crate::menu::MenuItemFields;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneId, PaneView};
-use crate::server::server_api::team::MockTeamClient;
-use crate::server::server_api::workspace::MockWorkspaceClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::team::MockTeamClient;
+use crate::infra::workspace::MockWorkspaceClient;
+use crate::infra::ServiceProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::shared_session::permissions_manager::SessionPermissionsManager;
 use crate::test_util::settings::initialize_settings_for_tests;
@@ -122,7 +122,7 @@ fn initialize_app(app: &mut App) {
         )
     });
     app.add_singleton_model(TeamTesterStatus::new);
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| UserProfiles::new(Vec::new()));
     app.add_singleton_model(CloudModel::mock);
     app.add_singleton_model(|ctx| UpdateManager::new(None, Arc::new(MockObjectClient::new()), ctx));

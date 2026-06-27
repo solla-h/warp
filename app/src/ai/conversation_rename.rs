@@ -2,7 +2,7 @@ use warpui::{SingletonEntity, View, ViewContext};
 
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::blocklist::{BeginConversationRenameError, BlocklistAIHistoryModel};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::view_components::DismissibleToast;
 use crate::workspace::ToastStack;
 
@@ -82,7 +82,7 @@ pub(crate) fn rename_conversation<T: View>(
         }
     };
 
-    let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+    let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
     ctx.spawn(
         async move {
             server_api

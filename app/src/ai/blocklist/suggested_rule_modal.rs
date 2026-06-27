@@ -30,8 +30,8 @@ use crate::send_telemetry_from_ctx;
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::SyncId;
-use crate::server::telemetry::TelemetryEvent;
+use crate::ids::SyncId;
+use crate::telemetry::TelemetryEvent;
 use crate::ui_components::blended_colors;
 use crate::view_components::action_button::{ActionButton, PrimaryTheme};
 use crate::workspaces::user_workspaces::UserWorkspaces;

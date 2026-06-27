@@ -15,7 +15,7 @@
 //! `forked_conversation_id` and `snapshot_upload` off `PendingHandoff`.
 
 use super::PendingAttachment;
-use crate::server::server_api::ai::AttachmentInput;
+use crate::infra::ai::AttachmentInput;
 
 #[cfg(feature = "local_fs")]
 pub(crate) mod snapshot;

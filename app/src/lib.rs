@@ -1,6 +1,8 @@
 #![allow(clippy::doc_lazy_continuation)]
 #![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 
+pub mod ids;
+pub mod telemetry;
 mod ai;
 mod alloc;
 mod antivirus;
@@ -78,6 +80,8 @@ mod safe_triangle;
 mod search_bar;
 #[cfg(feature = "cloud")]
 mod server;
+#[cfg(feature = "cloud")]
+pub mod infra;
 mod session_management;
 mod shell_indicator;
 mod smoke_test;
@@ -169,7 +173,7 @@ use server::network_log_pane_manager::NetworkLogPaneManager;
 #[cfg(feature = "cloud")]
 use server::network_logging::NetworkLogModel;
 #[cfg(feature = "cloud")]
-use server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 #[cfg(feature = "cloud")]
 use server::voice_transcriber::ServerVoiceTranscriber;
 #[cfg(feature = "local_fs")]
@@ -217,7 +221,7 @@ pub use persistence::testing as sqlite_testing;
 pub use plugin::{run_plugin_host, PLUGIN_HOST_FLAG};
 use referral_theme_status::ReferralThemeStatus;
 #[cfg(feature = "cloud")]
-use server::server_api::ServerApiProvider;
+use infra::ServiceProvider;
 use settings::{ExtraMetaKeys, PrivacySettings};
 #[cfg(feature = "local_fs")]
 use shellexpand::tilde;
@@ -304,12 +308,12 @@ use crate::root_view::{
 #[cfg(feature = "cloud")]
 use crate::server::experiments::ServerExperiments;
 #[cfg(feature = "cloud")]
-pub use crate::server::telemetry::{
+pub use crate::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
 };
-use crate::server::telemetry::{AppStartupInfo, CloseTarget, PaletteSource};
+use crate::telemetry::{AppStartupInfo, CloseTarget, PaletteSource};
 #[cfg(feature = "cloud")]
-use crate::server::telemetry::TelemetryCollector;
+use crate::telemetry::TelemetryCollector;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 #[cfg(feature = "cloud")]
 use crate::settings::cloud_preferences_syncer::initialize_cloud_preferences_syncer;
@@ -1211,8 +1215,8 @@ pub(crate) fn initialize_app(
 
     let agent_source = determine_agent_source(launch_mode);
 
-    // NetworkLogModel must be registered before ServerApiProvider so that
-    // `network_logging::init` (invoked from within `ServerApiProvider::new`)
+    // NetworkLogModel must be registered before ServiceProvider so that
+    // `network_logging::init` (invoked from within `ServiceProvider::new`)
     // can reach it via `NetworkLogModel::handle(ctx)` when forwarding items
     // captured by the HTTP client hooks.
     ctx.add_singleton_model(|_ctx| NetworkLogModel::default());
@@ -1220,10 +1224,10 @@ pub(crate) fn initialize_app(
     #[cfg(not(feature = "local-only"))]
     let server_api_provider = ctx.add_singleton_model({
         let auth_state = auth_state.clone();
-        move |ctx| ServerApiProvider::new(auth_state, agent_source, ctx)
+        move |ctx| ServiceProvider::new(auth_state, agent_source, ctx)
     });
     #[cfg(feature = "local-only")]
-    let server_api_provider = ctx.add_singleton_model(|_| ServerApiProvider::new_for_local_only());
+    let server_api_provider = ctx.add_singleton_model(|_| ServiceProvider::new_for_local_only());
 
     let server_api = server_api_provider.as_ref(ctx).get();
     #[cfg(all(not(target_family = "wasm"), not(feature = "local-only")))]

@@ -118,7 +118,7 @@ use crate::pane_group::PaneId;
 use crate::quit_warning::UnsavedStateSummary;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
-use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
+use crate::telemetry::CodePanelsFileOpenEntrypoint;
 use crate::settings::AISettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::cli_agent::{

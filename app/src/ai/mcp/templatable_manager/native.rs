@@ -44,8 +44,8 @@ use crate::persistence::{
     database_file_path_for_scope, establish_ro_connection, ModelEvent, PersistenceScope,
 };
 use crate::server::cloud_objects::update_manager::{InitiatedBy, UpdateManager};
-use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::server::telemetry::{
+use crate::ids::{ClientId, ServerId, SyncId};
+use crate::telemetry::{
     MCPServerModel, MCPServerTelemetryTransportType, MCPTemplateCreationSource, TelemetryEvent,
 };
 use crate::settings::AISettings;

@@ -4,8 +4,8 @@ use warpui::App;
 use super::*;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::system::SystemStats;
 use crate::test_util::settings::initialize_settings_for_tests;
@@ -16,7 +16,7 @@ use crate::workspaces::user_workspaces::UserWorkspaces;
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
 
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);
@@ -41,7 +41,7 @@ fn test_render_view() {
         initialize_app(&mut app);
 
         let (_window_id, _view) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-            CommandSearchView::new(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
+            CommandSearchView::new(ServiceProvider::as_ref(ctx).get_ai_client(), ctx)
         });
 
         app.update(|_| {

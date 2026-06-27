@@ -30,7 +30,7 @@ use crate::pane_group::pane::{
 };
 use crate::pane_group::{BackingView, Direction, PaneDragDropLocation, PaneId, TabBarHoverIndex};
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::{SharingDialogSource, TelemetryEvent};
+use crate::telemetry::{SharingDialogSource, TelemetryEvent};
 use crate::settings::CodeSettings;
 use crate::tab::tab_position_id;
 use crate::terminal::view::TerminalAction;

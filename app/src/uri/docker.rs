@@ -9,7 +9,7 @@ use warpui::AppContext;
 
 use crate::root_view::SubshellCommandArg;
 use crate::send_telemetry_from_app_ctx;
-use crate::server::telemetry::TelemetryEvent;
+use crate::telemetry::TelemetryEvent;
 use crate::terminal::shell::ShellType;
 
 /// String of hex digits meant to represent a Docker container ID.

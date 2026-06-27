@@ -66,7 +66,7 @@ use crate::persistence::model::{
     ToolUsageMetadata,
 };
 use crate::persistence::ModelEvent;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::model::block::{
     AgentInteractionMetadata, AgentViewVisibility, BlockId, SerializedAIMetadata, SerializedBlock,

@@ -30,7 +30,7 @@ use crate::ai::get_relevant_files::controller::GetRelevantFilesController;
 use crate::remote_server::codebase_index_model::{
     RemoteCodebaseIndexModel, RemoteCodebaseSearchAvailability, RemoteCodebaseSearchContext,
 };
-use crate::server::server_api::{ServerApi, ServerApiProvider};
+use crate::infra::{ServerApi, ServiceProvider};
 
 pub(super) enum RemoteSearchRequest {
     Pending(futures_util::stream::AbortHandle),
@@ -86,7 +86,7 @@ pub(super) fn send_request(
                     );
                 }
             }
-            let store_client = ServerApiProvider::as_ref(ctx).get();
+            let store_client = ServiceProvider::as_ref(ctx).get();
             let abort_handle = ctx
                 .spawn(
                     async move {

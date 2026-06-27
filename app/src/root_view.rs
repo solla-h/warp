@@ -68,10 +68,10 @@ use crate::persistence::ModelEvent;
 use crate::pricing::{PricingInfoModel, PricingInfoModelEvent, StripeSubscriptionPlan};
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::experiments::is_free_user_no_ai_experiment_active;
-use crate::server::ids::SyncId;
-use crate::server::server_api::auth::UserAuthenticationError;
-use crate::server::server_api::{ServerApi, ServerApiProvider, ServerTime};
-use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
+use crate::ids::SyncId;
+use crate::infra::auth::UserAuthenticationError;
+use crate::infra::{ServerApi, ServiceProvider, ServerTime};
+use crate::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::settings::cloud_preferences_syncer::{
     CloudPreferencesSyncer, CloudPreferencesSyncerEvent,
 };
@@ -547,7 +547,7 @@ fn open_launch_config(arg: &OpenLaunchConfigArg, ctx: &mut AppContext) {
 
     send_telemetry_from_app_ctx!(
         TelemetryEvent::OpenLaunchConfig {
-            ui_location: crate::server::telemetry::LaunchConfigUiLocation::Uri,
+            ui_location: crate::telemetry::LaunchConfigUiLocation::Uri,
             open_in_active_window: arg.open_in_active_window,
         },
         ctx
@@ -1438,11 +1438,11 @@ pub enum NewWorkspaceSource {
         file_path: Option<PathBuf>,
     },
     NotebookById {
-        id: crate::server::ids::SyncId,
+        id: crate::ids::SyncId,
         settings: crate::drive::OpenWarpDriveObjectSettings,
     },
     WorkflowById {
-        id: crate::server::ids::SyncId,
+        id: crate::ids::SyncId,
         settings: crate::drive::OpenWarpDriveObjectSettings,
     },
 
@@ -1587,7 +1587,7 @@ impl RootView {
         workspace_setting: NewWorkspaceSource,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        let server_api_provider = ServerApiProvider::as_ref(ctx);
+        let server_api_provider = ServiceProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
 

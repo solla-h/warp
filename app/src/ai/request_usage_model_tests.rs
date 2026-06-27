@@ -8,9 +8,9 @@ use warpui::{App, ModelHandle};
 use super::*;
 use crate::auth::AuthStateProvider;
 use crate::pricing::PricingInfoModel;
-use crate::server::server_api::team::MockTeamClient;
-use crate::server::server_api::workspace::MockWorkspaceClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::team::MockTeamClient;
+use crate::infra::workspace::MockWorkspaceClient;
+use crate::infra::ServiceProvider;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::{
     AiOverages, ByoApiKeyPolicy, CustomerType, EnterpriseCreditsAutoReloadPolicy,
@@ -18,7 +18,7 @@ use crate::workspaces::workspace::{
 };
 
 fn create_test_workspace() -> (WorkspaceUid, Workspace) {
-    let server_id: crate::server::ids::ServerId = 1_i64.into();
+    let server_id: crate::ids::ServerId = 1_i64.into();
     let uid = WorkspaceUid::from(server_id);
     let workspace = Workspace::from_local_cache(uid, "Test Workspace".to_string(), None);
     (uid, workspace)
@@ -46,14 +46,14 @@ fn add_request_usage_model_for_anonymous_users(app: &mut App) -> ModelHandle<AIR
 }
 
 fn add_request_usage_model_without_auth(app: &mut App) -> ModelHandle<AIRequestUsageModel> {
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.update(|ctx| {
         warpui_extras::secure_storage::register_noop("test", ctx);
         ctx.add_singleton_model(ApiKeyManager::new);
     });
     app.add_singleton_model(|_| PricingInfoModel::new());
     app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
+        AIRequestUsageModel::new_for_test(ServiceProvider::as_ref(ctx).get_ai_client(), ctx)
     })
 }
 

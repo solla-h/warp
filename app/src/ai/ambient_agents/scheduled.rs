@@ -19,9 +19,9 @@ use crate::cloud_object::{CloudObjectTypeAndId,
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::{ClientId, SyncId};
-use crate::server::server_api::ai::ScheduledAgentHistory;
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ClientId, SyncId};
+use crate::infra::ai::ScheduledAgentHistory;
+use crate::infra::ServiceProvider;
 
 impl StringModel for ScheduledAmbientAgent {
     type CloudObjectType = CloudScheduledAmbientAgent;
@@ -130,7 +130,7 @@ impl ScheduledAgentManager {
         app: &AppContext,
     ) -> impl warpui::r#async::Spawnable<Output = anyhow::Result<Option<ScheduledAgentHistory>>>
     {
-        let ai_client = ServerApiProvider::as_ref(app).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(app).get_ai_client();
 
         async move {
             let SyncId::ServerId(server_id) = schedule_id else {

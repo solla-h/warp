@@ -1,6 +1,6 @@
 use warpui::{Entity, ModelContext, SingletonEntity};
 
-use crate::server::telemetry::secret_redaction::update_telemetry_secrets_regex;
+use crate::telemetry::secret_redaction::update_telemetry_secrets_regex;
 use crate::settings::{CustomSecretRegex, PrivacySettings, PrivacySettingsChangedEvent};
 use crate::terminal::model::set_user_and_enterprise_secret_regexes;
 

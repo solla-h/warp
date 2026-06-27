@@ -27,7 +27,7 @@ use crate::context_chips::display_menu::{
     ChipMenuType, DisplayChipMenu, FixedFooter, GenericMenuItem, PromptDisplayMenuEvent,
 };
 use crate::report_if_error;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::terminal::input::{
     HandoffComposeState, HandoffComposeStateEvent, MenuPositioning, MenuPositioningProvider,
 };

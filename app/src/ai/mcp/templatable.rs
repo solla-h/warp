@@ -10,7 +10,7 @@ use crate::cloud_object::{
     CloudObjectUuid, GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType,
     Revision, UniquePer,
 };
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 const UNIQUENESS_KEY_PREFIX: &str = "templatable_mcp_server";
 

@@ -18,7 +18,7 @@ use crate::ai::ambient_agents::github_auth_url::{AuthSource, GithubAuthRedirectT
 use crate::ai::request_usage_model::AMBIENT_AGENT_TRIAL_CREDIT_THRESHOLD;
 use crate::ai::{cloud_environments, AIRequestUsageModel};
 use crate::appearance::Appearance;
-use crate::server::ids::ClientId;
+use crate::ids::ClientId;
 use crate::settings_view::update_environment_form::{
     EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
 };

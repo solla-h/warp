@@ -52,8 +52,8 @@ use crate::auth::UserUid;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::notebooks::NotebookId;
 use crate::send_telemetry_from_ctx;
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::AmbientAgentTask;
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::AmbientAgentTask;
 #[cfg(not(target_family = "wasm"))]
 use crate::settings::ai::{AISettings, AISettingsChangedEvent};
 use crate::ui_components::avatar::{Avatar, AvatarContent};

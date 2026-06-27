@@ -53,7 +53,7 @@ use crate::terminal::model::block::SerializedBlock;
 #[cfg(not(feature = "agent_mode_evals"))]
 use crate::{
     ai::request_usage_model::BonusGrantScope,
-    server::ids::ServerId,
+    ids::ServerId,
     workspaces::{gql_convert::PLACEHOLDER_WORKSPACE_UID, workspace::WorkspaceUid},
 };
 

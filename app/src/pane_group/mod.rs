@@ -101,11 +101,11 @@ use crate::quit_warning::UnsavedStateSummary;
 use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipAction, TipsCompleted,
 };
-use crate::server::ids::{ObjectUid, SyncId};
+use crate::ids::{ObjectUid, SyncId};
 use crate::drive::items::WarpDriveItemId;
 use crate::drive::OpenWarpDriveObjectArgs;
-use crate::server::server_api::{ServerApi, ServerApiProvider};
-use crate::server::telemetry::{
+use crate::infra::{ServerApi, ServiceProvider};
+use crate::telemetry::{
     AnonymousUserSignupEntrypoint, PaletteSource, SharingDialogSource, TelemetryEvent,
 };
 use crate::session_management::SessionNavigationData;
@@ -2976,7 +2976,7 @@ impl PaneGroup {
             me.handle_focus_state_event(event, ctx);
         });
 
-        let block_client = ServerApiProvider::as_ref(ctx).get_block_client();
+        let block_client = ServiceProvider::as_ref(ctx).get_block_client();
         let share_modal =
             ctx.add_typed_action_view(|ctx| ShareBlockModal::new(None, block_client, ctx));
         ctx.subscribe_to_view(&share_modal, move |me, _, event, ctx| {

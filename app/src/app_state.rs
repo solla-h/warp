@@ -13,7 +13,7 @@ use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::blocklist::{InputConfig, SerializedBlockListItem};
 use crate::code::editor_management::CodeSource;
 use crate::root_view::quake_mode_window_id;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::settings_view::environments_page::EnvironmentsPage;
 use crate::settings_view::SettingsSection;
 use crate::tab::SelectedTabColor;

@@ -30,8 +30,8 @@ use crate::root_view::{
     open_new_window_get_handles, open_new_with_workspace_source, NewWorkspaceSource,
     OpenLaunchConfigArg,
 };
-use crate::server::ids::ServerId;
-use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
+use crate::ids::ServerId;
+use crate::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::settings_view::{OpenTeamsSettingsModalArgs, SettingsSection};
 use crate::tab_configs::TabConfig;
 use crate::user_config::{load_launch_configs, load_tab_configs, tab_configs_dir};

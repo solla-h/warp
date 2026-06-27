@@ -16,7 +16,7 @@ use crate::auth::auth_state::AuthState;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::report_error;
-use crate::server::server_api::auth::SyncedUserSettings;
+use crate::infra::auth::SyncedUserSettings;
 use crate::terminal::safe_mode_settings::SafeModeSettings;
 use crate::workspaces::workspace::EnterpriseSecretRegex;
 use crate::cloud_object::UpdateManager;

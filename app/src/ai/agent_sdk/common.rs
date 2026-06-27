@@ -19,9 +19,9 @@ use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::auth::auth_state::AuthStateProvider;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _, Owner, UpdateManager};
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::AIClient;
+use crate::infra::ServiceProvider;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
@@ -68,7 +68,7 @@ pub(super) fn set_ambient_task_context_from_run_id(
     run_id: &str,
 ) -> anyhow::Result<AmbientAgentTaskId> {
     let task_id = parse_ambient_task_id(run_id, "Invalid run ID")?;
-    ServerApiProvider::handle(ctx)
+    ServiceProvider::handle(ctx)
         .as_ref(ctx)
         .get()
         .set_ambient_agent_task_id(Some(task_id));

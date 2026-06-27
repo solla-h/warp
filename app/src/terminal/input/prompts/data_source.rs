@@ -13,7 +13,7 @@ use crate::search::data_source::{DataSourceSearchError, Query, QueryResult};
 use crate::search::mixer::DataSourceRunErrorWrapper;
 use crate::search::result_renderer::ItemHighlightState;
 use crate::search::{SearchItem, SyncDataSource};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::terminal::input::inline_menu::{
     default_navigation_message_items, styles as inline_styles, InlineMenuAction,
     InlineMenuMessageArgs, InlineMenuType,

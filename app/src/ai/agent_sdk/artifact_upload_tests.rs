@@ -10,7 +10,7 @@ use crate::ai::agent::api::ServerConversationToken;
 use crate::ai::agent::conversation::{AIAgentHarness, ServerAIConversationMetadata};
 use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
 use crate::persistence::model::ConversationUsageMetadata;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 
 fn create_mock_server_metadata() -> ServerMetadata {
     ServerMetadata {

@@ -330,7 +330,7 @@ fn handle_call_tool_result(
                         server_output_id,
                         tool_call: tool_name,
                         error: Some(
-                            crate::server::telemetry::MCPServerTelemetryError::ResponseError(
+                            crate::telemetry::MCPServerTelemetryError::ResponseError(
                                 error_message.clone()
                             )
                         ),

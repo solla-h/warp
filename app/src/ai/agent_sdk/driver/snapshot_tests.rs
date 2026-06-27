@@ -13,7 +13,7 @@ use super::*;
 use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent_sdk::test_support::build_test_http_client;
 use crate::ai::artifacts::Artifact;
-use crate::server::server_api::harness_support::{
+use crate::infra::harness_support::{
     ReportArtifactResponse, ResolvePromptRequest, ResolvedHarnessPrompt,
 };
 

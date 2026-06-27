@@ -1,1 +1,1 @@
-pub use crate::server::server_api::AIApiError;
+pub use crate::infra::AIApiError;

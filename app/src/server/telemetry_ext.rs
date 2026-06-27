@@ -4,12 +4,12 @@ use warp_core::channel::{Channel, ChannelState};
 use warp_core::execution_mode;
 use warpui::telemetry::EventPayload;
 
-use super::telemetry::rudder_message::{
+use crate::telemetry::rudder_message::{
     BatchMessage as RudderBatchMessage, BatchMessageItem as RudderBatchMessageItem,
     Identify as RudderIdentify, Track as RudderTrack,
 };
-use super::telemetry::secret_redaction::redact_secrets_in_value;
-use super::telemetry::telemetry_context;
+use crate::telemetry::secret_redaction::redact_secrets_in_value;
+use crate::telemetry::telemetry_context;
 use crate::auth::UserUid;
 
 pub trait TelemetryExt {

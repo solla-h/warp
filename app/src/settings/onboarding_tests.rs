@@ -13,7 +13,7 @@ use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{Revision, ServerAIExecutionProfile, ServerMetadata, ServerPermissions};
 use crate::network::NetworkStatus;
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 use crate::settings::{apply_onboarding_settings, PrivacySettings};
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspaces::team_tester::TeamTesterStatus;

@@ -29,7 +29,7 @@ use crate::channel::ChannelState;
 pub use crate::drive::items::WarpDriveItem;
 pub use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::persistence::ModelEvent;
-use crate::server::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
+use crate::ids::{HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, SyncIdExt, ToServerId};
 use cloud_object_models::ObjectClient;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workflows::{CloudWorkflow, WorkflowSource};
@@ -79,8 +79,8 @@ pub enum OperationSuccessType {
 pub struct ObjectOperationResult {
     pub operation: ObjectOperation,
     pub success_type: OperationSuccessType,
-    pub client_id: Option<crate::server::ids::ClientId>,
-    pub server_id: Option<crate::server::ids::ServerId>,
+    pub client_id: Option<crate::ids::ClientId>,
+    pub server_id: Option<crate::ids::ServerId>,
 }
 
 #[derive(Debug, Clone)]
@@ -125,8 +125,8 @@ impl UpdateManager {
     pub fn create_ai_fact<A: 'static, I: 'static, O: 'static>(&mut self, _fact: A, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn create_ai_execution_profile<A: 'static, I: 'static, O: 'static>(&mut self, _profile: A, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn create_ambient_agent_environment<E: 'static, I: 'static, O: 'static>(&mut self, _env: E, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) {}
-    pub fn create_ambient_agent_environment_online<E: 'static, I: 'static, O: 'static>(&mut self, _env: E, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<crate::server::ids::ServerId> { std::future::ready(crate::server::ids::ServerId::default()) }
-    pub fn create_scheduled_ambient_agent_online<C: 'static, I: 'static, O: 'static>(&mut self, _config: C, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<crate::server::ids::ServerId>> { std::future::ready(Ok(crate::server::ids::ServerId::default())) }
+    pub fn create_ambient_agent_environment_online<E: 'static, I: 'static, O: 'static>(&mut self, _env: E, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<crate::ids::ServerId> { std::future::ready(crate::ids::ServerId::default()) }
+    pub fn create_scheduled_ambient_agent_online<C: 'static, I: 'static, O: 'static>(&mut self, _config: C, _client_id: I, _owner: O, _ctx: &mut warpui::ModelContext<Self>) -> std::future::Ready<anyhow::Result<crate::ids::ServerId>> { std::future::ready(Ok(crate::ids::ServerId::default())) }
     pub fn create_templatable_mcp_server<S: 'static, I: 'static, O: 'static>(&mut self, _server: S, _client_id: I, _owner: O, _initiated_by: InitiatedBy, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_object<K: 'static, M: 'static, I: 'static, R: 'static>(&mut self, _model: M, _id: I, _revision: R, _ctx: &mut warpui::ModelContext<Self>) {}
     pub fn update_notebook_data(&mut self, _content: Arc<String>, _id: SyncId, _ctx: &mut warpui::ModelContext<Self>) {}
@@ -199,15 +199,15 @@ impl SingletonEntity for Listener {}
 
 #[allow(unused)]
 pub struct GenericStringObjectInput<T, S> {
-    pub id: crate::server::ids::ClientId,
+    pub id: crate::ids::ClientId,
     pub model: T,
-    pub initial_folder_id: Option<crate::server::ids::SyncId>,
+    pub initial_folder_id: Option<crate::ids::SyncId>,
     pub entrypoint: CloudObjectEventEntrypoint,
     _phantom: std::marker::PhantomData<fn() -> S>,
 }
 
 impl<T, S> GenericStringObjectInput<T, S> {
-    pub fn new(id: crate::server::ids::ClientId, model: T, initial_folder_id: Option<crate::server::ids::SyncId>, entrypoint: CloudObjectEventEntrypoint) -> Self {
+    pub fn new(id: crate::ids::ClientId, model: T, initial_folder_id: Option<crate::ids::SyncId>, entrypoint: CloudObjectEventEntrypoint) -> Self {
         Self { id, model, initial_folder_id, entrypoint, _phantom: std::marker::PhantomData }
     }
 }

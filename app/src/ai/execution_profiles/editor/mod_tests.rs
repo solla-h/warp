@@ -18,7 +18,7 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::UserWorkspaces;
@@ -61,7 +61,7 @@ fn assert_context_window_limit_for_request(
             .override_enabled(gpt_configurable_context_window_enabled);
 
         initialize_settings_for_tests(&mut app);
-        app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+        app.add_singleton_model(|_| ServiceProvider::new_for_test());
         app.add_singleton_model(|_| AuthStateProvider::new_for_test());
         app.add_singleton_model(AuthManager::new_for_test);
         app.add_singleton_model(|_| NetworkStatus::new());

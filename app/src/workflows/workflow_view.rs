@@ -59,10 +59,10 @@ use crate::server::cloud_objects::update_manager::{
     FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
     UpdateManagerEvent,
 };
-use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::{
+use crate::ids::{ClientId, ServerId, SyncId};
+use crate::infra::ai::AIClient;
+use crate::infra::ServiceProvider;
+use crate::telemetry::{
     CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
 };
 use crate::settings::app_installation_detection::{
@@ -381,7 +381,7 @@ impl WorkflowView {
             me.handle_content_editor_event(event, ctx);
         });
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         let content_editor_highlight_model =
             ctx.add_model(|ctx| SyntaxHighlightable::new(content_editor.clone(), ctx));

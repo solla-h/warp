@@ -16,8 +16,8 @@ use crate::ai::artifact_download::sanitized_basename;
 #[cfg(feature = "local_fs")]
 use crate::ai::artifact_download::{default_download_directory, download_artifact_bytes};
 use crate::notebooks::NotebookId;
-use crate::server::server_api::ai::ArtifactDownloadResponse;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::ArtifactDownloadResponse;
+use crate::infra::ServiceProvider;
 use crate::view_components::DismissibleToast;
 use crate::workspace::{ToastStack, WorkspaceAction};
 
@@ -276,7 +276,7 @@ pub fn open_screenshot_lightbox<V: warpui::View>(
     // Fetch each signed URL independently and update the lightbox as each resolves.
     // TODO(QUALITY-318): We should cache the signed URL for each artifact UUID so
     // we avoid fetching screenshots already in the asset cache.
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
 
     for (i, uid) in artifact_uids.iter().enumerate() {
         let ai_client = ai_client.clone();
@@ -331,7 +331,7 @@ pub fn download_file_artifact<V: warpui::View>(
     artifact_uid: &str,
     ctx: &mut warpui::ViewContext<V>,
 ) {
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
     let artifact_uid = artifact_uid.to_string();
     let artifact_uid_for_request = artifact_uid.clone();
 
@@ -394,7 +394,7 @@ fn open_file_download_picker<V: warpui::View>(
             let Some(path) = path_opt else {
                 return;
             };
-            let server_api = ServerApiProvider::handle(ctx).as_ref(ctx).get();
+            let server_api = ServiceProvider::handle(ctx).as_ref(ctx).get();
             let artifact = artifact.clone();
             let artifact_uid = artifact.artifact_uid().to_string();
             let path = PathBuf::from(path);

@@ -68,10 +68,10 @@ use crate::network::NetworkStatus;
 use crate::notebooks::editor::model::FileLinkResolutionContext;
 use crate::persistence::ModelEvent;
 use crate::send_telemetry_from_ctx;
-use crate::server::server_api::AIApiError;
+use crate::infra::AIApiError;
 #[cfg(not(target_family = "wasm"))]
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::TelemetryEvent;
+use crate::infra::ServiceProvider;
+use crate::telemetry::TelemetryEvent;
 use crate::terminal::model::block::{
     formatted_terminal_contents_for_input, BlockId, CURSOR_MARKER,
 };
@@ -1735,7 +1735,7 @@ impl BlocklistAIController {
         };
         let trigger_for_callback = trigger.clone();
 
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let server_api = ServiceProvider::as_ref(ctx).get();
         let handle = ctx.spawn(
             async move {
                 log::info!(

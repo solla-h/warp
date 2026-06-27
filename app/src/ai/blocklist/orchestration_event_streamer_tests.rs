@@ -11,8 +11,8 @@ use crate::ai::agent_events::{
     DEFAULT_AGENT_EVENT_RECONNECT_BACKOFF_STEPS,
 };
 use crate::persistence::ModelEvent;
-use crate::server::server_api::ai::MockAIClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::MockAIClient;
+use crate::infra::ServiceProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
@@ -225,7 +225,7 @@ fn make_server_metadata_with_harness(
     use crate::ai::agent::api::ServerConversationToken;
     use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
     use crate::persistence::model::ConversationUsageMetadata;
-    use crate::server::ids::ServerId;
+    use crate::ids::ServerId;
 
     crate::ai::agent::conversation::ServerAIConversationMetadata {
         title: "test".to_string(),
@@ -266,8 +266,8 @@ fn dormant_local_claude_child_skips_generic_sse_but_allows_wake_listener() {
     use warpui::App;
 
     use crate::ai::agent::conversation::{AIConversation, ConversationStatus};
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -294,7 +294,7 @@ fn dormant_local_claude_child_skips_generic_sse_but_allows_wake_listener() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -327,8 +327,8 @@ fn persist_event_cursor_keeps_the_max_sequence_and_updates_history_model() {
 
     use crate::ai::agent::conversation::{AIConversation, AIConversationId};
     use crate::persistence::ModelEvent;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
     use crate::test_util::settings::initialize_settings_for_tests;
     use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
@@ -356,7 +356,7 @@ fn persist_event_cursor_keeps_the_max_sequence_and_updates_history_model() {
             .times(1)
             .returning(|_, _| Ok(()));
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -396,8 +396,8 @@ fn wake_ready_does_not_advance_cursor_before_wake_preparation() {
 
     use crate::ai::agent::conversation::AIConversation;
     use crate::ai::agent_events::AgentMessageEventMetadata;
-    use crate::server::server_api::ai::{AIClient, MockAIClient};
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::{AIClient, MockAIClient};
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -412,7 +412,7 @@ fn wake_ready_does_not_advance_cursor_before_wake_preparation() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -459,8 +459,8 @@ fn dormant_local_claude_child_uses_task_harness_when_server_metadata_missing() {
     use warpui::App;
 
     use crate::ai::agent::conversation::{AIConversation, ConversationStatus};
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -484,7 +484,7 @@ fn dormant_local_claude_child_uses_task_harness_when_server_metadata_missing() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -587,8 +587,8 @@ fn restored_conversations_initialize_v2_streaming_state() {
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -603,7 +603,7 @@ fn restored_conversations_initialize_v2_streaming_state() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -648,7 +648,7 @@ async fn sse_forwarding_consumer_skips_message_hydration_when_disabled() {
     use futures::StreamExt;
 
     let (tx, mut rx) = futures::channel::mpsc::unbounded();
-    let mut ai_client = crate::server::server_api::ai::MockAIClient::new();
+    let mut ai_client = crate::infra::ai::MockAIClient::new();
     ai_client.expect_read_agent_message().times(0);
     let ai_client: Arc<dyn AIClient> = Arc::new(ai_client);
     let hydrator = MessageHydrator::new(ai_client);
@@ -673,8 +673,8 @@ fn finish_restore_fetch_uses_server_cursor_when_sqlite_is_absent() {
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -691,7 +691,7 @@ fn finish_restore_fetch_uses_server_cursor_when_sqlite_is_absent() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -733,8 +733,8 @@ fn handle_event_batch_persists_max_seq_to_history_model() {
 
     use crate::ai::agent::conversation::{AIConversation, AIConversationId};
     use crate::persistence::ModelEvent;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
     use crate::test_util::settings::initialize_settings_for_tests;
     use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
@@ -763,7 +763,7 @@ fn handle_event_batch_persists_max_seq_to_history_model() {
         mock.expect_update_event_sequence_on_server()
             .returning(|_, _| Ok(()));
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -847,7 +847,7 @@ fn handle_event_batch_drops_events_for_killed_run_ids_after_persisting_cursor() 
         mock.expect_update_event_sequence_on_server()
             .returning(|_, _| Ok(()));
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -931,7 +931,7 @@ fn killed_run_ids_are_bounded() {
         app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -964,8 +964,8 @@ fn finish_restore_fetch_no_ops_when_conversation_deleted_mid_flight() {
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -980,7 +980,7 @@ fn finish_restore_fetch_no_ops_when_conversation_deleted_mid_flight() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1033,8 +1033,8 @@ fn finish_restore_fetch_err_does_not_resurrect_deleted_conversation() {
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -1049,7 +1049,7 @@ fn finish_restore_fetch_err_does_not_resurrect_deleted_conversation() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1098,8 +1098,8 @@ fn on_conversation_removed_prunes_stale_child_run_id_from_parent() {
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -1116,7 +1116,7 @@ fn on_conversation_removed_prunes_stale_child_run_id_from_parent() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1157,8 +1157,8 @@ fn on_conversation_removed_prunes_killed_child_run_id_from_parent_but_keeps_tomb
     use warpui::App;
 
     use crate::ai::agent::conversation::AIConversation;
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -1169,7 +1169,7 @@ fn on_conversation_removed_prunes_killed_child_run_id_from_parent_but_keeps_tomb
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1330,7 +1330,7 @@ fn is_known_child_dedupes_per_parent_after_first_observation() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1389,7 +1389,7 @@ fn is_known_child_isolated_per_parent() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1432,7 +1432,7 @@ fn viewer_mode_consumer_refcount_handles_multiple_panes_and_double_unregister() 
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1521,7 +1521,7 @@ fn is_remote_run_view_excludes_shared_session_viewer() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1553,7 +1553,7 @@ fn is_remote_run_view_excludes_remote_child() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1591,7 +1591,7 @@ fn reevaluate_eligibility_does_not_reconnect_when_watched_run_ids_unchanged() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1654,8 +1654,8 @@ fn finish_restore_fetch_reconnects_sse_when_children_added_to_open_connection() 
     use warpui::App;
 
     use crate::ai::agent::conversation::{AIConversation, ConversationStatus};
-    use crate::server::server_api::ai::MockAIClient;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ai::MockAIClient;
+    use crate::infra::ServiceProvider;
 
     App::test((), |mut app| async move {
         let history_model = app.add_singleton_model(|_| BlocklistAIHistoryModel::new(vec![], &[]));
@@ -1677,7 +1677,7 @@ fn finish_restore_fetch_reconnects_sse_when_children_added_to_open_connection() 
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1787,7 +1787,7 @@ fn finish_ancestor_seed_fetch_emits_child_spawned_for_each_seeded_child() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1878,7 +1878,7 @@ fn register_viewer_mode_consumer_replays_known_children_for_later_panes() {
 
         let mock = MockAIClient::new();
         let ai_client: Arc<dyn AIClient> = Arc::new(mock);
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
 
         let streamer = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
@@ -1974,7 +1974,7 @@ fn parent_with_many_children_opens_one_ancestor_include_self_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2030,7 +2030,7 @@ fn registering_additional_child_does_not_reconnect_parent_family_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2094,7 +2094,7 @@ fn child_only_conversation_opens_self_run_id_filter() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2141,7 +2141,7 @@ fn parent_over_run_id_limit_without_flag_does_not_open_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2192,7 +2192,7 @@ fn parent_crossing_run_id_limit_without_flag_tears_down_partial_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2253,7 +2253,7 @@ fn restored_parent_with_children_opens_ancestor_include_self_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });
@@ -2325,7 +2325,7 @@ fn restored_child_without_children_opens_self_run_id_stream() {
         });
 
         let ai_client: Arc<dyn AIClient> = Arc::new(MockAIClient::new());
-        let server_api = ServerApiProvider::new_for_test().get();
+        let server_api = ServiceProvider::new_for_test().get();
         let poller = app.add_singleton_model(|ctx| {
             OrchestrationEventStreamer::new_with_clients_for_test(ai_client, server_api, ctx)
         });

@@ -24,8 +24,8 @@ use crate::ai::ambient_agents::{
 use crate::ai::artifacts::{Artifact, ArtifactButtonsRow, ArtifactButtonsRowEvent};
 use crate::ai::blocklist::{format_credits, BlocklistAIHistoryModel};
 use crate::appearance::Appearance;
-use crate::server::ids::SyncId;
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::SyncId;
+use crate::infra::ServiceProvider;
 use crate::settings::ai::{AISettings, AISettingsChangedEvent};
 use crate::ui_components::blended_colors;
 use crate::util::time_format::human_readable_precise_duration;
@@ -316,7 +316,7 @@ impl ConversationEndedTombstoneView {
 
         // Fetch AmbientAgentTask for additional metadata (source, skill, artifacts, etc.)
         if let Some(task_id) = task_id {
-            let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+            let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
             ctx.spawn(
                 async move { ai_client.get_ambient_agent_task(&task_id).await },
                 |me, result, ctx| match result {

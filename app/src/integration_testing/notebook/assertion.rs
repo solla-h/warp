@@ -12,7 +12,7 @@ use crate::integration_testing::view_getters::{notebook_view, terminal_view};
 use crate::notebooks::notebook::NotebookView;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::pane_group::PaneGroup;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::settings::{CloudPreferenceModel, Preference};
 
 /// Asserts that the notebook in the given pane has the expected Markdown content.

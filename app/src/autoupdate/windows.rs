@@ -15,7 +15,7 @@ use warp_core::channel::{Channel, ChannelState};
 use warpui::AppContext;
 
 use super::{release_assets_directory_url, DownloadReady};
-use crate::server::telemetry::TelemetryEvent;
+use crate::telemetry::TelemetryEvent;
 use crate::util::windows::install_dir;
 
 lazy_static! {

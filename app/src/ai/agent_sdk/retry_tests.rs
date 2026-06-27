@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use futures::executor::block_on;
 
 use super::*;
-use crate::server::server_api::presigned_upload::HttpStatusError;
+use crate::infra::presigned_upload::HttpStatusError;
 
 fn http_err(status: u16) -> anyhow::Error {
     HttpStatusError {

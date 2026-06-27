@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use warp_core::command::ExitCode;
 
 use crate::ai::{RequestLimitInfo, RequestLimitRefreshDuration};
-use crate::server::telemetry::OpenedWarpAISource;
+use crate::telemetry::OpenedWarpAISource;
 use crate::terminal::model::terminal_model::BlockIndex;
 use crate::workflows::workflow::{Argument, Workflow};
 

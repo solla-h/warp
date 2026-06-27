@@ -14,7 +14,7 @@ use warpui::{AppContext, SingletonEntity};
 use super::workflow::{Argument, ArgumentType, Workflow};
 use super::workflow_enum::{EnumVariants, WorkflowEnum};
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 
 /// Separate structure for exporting arguments. This new structure holds explicit enum information,
 /// unlike the `Argument` struct which just holds the enum_id. It is also flatter than the normal `Argument`

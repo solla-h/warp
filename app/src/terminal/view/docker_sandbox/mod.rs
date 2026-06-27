@@ -28,9 +28,9 @@ use crate::pane_group::TerminalViewResources;
 use crate::persistence::ModelEvent;
 #[cfg(not(target_family = "wasm"))]
 #[cfg(not(target_family = "wasm"))]
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 #[cfg(any(feature = "local_tty", not(target_family = "wasm")))]
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 #[cfg(feature = "local_tty")]
 use crate::terminal::local_tty::docker_sandbox::resolve_sbx_path_from_user_shell;
 #[cfg(not(target_family = "wasm"))]
@@ -168,7 +168,7 @@ impl TerminalView {
 
         let resources = TerminalViewResources {
             tips_completed: self.tips_completed.clone(),
-            server_api: ServerApiProvider::as_ref(ctx).get(),
+            server_api: ServiceProvider::as_ref(ctx).get(),
             model_event_sender: self.model_event_sender.clone(),
         };
         let pane_configuration = self.pane_configuration().clone();
@@ -208,7 +208,7 @@ impl TerminalView {
         // Local Docker sandbox tabs are not backed by an Oz run ID, so setup event reporting is
         // intentionally disabled for this environment preparation path.
         let setup_events = SetupClientEventReporter::noop(
-            ServerApiProvider::as_ref(ctx).get_ai_client().clone(),
+            ServiceProvider::as_ref(ctx).get_ai_client().clone(),
             ctx.background_executor().clone(),
         );
 

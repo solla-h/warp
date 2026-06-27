@@ -17,8 +17,8 @@ use crate::ai::cloud_environments::GithubRepo;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::ids::{ClientId, SyncId};
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ClientId, SyncId};
+use crate::infra::ServiceProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::test_util::settings::initialize_settings_for_tests;
@@ -176,7 +176,7 @@ fn create_test_window(app: &mut App) -> WindowId {
 fn init_update_environment_form_test_models(app: &mut App) {
     initialize_settings_for_tests(app);
 
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(CloudModel::mock);

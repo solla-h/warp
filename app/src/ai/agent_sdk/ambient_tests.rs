@@ -7,7 +7,7 @@ use warp_cli::task::{
 use warp_cli::SortOrderArg;
 
 use super::*;
-use crate::server::server_api::ai::{ArtifactType, ExecutionLocation, RunSortBy, RunSortOrder};
+use crate::infra::ai::{ArtifactType, ExecutionLocation, RunSortBy, RunSortOrder};
 
 const TASK_ID: &str = "00000000-0000-0000-0000-000000000001";
 const OTHER_TASK_ID: &str = "00000000-0000-0000-0000-000000000002";

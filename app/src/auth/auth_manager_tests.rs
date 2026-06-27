@@ -8,11 +8,11 @@ use crate::auth::auth_view_modal::AuthRedirectPayload;
 use crate::auth::credentials::{Credentials, RefreshToken};
 use crate::auth::user::{FirebaseAuthTokens, TEST_USER_UID};
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::server::server_api::auth::UserAuthenticationError;
-use crate::ServerApiProvider;
+use crate::infra::auth::UserAuthenticationError;
+use crate::ServiceProvider;
 
 fn initialize_app(app: &mut App) {
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AuthManager::new_for_test);
 }

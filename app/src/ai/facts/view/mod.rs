@@ -21,7 +21,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::ui_components::icons::Icon;
 
 pub mod rule;

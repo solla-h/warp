@@ -10,7 +10,7 @@ pub use cloud_objects::ids::{
 /// ServerId. It implements different To/From and Display, and HashableId traits.
 /// Takes type and desired prefix for HashableId.
 ///
-/// Note: This macro uses `$crate::server::ids::*` paths, so it only works within the warp crate.
+/// Note: This macro uses `$crate::ids::*` paths, so it only works within the warp crate.
 /// For types defined in cloud_objects, use `cloud_objects::server_id_traits!` instead.
 #[macro_export]
 macro_rules! server_id_traits {
@@ -24,7 +24,7 @@ macro_rules! server_id_traits {
 
         impl From<String> for $t {
             fn from(id: String) -> Self {
-                Self($crate::server::ids::ServerId::from_string_lossy(id))
+                Self($crate::ids::ServerId::from_string_lossy(id))
             }
         }
 
@@ -40,13 +40,13 @@ macro_rules! server_id_traits {
             }
         }
 
-        impl From<$t> for $crate::server::ids::ServerId {
+        impl From<$t> for $crate::ids::ServerId {
             fn from(id: $t) -> Self {
                 id.0
             }
         }
 
-        impl $crate::server::ids::HashableId for $t {
+        impl $crate::ids::HashableId for $t {
             fn to_hash(&self) -> String {
                 format!("{}-{}", $prefix, self)
             }
@@ -57,14 +57,14 @@ macro_rules! server_id_traits {
             }
         }
 
-        impl From<$crate::server::ids::ServerId> for $t {
-            fn from(id: $crate::server::ids::ServerId) -> Self {
+        impl From<$crate::ids::ServerId> for $t {
+            fn from(id: $crate::ids::ServerId) -> Self {
                 Self(id)
             }
         }
 
-        impl $crate::server::ids::ToServerId for $t {
-            fn to_server_id(&self) -> $crate::server::ids::ServerId {
+        impl $crate::ids::ToServerId for $t {
+            fn to_server_id(&self) -> $crate::ids::ServerId {
                 self.0
             }
         }
@@ -72,5 +72,5 @@ macro_rules! server_id_traits {
 }
 
 #[cfg(test)]
-#[path = "ids_tests.rs"]
+#[path = "server/ids_tests.rs"]
 mod tests;

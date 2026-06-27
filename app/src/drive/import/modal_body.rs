@@ -21,7 +21,7 @@ use super::nodes::{
 use super::queue::{ImportQueue, ImportQueueArgs, ImportQueueEvent, ParentId, RequestContent};
 use crate::appearance::Appearance;
 use crate::cloud_object::Owner;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::ui_components::icons::Icon;
 use crate::view_components::DismissibleToast;
 use crate::workspace::ToastStack;

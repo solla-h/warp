@@ -16,10 +16,10 @@ use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use super::output::TableFormat;
-use crate::server::server_api::ai::{
+use crate::infra::ai::{
     AgentResponse, CreateAgentRequest, SecretRef, UpdateAgentRequest,
 };
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 
 /// Singleton model that runs async work for named-agent CLI commands.
 struct AgentManagementRunner;
@@ -90,7 +90,7 @@ impl AgentManagementRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let future = async move {
             ensure_json_sort_is_not_requested(output_format, &args.json_output, &args)?;
 
@@ -114,7 +114,7 @@ impl AgentManagementRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let future = async move {
             if matches!(output_format, OutputFormat::Json) || args.json_output.force_json_output() {
                 let response = ai_client.get_agent_raw(&args.uid).await?;
@@ -135,7 +135,7 @@ impl AgentManagementRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let future = async move {
             let json_output = args.json_output.clone();
             let request = CreateAgentRequest {
@@ -165,7 +165,7 @@ impl AgentManagementRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let future = async move {
             let uid = args.uid.clone();
             let json_output = args.json_output.clone();
@@ -247,7 +247,7 @@ impl AgentManagementRunner {
         output_format: OutputFormat,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()> {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let future = async move {
             ai_client.delete_agent(&args.uid).await?;
             print_delete_result(&args.uid, output_format)?;

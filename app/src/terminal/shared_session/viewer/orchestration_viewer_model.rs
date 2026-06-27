@@ -30,8 +30,8 @@ use crate::ai::blocklist::orchestration_event_streamer::{
     OrchestrationEventStreamer, OrchestrationEventStreamerEvent,
 };
 use crate::ai::blocklist::BlocklistAIHistoryModel;
-use crate::server::server_api::ai::TaskListFilter;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::TaskListFilter;
+use crate::infra::ServiceProvider;
 use crate::terminal::{Event as TerminalViewEvent, TerminalView};
 
 /// Max child runs per legacy `?ancestor_run_id=` page (polling path).
@@ -315,7 +315,7 @@ impl OrchestrationViewerModel {
         {
             self.metadata_fetch_dispatch_count += 1;
         }
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let parent_task_id = self.parent_task_id;
         ctx.spawn(
             async move { ai_client.get_ambient_agent_task(&task_id).await },
@@ -693,7 +693,7 @@ impl OrchestrationViewerModel {
         self.fetch_generation = self.fetch_generation.wrapping_add(1);
         let fetch_generation = self.fetch_generation;
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let filter = TaskListFilter {
             ancestor_run_id: Some(self.parent_task_id.to_string()),
             ..TaskListFilter::default()

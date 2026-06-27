@@ -15,7 +15,7 @@ use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::report_error;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
 /// Checks if a user's' API key is being used for the given provider.
@@ -1087,7 +1087,7 @@ impl LLMPreferences {
             return;
         }
 
-        let ai_api_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_api_client = ServiceProvider::as_ref(ctx).get_ai_client();
         ctx.spawn(
             async move { ai_api_client.get_feature_model_choices().await },
             |me, result, ctx| match result {
@@ -1105,7 +1105,7 @@ impl LLMPreferences {
 
     /// No auth required (i.e. to populate the pre-login onboarding picker).
     fn refresh_public_models(&self, ctx: &mut ModelContext<Self>) {
-        let ai_api_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_api_client = ServiceProvider::as_ref(ctx).get_ai_client();
         ctx.spawn(
             async move { ai_api_client.get_free_available_models(None).await },
             |me, result, ctx| match result {

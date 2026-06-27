@@ -72,9 +72,9 @@ use crate::notebooks::notebook::NotebookView;
 use crate::pricing::PricingInfoModel;
 use crate::resource_center::TipsCompleted;
 use crate::search::files::model::FileSearchModel;
-use crate::server::ids::ServerId;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::ids::ServerId;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
@@ -108,8 +108,8 @@ use crate::{
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
 
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
-    app.add_singleton_model(|ctx| ChangelogModel::new(ServerApiProvider::as_ref(ctx).get()));
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
+    app.add_singleton_model(|ctx| ChangelogModel::new(ServiceProvider::as_ref(ctx).get()));
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);
@@ -170,7 +170,7 @@ fn initialize_app(app: &mut App) {
         AIExecutionProfilesModel::new(&crate::LaunchMode::new_for_unit_test(), ctx)
     });
     app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
+        AIRequestUsageModel::new_for_test(ServiceProvider::as_ref(ctx).get_ai_client(), ctx)
     });
     app.add_singleton_model(SessionPermissionsManager::new);
     app.add_singleton_model(LLMPreferences::new);
@@ -187,7 +187,7 @@ fn initialize_app(app: &mut App) {
     app.update(experiments::init);
     AltScreenReporting::register(app);
     app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
+        CodebaseIndexManager::new_for_test(ServiceProvider::as_ref(ctx).get(), ctx)
     });
     app.add_singleton_model(|ctx| PersistedWorkspace::new(vec![], HashMap::new(), None, ctx));
     app.add_singleton_model(|_| ProjectContextModel::default());
@@ -232,7 +232,7 @@ fn mock_pane_group(app: &mut App, options: MockOptions) -> ViewHandle<PaneGroup>
             PaneGroup::new_with_panes_layout(
                 tips_model,
                 user_default_shell_changed_banner_dismissal_model_handle,
-                ServerApiProvider::as_ref(ctx).get(),
+                ServiceProvider::as_ref(ctx).get(),
                 options.layout,
                 block_lists,
                 None,
@@ -3076,7 +3076,7 @@ fn test_focused_pane_is_synchronized_with_application_focus() {
                     PaneGroup::new_with_panes_layout(
                         tips_model,
                         user_default_shell_changed_banner_dismissal_model_handle,
-                        ServerApiProvider::as_ref(ctx).get(),
+                        ServiceProvider::as_ref(ctx).get(),
                         panes_layout,
                         block_lists,
                         None,

@@ -18,7 +18,7 @@ use crate::report_error;
 use crate::server::retry_strategies::{
     is_transient_graphql_or_http_error, OUT_OF_BAND_REQUEST_RETRY_STRATEGY,
 };
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
 const CACHE_KEY: &str = "AvailableHarnesses";
@@ -197,7 +197,7 @@ impl HarnessAvailabilityModel {
             .insert(harness, AuthSecretFetchState::Loading);
         self.auth_secret_retry_after.remove(&harness);
 
-        let api = ServerApiProvider::as_ref(ctx).get_managed_secrets_client();
+        let api = ServiceProvider::as_ref(ctx).get_managed_secrets_client();
         ctx.spawn_with_retry_on_error_when(
             move || {
                 let api = api.clone();
@@ -329,7 +329,7 @@ impl HarnessAvailabilityModel {
             return;
         }
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         ctx.spawn(
             async move { ai_client.get_available_harnesses().await },
             |me, result, ctx| match result {

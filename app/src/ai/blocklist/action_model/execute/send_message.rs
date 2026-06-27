@@ -24,8 +24,8 @@ use crate::ai::blocklist::telemetry::{
     TeamAgentCommunicationFailureReason, TeamAgentCommunicationKind,
     TeamAgentCommunicationTransport, TeamAgentOrchestrationVersion,
 };
-use crate::server::server_api::ai::{SendAgentMessageRequest, SendAgentMessageResponse};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{SendAgentMessageRequest, SendAgentMessageResponse};
+use crate::infra::ServiceProvider;
 
 #[cfg(not(target_family = "wasm"))]
 const SEND_AGENT_MESSAGE_TIMEOUT: Duration = Duration::from_secs(15);
@@ -69,8 +69,8 @@ fn sender_run_id_and_task_id_for_send(
 
 #[cfg(not(target_family = "wasm"))]
 async fn send_agent_message_with_timeout(
-    server_api: std::sync::Arc<crate::server::server_api::ServerApi>,
-    ai_client: std::sync::Arc<dyn crate::server::server_api::ai::AIClient>,
+    server_api: std::sync::Arc<crate::infra::ServerApi>,
+    ai_client: std::sync::Arc<dyn crate::infra::ai::AIClient>,
     task_id: Option<AmbientAgentTaskId>,
     request: SendAgentMessageRequest,
 ) -> anyhow::Result<SendAgentMessageResponse, anyhow::Error> {
@@ -102,8 +102,8 @@ async fn send_agent_message_with_timeout(
 
 #[cfg(target_family = "wasm")]
 async fn send_agent_message_with_timeout(
-    server_api: std::sync::Arc<crate::server::server_api::ServerApi>,
-    ai_client: std::sync::Arc<dyn crate::server::server_api::ai::AIClient>,
+    server_api: std::sync::Arc<crate::infra::ServerApi>,
+    ai_client: std::sync::Arc<dyn crate::infra::ai::AIClient>,
     task_id: Option<AmbientAgentTaskId>,
     request: SendAgentMessageRequest,
 ) -> anyhow::Result<SendAgentMessageResponse, anyhow::Error> {
@@ -166,8 +166,8 @@ impl SendMessageToAgentExecutor {
         let log_sender_run_id = sender_run_id.clone();
         let log_task_id = task_id.map(|task_id| task_id.to_string());
         let log_body_len = message_body.chars().count();
-        let server_api = ServerApiProvider::as_ref(ctx).get();
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         log::info!(
             "Sending orchestration message: conversation_id={conversation_id:?} resolution={task_resolution:?} sender_run_id={log_sender_run_id:?} task_id={log_task_id:?} target_agent_ids={log_addresses:?} subject={log_subject:?} body_len={log_body_len}"
         );

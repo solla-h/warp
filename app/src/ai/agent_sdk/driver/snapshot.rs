@@ -43,11 +43,11 @@ use warpui::r#async::FutureExt as _;
 
 use crate::ai::agent_sdk::retry::with_bounded_retry;
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::server_api::ai::{
+use crate::infra::ai::{
     AIClient, InitialSnapshotToken, SnapshotUploadFileInfo as AiSnapshotUploadFileInfo,
     UploadLocalHandoffSnapshotRequest,
 };
-use crate::server::server_api::harness_support::{
+use crate::infra::harness_support::{
     upload_to_target, HarnessSupportClient, SnapshotFileInfo, SnapshotUploadRequest, UploadTarget,
 };
 

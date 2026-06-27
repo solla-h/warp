@@ -6,7 +6,7 @@ use super::open_workflow_count;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
 use crate::integration_testing::view_getters::workspace_view;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::workflows::manager::WorkflowOpenSource;
 use crate::workflows::workflow::Workflow;
 use crate::workflows::WorkflowViewMode;

@@ -12,7 +12,7 @@ use {
 use super::PseudoConsoleChild;
 use super::{PtyOptions, PtySpawnResult};
 use crate::send_telemetry_from_app_ctx;
-use crate::server::telemetry::{PtySpawnMode, TelemetryEvent};
+use crate::telemetry::{PtySpawnMode, TelemetryEvent};
 use crate::terminal::local_tty::{self};
 /// A handle that can be used to interact with a pty process.
 pub trait PtyHandle: Send + Sync {

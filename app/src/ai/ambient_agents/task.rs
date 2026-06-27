@@ -16,7 +16,7 @@ use warpui::{SingletonEntity, View, ViewContext};
 
 use super::AmbientAgentTaskId;
 use crate::ai::artifacts::{deserialize_artifacts, Artifact};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::ui_components::icons::Icon;
 use crate::view_components::DismissibleToast;
 use crate::workspace::ToastStack;
@@ -526,7 +526,7 @@ pub struct RequestUsage {
 
 /// Cancel an ambient agent task and show a toast with the result.
 pub fn cancel_task_with_toast<V: View>(task_id: AmbientAgentTaskId, ctx: &mut ViewContext<V>) {
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
     let window_id = ctx.window_id();
     ctx.spawn(
         async move { ai_client.cancel_ambient_agent_task(&task_id).await },
@@ -548,7 +548,7 @@ pub fn cancel_task_with_toast<V: View>(task_id: AmbientAgentTaskId, ctx: &mut Vi
 
 /// Cancel an ambient agent task without surfacing a toast to the user.
 pub fn cancel_task_silently<V: View>(task_id: AmbientAgentTaskId, ctx: &mut ViewContext<V>) {
-    let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+    let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
     ctx.spawn(
         async move { ai_client.cancel_ambient_agent_task(&task_id).await },
         move |_view, result, _| {

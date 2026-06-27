@@ -25,7 +25,7 @@ use crate::report_if_error;
 use crate::cloud_object::{
     GenericStringObjectInput, InitiatedBy, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::settings::cloud_preferences::{
     CloudPreference, CloudPreferenceModel, Platform, Preference,
 };

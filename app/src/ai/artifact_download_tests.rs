@@ -3,7 +3,7 @@ use chrono::{TimeZone, Utc};
 
 use super::*;
 #[cfg(feature = "local_fs")]
-use crate::server::server_api::ai::{
+use crate::infra::ai::{
     ArtifactDownloadCommonFields, FileArtifactResponseData, ScreenshotArtifactResponseData,
 };
 

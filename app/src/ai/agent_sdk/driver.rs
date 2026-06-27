@@ -77,12 +77,12 @@ use crate::ai::skills::{
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
 use crate::send_telemetry_from_app_ctx;
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::{AIClient, TaskStatusUpdate};
-use crate::server::server_api::harness_support::{
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::{AIClient, TaskStatusUpdate};
+use crate::infra::harness_support::{
     HarnessSupportClient, ResolvePromptAttachedSkill, ResolvePromptRequest,
 };
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::cli_agent_sessions::plugin_manager::{
     plugin_manager_for, CliAgentPluginManager,
 };
@@ -843,7 +843,7 @@ impl AgentDriver {
         let (tx, rx) = oneshot::channel();
         let foreground = ctx.spawner();
         let foreground_for_error = foreground.clone();
-        let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
         let task_id = self.task_id;
         let idle_on_complete = self.idle_on_complete;
 
@@ -892,7 +892,7 @@ impl AgentDriver {
             |_, _, _| {},
         );
 
-        let server_api_for_error = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let server_api_for_error = ServiceProvider::as_ref(ctx).get_ai_client();
 
         async move {
             if let Some(ref task_id) = task_id {
@@ -1278,7 +1278,7 @@ impl AgentDriver {
             .spawn(|me, ctx| {
                 (
                     me.task_id,
-                    ServerApiProvider::as_ref(ctx).get_ai_client().clone(),
+                    ServiceProvider::as_ref(ctx).get_ai_client().clone(),
                 )
             })
             .await?;
@@ -1854,7 +1854,7 @@ impl AgentDriver {
         );
         let setup_events = foreground
             .spawn(|me, ctx| {
-                let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client().clone();
+                let ai_client = ServiceProvider::as_ref(ctx).get_ai_client().clone();
                 match me.task_id {
                     Some(task_id) => {
                         SetupClientEventReporter::new(task_id, ai_client, ctx.background_executor())
@@ -2131,7 +2131,7 @@ impl AgentDriver {
                 } else {
                     None
                 };
-                let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client().clone();
+                let ai_client = ServiceProvider::as_ref(ctx).get_ai_client().clone();
                 // Capture OidcManaged strategy parameters for the proactive Bedrock credential
                 // refresh loop. Only populated when Bedrock OIDC inference is configured.
                 let oidc_strategy = match ApiKeyManager::handle(ctx)
@@ -2461,7 +2461,7 @@ impl AgentDriver {
                 Ok((
                     me.working_dir.clone(),
                     me.task_id,
-                    ServerApiProvider::as_ref(ctx).get(),
+                    ServiceProvider::as_ref(ctx).get(),
                     me.terminal_driver.clone(),
                 ))
             })
@@ -2831,7 +2831,7 @@ impl AgentDriver {
         let conversation_id_cell_for_handler = Arc::clone(&conversation_id_cell);
 
         // Get the server API from context
-        let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
         let server_api_for_conversation_update = server_api.clone();
         let task_id_for_conversation_update = self.task_id;
 
@@ -3382,7 +3382,7 @@ impl AgentDriver {
 
                 // If running as part of a task, store the session-sharing link.
                 if let Some(task_id) = self.task_id {
-                    let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+                    let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
                     let session_id = *session_id;
                     ctx.spawn(
                         async move {
@@ -3489,7 +3489,7 @@ impl AgentDriver {
 
         let Ok((working_dir, client)) = spawner
             .spawn(|me, ctx| {
-                let client = ServerApiProvider::as_ref(ctx).get_harness_support_client();
+                let client = ServiceProvider::as_ref(ctx).get_harness_support_client();
                 (me.working_dir.clone(), client)
             })
             .await

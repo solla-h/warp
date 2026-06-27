@@ -1,14 +1,14 @@
-﻿#![allow(dead_code, unused_variables, unused_imports)]
+#![allow(dead_code, unused_variables, unused_imports)]
 use std::sync::{Arc, Mutex};
 use cloud_objects::drive::CloudObjectTypeAndId;
 use warpui::AppContext;
 use warpui::elements::MouseStateHandle;
 use crate::cloud_object::Space;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::ui_components::menu_button::MenuDirection;
 
 pub mod ai_fact_collection {
-    use crate::server::ids::ClientId;
+    use crate::ids::ClientId;
     #[derive(Clone)]
     pub struct WarpDriveAIFactCollection { client_id: ClientId }
     impl WarpDriveAIFactCollection {
@@ -84,7 +84,7 @@ pub mod item {
 }
 
 pub mod mcp_server_collection {
-    use crate::server::ids::ClientId;
+    use crate::ids::ClientId;
     #[derive(Clone)]
     pub struct WarpDriveMCPServerCollection { client_id: ClientId }
     impl WarpDriveMCPServerCollection {

@@ -37,7 +37,7 @@ use crate::auth::UserUid;
 use crate::context_chips::ContextChipKind;
 use crate::editor::{InteractionState, ReplicaId};
 use crate::menu::{Event as MenuEvent, MenuItem, MenuItemFields};
-use crate::server::telemetry::SharingDialogSource;
+use crate::telemetry::SharingDialogSource;
 use crate::settings::InputModeSettings;
 use crate::terminal::block_list_viewport::ScrollPositionUpdate;
 use crate::terminal::model::blocks::BlockListPoint;

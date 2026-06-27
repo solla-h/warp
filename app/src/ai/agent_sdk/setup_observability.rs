@@ -7,7 +7,7 @@ use tracing::Instrument as _;
 use warpui::r#async::executor::Background;
 
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::server_api::ai::{AIClient, AgentRunClientEventRequest};
+use crate::infra::ai::{AIClient, AgentRunClientEventRequest};
 
 #[derive(Clone)]
 pub(crate) struct SetupClientEventReporter {

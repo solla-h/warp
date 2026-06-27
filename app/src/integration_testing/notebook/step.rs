@@ -10,7 +10,7 @@ use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
 use crate::integration_testing::view_getters::{notebook_view, workspace_view};
 use crate::notebooks::manager::NotebookSource;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
 fn notebook_editor(

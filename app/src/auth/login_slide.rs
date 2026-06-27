@@ -34,7 +34,7 @@ use crate::auth::auth_view_shared_helpers::{
 };
 use crate::auth::login_failure_notification::{self, LoginFailureReason};
 use crate::editor::{EditorView, SingleLineEditorOptions, TextColors, TextOptions};
-use crate::server::telemetry::{LoginEventSource, TelemetryEvent};
+use crate::telemetry::{LoginEventSource, TelemetryEvent};
 use crate::settings::PrivacySettings;
 use crate::themes::theme::Fill as ThemeFill;
 use crate::util::bindings::CustomAction;
@@ -351,7 +351,7 @@ impl LoginSlideView {
     fn handle_auth_manager_event(&mut self, event: &AuthManagerEvent, ctx: &mut ViewContext<Self>) {
         match event {
             AuthManagerEvent::AuthFailed(err) => {
-                use crate::server::server_api::auth::UserAuthenticationError;
+                use crate::infra::auth::UserAuthenticationError;
                 if let UserAuthenticationError::InvalidStateParameter = err {
                     self.last_login_failure_reason =
                         Some(LoginFailureReason::InvalidStateParameter);

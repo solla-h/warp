@@ -43,8 +43,8 @@ use crate::context_chips::prompt::Prompt;
 use crate::network::NetworkStatus;
 use crate::pricing::PricingInfoModel;
 use crate::search::files::model::FileSearchModel;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
@@ -70,8 +70,8 @@ use crate::{experiments, AgentNotificationsModel};
 pub fn initialize_app_for_terminal_view(app: &mut App) {
     initialize_history_persistence_for_tests(app);
 
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
-    app.add_singleton_model(|ctx| ChangelogModel::new(ServerApiProvider::as_ref(ctx).get()));
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
+    app.add_singleton_model(|ctx| ChangelogModel::new(ServiceProvider::as_ref(ctx).get()));
     app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(|_| SystemStats::new());
     app.add_singleton_model(|_| Prompt::mock());
@@ -105,7 +105,7 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     app.add_singleton_model(UndoCloseStack::new);
 
     app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
+        AIRequestUsageModel::new_for_test(ServiceProvider::as_ref(ctx).get_ai_client(), ctx)
     });
     app.add_singleton_model(|_| KeybindingChangedNotifier::new());
     app.add_singleton_model(TerminalKeybindings::new);
@@ -144,7 +144,7 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
     app.add_singleton_model(SkillManager::new);
     app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
+        CodebaseIndexManager::new_for_test(ServiceProvider::as_ref(ctx).get(), ctx)
     });
     app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     app.add_singleton_model(|ctx| {

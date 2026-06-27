@@ -6,7 +6,7 @@ use warpui::{App, SingletonEntity, ViewHandle};
 use crate::auth::UserUid;
 use crate::editor::ReplicaId;
 use crate::pane_group::PaneGroup;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::shared_session::manager::Manager;
 use crate::terminal::TerminalView;
 use crate::test_util::terminal::initialize_app_for_terminal_view;
@@ -30,7 +30,7 @@ pub fn terminal_view_for_viewer(app: &mut App) -> ViewHandle<TerminalView> {
     let session_id = SessionId::new();
 
     let (_, pane_group) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let server_api = ServiceProvider::as_ref(ctx).get();
         PaneGroup::new_for_shared_session_viewer(
             session_id,
             tips_completed,

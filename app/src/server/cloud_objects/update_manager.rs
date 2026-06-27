@@ -70,7 +70,7 @@ use crate::env_vars::{CloudEnvVarCollectionModel, EnvVarCollection};
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::persistence::ModelEvent;
-use crate::server::ids::{
+use crate::ids::{
     parse_sqlite_id_to_uid, ClientId, HashableId, HashedSqliteId, ObjectUid, ServerId, ServerIdExt, SyncId, SyncIdExt,
     ToServerId,
 };
@@ -222,11 +222,11 @@ impl UpdateManager {
 
     #[cfg(test)]
     pub fn mock(ctx: &mut ModelContext<Self>) -> Self {
-        use crate::server::server_api::ServerApiProvider;
+        use crate::infra::ServiceProvider;
 
         Self::new(
             None,
-            ServerApiProvider::new_for_test().get_cloud_objects_client(),
+            ServiceProvider::new_for_test().get_cloud_objects_client(),
             ctx,
         )
     }

@@ -262,7 +262,7 @@ fn validation_rejects_invalid_entries() {
 fn serializes_mcp_servers_as_object_not_string() {
     use crate::ai::agent::UserQueryMode;
     use crate::ai::ambient_agents::AgentConfigSnapshot;
-    use crate::server::server_api::ai::SpawnAgentRequest;
+    use crate::infra::ai::SpawnAgentRequest;
 
     let uuid = uuid::Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap();
     let mcp_servers = build_mcp_servers_from_specs(&[MCPSpec::Uuid(uuid)])

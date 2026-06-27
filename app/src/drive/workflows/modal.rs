@@ -5,8 +5,8 @@ use warpui::{AppContext, Element, Entity, View, ViewContext, TypedActionView};
 use crate::auth::UserUid;
 use crate::cloud_object::Owner;
 use crate::drive::items::WarpDriveItemId;
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::AIClient;
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::AIClient;
 
 pub struct WorkflowModal {
     is_open: bool,

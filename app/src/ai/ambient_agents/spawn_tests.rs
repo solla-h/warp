@@ -10,7 +10,7 @@ use super::{
 };
 use crate::ai::agent::UserQueryMode;
 use crate::ai::ambient_agents::{AmbientAgentTask, AmbientAgentTaskState};
-use crate::server::server_api::ai::{MockAIClient, SpawnAgentResponse, TaskStatusMessage};
+use crate::infra::ai::{MockAIClient, SpawnAgentResponse, TaskStatusMessage};
 use crate::terminal::shared_session;
 
 fn task_with(
@@ -650,7 +650,7 @@ fn run_id() -> crate::ai::ambient_agents::AmbientAgentTaskId {
 }
 
 fn transient_http_error() -> anyhow::Error {
-    use crate::server::server_api::presigned_upload::HttpStatusError;
+    use crate::infra::presigned_upload::HttpStatusError;
     anyhow::Error::new(HttpStatusError {
         status: 429,
         body: "Too Many Requests".to_string(),
@@ -659,7 +659,7 @@ fn transient_http_error() -> anyhow::Error {
 }
 
 fn permanent_http_error() -> anyhow::Error {
-    use crate::server::server_api::presigned_upload::HttpStatusError;
+    use crate::infra::presigned_upload::HttpStatusError;
     anyhow::Error::new(HttpStatusError {
         status: 403,
         body: "Forbidden".to_string(),
@@ -698,7 +698,7 @@ async fn poll_retries_transient_429_errors() {
     });
 
     let ai_client = Arc::new(mock);
-    let request = crate::server::server_api::ai::SpawnAgentRequest {
+    let request = crate::infra::ai::SpawnAgentRequest {
         prompt: Some("test".to_string()),
         mode: crate::ai::agent::UserQueryMode::Normal,
         config: None,
@@ -767,7 +767,7 @@ async fn poll_fails_on_permanent_http_error() {
         .returning(|_task_id| Err(permanent_http_error()));
 
     let ai_client = Arc::new(mock);
-    let request = crate::server::server_api::ai::SpawnAgentRequest {
+    let request = crate::infra::ai::SpawnAgentRequest {
         prompt: Some("test".to_string()),
         mode: crate::ai::agent::UserQueryMode::Normal,
         config: None,
@@ -837,7 +837,7 @@ async fn poll_gives_up_after_max_transient_retries() {
     });
 
     let ai_client = Arc::new(mock);
-    let request = crate::server::server_api::ai::SpawnAgentRequest {
+    let request = crate::infra::ai::SpawnAgentRequest {
         prompt: Some("test".to_string()),
         mode: crate::ai::agent::UserQueryMode::Normal,
         config: None,
@@ -901,7 +901,7 @@ async fn poll_stops_on_terminal_failure_like_state() {
         .returning(|_task_id| Ok(task_with(AmbientAgentTaskState::Error, None, None)));
 
     let ai_client = Arc::new(mock);
-    let request = crate::server::server_api::ai::SpawnAgentRequest {
+    let request = crate::infra::ai::SpawnAgentRequest {
         prompt: Some("test".to_string()),
         mode: UserQueryMode::Normal,
         config: None,
@@ -1048,7 +1048,7 @@ async fn poll_for_session_join_info_waits_until_link_is_available() {
     });
 
     let ai_client = Arc::new(mock);
-    let request = crate::server::server_api::ai::SpawnAgentRequest {
+    let request = crate::infra::ai::SpawnAgentRequest {
         prompt: Some("test".to_string()),
         mode: UserQueryMode::Normal,
         config: None,

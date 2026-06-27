@@ -10,7 +10,7 @@ use warpui::{AppContext, ModelContext, SingletonEntity};
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::CloudObjectTypeAndId;
 use crate::cloud_object::CloudObject as _;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 define_settings_group!(WorkflowAliases, settings: [
     aliases: Aliases {

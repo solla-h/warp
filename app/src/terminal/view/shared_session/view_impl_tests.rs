@@ -26,7 +26,7 @@ use crate::auth::user::TEST_USER_UID;
 use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
 use crate::context_chips::prompt_type::PromptType;
 use crate::editor::InteractionState;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::terminal::model::blocks::{ToTotalIndex as _, INLINE_BANNER_HEIGHT};
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
 use crate::terminal::view::ambient_agent::{

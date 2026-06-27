@@ -16,7 +16,7 @@ use crate::cloud_object::{
     UpdateCloudObjectResult,
 };
 use crate::persistence::ModelEvent;
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]

@@ -14,7 +14,7 @@ use super::{clear_event_queue, rudder_event_file_path, RUDDER_TELEMETRY_EVENTS_F
 use crate::auth::AuthStateProvider;
 use crate::channel::ChannelState;
 use crate::features::FeatureFlag;
-use crate::server::server_api::ServerApi;
+use crate::infra::ServerApi;
 use crate::settings::{PrivacySettings, PrivacySettingsChangedEvent};
 
 // How often we send Active Usage signals.

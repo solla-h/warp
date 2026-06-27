@@ -19,7 +19,7 @@ use crate::search::mixer::DataSourceRunErrorWrapper;
 use crate::search::notebooks::fuzzy_match::FuzzyMatchNotebookResult;
 use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
 use crate::search::QueryFilter;
-use crate::server::ids::{ObjectUid, SyncId};
+use crate::ids::{ObjectUid, SyncId};
 use crate::settings::AISettings;
 use crate::workflows::CloudWorkflow;
 
@@ -562,7 +562,7 @@ mod full_text_searcher {
     use crate::search::notebooks::fuzzy_match::FuzzyMatchNotebookResult;
     use crate::search::searcher::{AsyncSearcher, DEFAULT_MEMORY_BUDGET, SCORE_CONVERSION_FACTOR};
     use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
-    use crate::server::ids::ObjectUid;
+    use crate::ids::ObjectUid;
     use crate::workflows::CloudWorkflow;
 use cloud_object_models::CloudFolder;
 

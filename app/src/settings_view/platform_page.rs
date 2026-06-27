@@ -32,7 +32,7 @@ use crate::editor::{
 };
 use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::search_bar::SearchBar;
-use crate::server::ids::ApiKeyUid;
+use crate::ids::ApiKeyUid;
 use crate::ui_components::icons::Icon;
 use crate::util::time_format::format_approx_duration_from_now_utc;
 

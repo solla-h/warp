@@ -11,7 +11,7 @@ use crate::search::async_snapshot_data_source::AsyncSnapshotDataSource;
 use crate::search::command_search::searcher::CommandSearchItemAction;
 use crate::search::data_source::{Query, QueryResult};
 use crate::search::mixer::{BoxFuture, DataSourceRunErrorWrapper};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 pub(crate) struct NotebookMatchCandidate {
     id: SyncId,

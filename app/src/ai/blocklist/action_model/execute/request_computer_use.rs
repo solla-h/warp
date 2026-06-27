@@ -10,7 +10,7 @@ use crate::ai::agent::{AIAgentActionId, AIAgentActionType};
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
+use crate::telemetry::TelemetryEvent;
 
 pub struct RequestComputerUseExecutor {
     terminal_view_id: EntityId,

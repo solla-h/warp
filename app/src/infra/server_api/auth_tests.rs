@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::auth::credentials::{FirebaseToken, RefreshToken};
 #[cfg(feature = "skip_login")]
-use crate::server::server_api::ServerApi;
+use crate::infra::server_api::ServerApi;
 
 #[test]
 fn test_firebase_token_urls() -> Result<()> {

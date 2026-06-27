@@ -30,7 +30,7 @@ use crate::referral_theme_status::ReferralThemeStatus;
 use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipAction, TipsCompleted,
 };
-use crate::server::telemetry::TelemetryEvent;
+use crate::telemetry::TelemetryEvent;
 use crate::settings::{respect_system_theme, ThemeSettings};
 use crate::themes::theme::{
     RespectSystemTheme, SelectedSystemThemes, ThemeKind, WarpTheme, WarpThemeConfig,

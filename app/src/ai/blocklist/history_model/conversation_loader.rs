@@ -26,8 +26,8 @@ use crate::ai::agent::task::Task;
 #[cfg(feature = "local_fs")]
 use crate::persistence::agent::read_agent_conversation_by_id;
 use crate::persistence::model::{AgentConversation, AgentConversationData};
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::AIClient;
+use crate::infra::ServiceProvider;
 use crate::terminal::model::block::SerializedBlock;
 
 /// A conversation transcript from a CLI agent harness (e.g. Claude Code).
@@ -261,7 +261,7 @@ impl BlocklistAIHistoryModel {
             // Load from server asynchronously
             if let Some(server_token) = metadata.server_conversation_token {
                 // Extract the server API before creating the async future
-                let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+                let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
                 box_future(load_conversation_from_server(
                     conversation_id,
                     server_token,
@@ -308,7 +308,7 @@ impl BlocklistAIHistoryModel {
             "No local metadata for server token {}, falling back to server fetch",
             server_token.as_str()
         );
-        let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
         box_future(load_conversation_from_server(
             conversation_id,
             server_token.clone(),

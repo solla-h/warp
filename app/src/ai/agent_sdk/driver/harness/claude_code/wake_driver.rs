@@ -20,9 +20,9 @@ use super::{claude_command, prepare_claude_environment_config, ClaudeHarness};
 use crate::ai::agent::conversation::{AIConversation, ConversationStatus};
 use crate::ai::agent_events::{AgentMessageEventMetadata, MessageHydrator};
 use crate::ai::ambient_agents::{AmbientAgentTaskId, AmbientAgentTaskState};
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::harness_support::ResolvePromptRequest;
-use crate::server::server_api::ServerApi;
+use crate::infra::ai::AIClient;
+use crate::infra::harness_support::ResolvePromptRequest;
+use crate::infra::ServerApi;
 use crate::terminal::CLIAgent;
 
 const CLAUDE_WAKE_PROMPT: &str =

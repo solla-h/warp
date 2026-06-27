@@ -8,7 +8,7 @@ use crate::cloud_object::CloudObject;
 use crate::notebooks::manager::NotebookManager;
 use crate::notebooks::CloudNotebook;
 use crate::search::result_renderer::ItemHighlightState;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 #[derive(Clone, Debug)]
 /// Result of fuzzy matching a [`Notebook`].

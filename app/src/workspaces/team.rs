@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use serde::{Deserialize, Serialize};
 use crate::auth::UserUid;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use super::workspace::{BillingMetadata, WorkspaceUid};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

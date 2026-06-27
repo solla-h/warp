@@ -14,7 +14,7 @@ use crate::ai::cloud_environments;
 use crate::appearance::Appearance;
 use crate::modal::MODAL_BACKDROP_OPACITY;
 use crate::cloud_object::UpdateManager;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::settings_view::update_environment_form::{
     EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
 };

@@ -40,7 +40,7 @@ use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::search::external_secrets::view::ExternalSecretsMenu;
 use crate::cloud_object::{FetchSingleObjectOption, UpdateManager};
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 use crate::terminal::model::secrets::SecretLevel;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::ui_components::breadcrumb::{render_breadcrumbs, BreadcrumbState};

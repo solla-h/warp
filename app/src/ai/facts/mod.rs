@@ -6,7 +6,7 @@ use crate::cloud_object::model::json_model::JsonModel;
 use crate::cloud_object::{CloudObjectTypeAndId, 
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision,
 };
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 pub mod manager;
 pub mod view;

@@ -16,9 +16,9 @@ use crate::ai::agent_sdk::retry::with_bounded_retry;
 use crate::ai::ambient_agents::task::{AttachmentInput, TaskAttachment};
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::attachment_utils::MAX_ATTACHMENT_SIZE_BYTES;
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::presigned_upload::HttpStatusError;
-use crate::server::server_api::ServerApi;
+use crate::infra::ai::AIClient;
+use crate::infra::presigned_upload::HttpStatusError;
+use crate::infra::ServerApi;
 use crate::util::image::MIN_IMAGE_HEADER_SIZE;
 
 /// Maximum number of file attachments for a cloud agent task.

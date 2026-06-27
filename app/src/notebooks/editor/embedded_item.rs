@@ -29,7 +29,7 @@ use warpui::{AppContext, Element, LayoutContext, SingletonEntity, SizeConstraint
 
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::CloudObject;
-use crate::server::ids::{HashableId, ToServerId};
+use crate::ids::{HashableId, ToServerId};
 use crate::ui_components::icons::Icon;
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{CloudWorkflow, WorkflowId};

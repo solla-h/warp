@@ -27,7 +27,7 @@ use crate::view_components::dropdown::{DROPDOWN_PADDING, TOP_MENU_BAR_HEIGHT};
 use crate::view_components::{Dropdown as DropdownView, DropdownItem};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
-use crate::server::server_api::auth::AgentIdentity;
+use crate::infra::auth::AgentIdentity;
 
 const OZ_AGENTS_URL: &str = "https://oz.warp.dev/agents?new=true";
 const API_KEY_DOCS_URL: &str =

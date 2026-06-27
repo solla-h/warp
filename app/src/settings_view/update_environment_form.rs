@@ -6,7 +6,7 @@ use log::debug;
 use url::Url;
 use warp_core::send_telemetry_from_ctx;
 use warp_editor::editor::NavigationKey;
-use crate::server::server_api::integrations::{SuggestCloudEnvironmentImageResult, UserGithubInfoResult};
+use crate::infra::integrations::{SuggestCloudEnvironmentImageResult, UserGithubInfoResult};
 use warpui::elements::{
     Border, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable,
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss, Element, Empty, Expanded,
@@ -37,8 +37,8 @@ use crate::editor::{
     EditorOptions, EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::ids::SyncId;
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::SyncId;
+use crate::infra::ServiceProvider;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
@@ -1302,7 +1302,7 @@ impl UpdateEnvironmentForm {
         self.github_dropdown_state.auth_fetched_at = None;
         ctx.notify();
 
-        let integrations_client = ServerApiProvider::handle(ctx)
+        let integrations_client = ServiceProvider::handle(ctx)
             .as_ref(ctx)
             .get_integrations_client();
 
@@ -1516,7 +1516,7 @@ impl UpdateEnvironmentForm {
             .map(|r| (r.owner.clone(), r.repo.clone()))
             .collect::<Vec<_>>();
 
-        let integrations_client = ServerApiProvider::handle(ctx)
+        let integrations_client = ServiceProvider::handle(ctx)
             .as_ref(ctx)
             .get_integrations_client();
 

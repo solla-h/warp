@@ -29,8 +29,8 @@ use crate::pane_group::PaneGroup;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search;
 use crate::cloud_object::CloudObjectTypeAndId;
-use crate::server::ids::SyncId;
-use crate::server::telemetry::{
+use crate::ids::SyncId;
+use crate::telemetry::{
     AddTabWithShellSource, AgentModeEntrypoint, PaletteSource, SharingDialogSource,
 };
 use crate::settings_view::{SettingsAction as SettingsTabAction, SettingsSection};
@@ -441,7 +441,7 @@ pub enum WorkspaceAction {
         object_id: CloudObjectTypeAndId,
         source: SharingDialogSource,
     },
-    ViewObjectInWarpDrive(Box<crate::server::ids::SyncId>),
+    ViewObjectInWarpDrive(Box<crate::ids::SyncId>),
     UndoTrash(CloudObjectTypeAndId),
     /// Open a local path in the file explorer.
     OpenInExplorer {
@@ -590,7 +590,7 @@ pub enum WorkspaceAction {
         launch: Option<crate::ai::blocklist::handoff::PendingCloudLaunch>,
         #[cfg(not(all(feature = "local_fs", not(target_family = "wasm"))))]
         launch: Option<()>,
-        environment_id: Option<crate::server::ids::SyncId>,
+        environment_id: Option<crate::ids::SyncId>,
         entry_point: crate::ai::ambient_agents::telemetry::HandoffEntryPoint,
     },
     /// Automatically hand off the active running local agent conversation in the

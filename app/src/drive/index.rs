@@ -3,7 +3,7 @@ use warpui::{AppContext, Element, Entity, View, ViewContext, TypedActionView, Vi
 
 use super::items::WarpDriveItemId;
 use super::{CloudObjectTypeAndId, DriveObjectType, DriveSortOrder};
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 
 pub fn init(_ctx: &mut AppContext) {}
 

@@ -23,7 +23,7 @@ use crate::auth::AuthStateProvider;
 use crate::default_terminal::DefaultTerminal;
 use crate::features::{runtime_flags_menu_items, FeatureFlag};
 use crate::root_view::OpenLaunchConfigArg;
-use crate::server::telemetry::LaunchConfigUiLocation;
+use crate::telemetry::LaunchConfigUiLocation;
 use crate::settings::{
     AISettings, BlockVisibilitySettings, DebugSettings, DefaultSessionMode, SelectionSettings,
 };

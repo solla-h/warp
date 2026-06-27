@@ -7,10 +7,10 @@ use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use super::common::{EnvironmentChoice, ResolveConfigurationError};
 use super::oauth_flow::poll_oauth_until_terminal;
-use crate::server::server_api::integrations::{
+use crate::infra::integrations::{
     CreateSimpleIntegrationOutput, OauthConnectTxStatus, SimpleIntegrationsOutput,
 };
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 
 pub fn run(
     ctx: &mut AppContext,
@@ -40,7 +40,7 @@ impl IntegrationCommandRunner {
         let providers = vec![ProviderType::Linear, ProviderType::Slack];
         let provider_slugs: Vec<String> = providers.into_iter().map(|p| p.slug()).collect();
 
-        let integrations_client = ServerApiProvider::as_ref(ctx).get_integrations_client();
+        let integrations_client = ServiceProvider::as_ref(ctx).get_integrations_client();
 
         let list_future = async move {
             integrations_client
@@ -215,7 +215,7 @@ impl IntegrationCommandRunner {
             return;
         }
 
-        let integrations_client = ServerApiProvider::as_ref(ctx).get_integrations_client();
+        let integrations_client = ServiceProvider::as_ref(ctx).get_integrations_client();
 
         let future_integration_type = integration_type.clone();
         let future_environment_uid = environment_uid.clone();
@@ -258,7 +258,7 @@ impl IntegrationCommandRunner {
                                 println!("Authorize the provider here: {auth_url}\n");
                                 ctx.open_url(&auth_url);
 
-                                let integrations_client = ServerApiProvider::as_ref(ctx)
+                                let integrations_client = ServiceProvider::as_ref(ctx)
                                     .get_integrations_client();
 
                                 let poll_future =

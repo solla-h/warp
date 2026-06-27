@@ -6,8 +6,8 @@ use mockito::{Matcher, Server};
 use tempfile::tempdir;
 
 use super::*;
-use crate::server::server_api::ai::{FileArtifactUploadHeaderInfo, FileArtifactUploadTargetInfo};
-use crate::server::server_api::harness_support::{UploadField, UploadFieldValue};
+use crate::infra::server_api::ai::{FileArtifactUploadHeaderInfo, FileArtifactUploadTargetInfo};
+use crate::infra::server_api::harness_support::{UploadField, UploadFieldValue};
 
 /// Drive a future to completion on a fresh Tokio runtime. Required for tests
 /// that exercise `FileUploadBody`, which hashes the file via `spawn_blocking`

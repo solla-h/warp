@@ -63,8 +63,8 @@ use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusEvent};
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::cloud_object::{FetchSingleObjectOption, UpdateManager};
-use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::server::telemetry::{
+use crate::ids::{ClientId, ServerId, SyncId};
+use crate::telemetry::{
     CloudObjectTelemetryMetadata, NotebookActionEvent, NotebookTelemetryMetadata,
     SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
 };

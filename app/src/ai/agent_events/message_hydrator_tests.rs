@@ -5,10 +5,10 @@ use std::time::Duration;
 use mockall::predicate::eq;
 
 use super::*;
-use crate::server::server_api::ai::{
+use crate::infra::ai::{
     AIClient, AgentRunEvent, MockAIClient, ReadAgentMessageResponse,
 };
-use crate::server::server_api::presigned_upload::HttpStatusError;
+use crate::infra::presigned_upload::HttpStatusError;
 
 fn make_run_event(
     sequence: i64,

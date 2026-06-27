@@ -21,7 +21,7 @@ use crate::{
         blocklist::{BlocklistAIHistoryModel, BlocklistAIPermissions},
         paths::host_native_absolute_path,
     },
-    server::server_api::ServerApiProvider,
+    infra::ServiceProvider,
 };
 
 #[cfg(not(target_family = "wasm"))]
@@ -132,8 +132,8 @@ impl UploadArtifactExecutor {
                 model.add_temporary_file_read_permissions(conversation_id, [resolved_path.clone()]);
             });
 
-            let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
-            let server_api = ServerApiProvider::as_ref(ctx).get();
+            let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
+            let server_api = ServiceProvider::as_ref(ctx).get();
             let description = request.description.clone();
 
             ActionExecution::new_async(

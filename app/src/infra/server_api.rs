@@ -45,7 +45,7 @@ use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
 
-use super::experiments::{ServerExperiment, ServerExperiments};
+use crate::server::experiments::{ServerExperiment, ServerExperiments};
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::get_relevant_files::api::{GetRelevantFiles, GetRelevantFilesResponse};
 use crate::ai::predict::generate_ai_input_suggestions::GenerateAIInputSuggestionsRequest;
@@ -56,8 +56,8 @@ use crate::ai::voice::transcribe::{TranscribeRequest, TranscribeResponse};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::auth::UserUid;
-use crate::server::server_api::presigned_upload::HttpStatusError;
-use crate::server::telemetry::TelemetryApi;
+use self::presigned_upload::HttpStatusError;
+use crate::telemetry::TelemetryApi;
 use crate::settings::PrivacySettingsSnapshot;
 use crate::{settings_view, ChannelState};
 
@@ -420,7 +420,7 @@ impl ServerApi {
         let mut client = http_client::Client::new();
         let mut telemetry_api = TelemetryApi::new();
         if ContextFlag::NetworkLogConsole.is_enabled() {
-            super::network_logging::init([&mut client, &mut telemetry_api.client], ctx);
+            crate::server::network_logging::init([&mut client, &mut telemetry_api.client], ctx);
         }
         Self::new_with_parts(
             Arc::new(client),
@@ -1019,7 +1019,7 @@ impl ServerApi {
     }
 
     /// Synchronously sends a [`TelemetryEvent`] to the Rudderstack API. Prefer not to call this
-    /// directly, use the macros defined in crate::server::telemetry::macros. If telemetry is
+    /// directly, use the macros defined in crate::telemetry::macros. If telemetry is
     /// disabled, this is a no-op.
     pub async fn send_telemetry_event(
         &self,

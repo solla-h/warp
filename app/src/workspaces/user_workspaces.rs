@@ -2,7 +2,7 @@
 use cloud_objects::cloud_object::Owner;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 use crate::auth::UserUid;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use super::team::{DiscoverableTeam, MembershipRole, Team, TeamMember};
 use super::workspace::*;
 
@@ -117,7 +117,7 @@ impl UserWorkspaces {
     pub fn set_team_member_role<A: 'static, B: 'static>(&mut self, _user_uid: A, _team_uid: B, _role: MembershipRole, _ctx: &mut ModelContext<Self>) {}
     pub fn setup_test_workspace(&mut self, _ctx: &mut ModelContext<Self>) {}
     pub fn update<R: 'static>(&mut self, _response: R, _ctx: &mut ModelContext<Self>) {}
-    pub fn update_addon_credits_settings(&mut self, _team_uid: crate::server::ids::ServerId, _enabled: Option<bool>, _monthly_limit: Option<i32>, _credits: Option<i32>, _ctx: &mut ModelContext<Self>) {}
+    pub fn update_addon_credits_settings(&mut self, _team_uid: crate::ids::ServerId, _enabled: Option<bool>, _monthly_limit: Option<i32>, _credits: Option<i32>, _ctx: &mut ModelContext<Self>) {}
     pub fn update_current_workspace(&mut self, _workspace: Workspace, _ctx: &mut ModelContext<Self>) {}
     pub fn update_object_location(&mut self, _ctx: &mut ModelContext<Self>) {}
     pub fn update_session_team_permissions(&mut self, _ctx: &mut ModelContext<Self>) {}

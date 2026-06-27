@@ -15,7 +15,7 @@ use warp_util::standardized_path::StandardizedPath;
 
 use crate::ai::agent_sdk::driver::upload_snapshot_for_handoff;
 use crate::ai::blocklist::handoff::touched_repos::derive_touched_workspace;
-use crate::server::server_api::ai::{AIClient, InitialSnapshotToken};
+use crate::infra::ai::{AIClient, InitialSnapshotToken};
 
 /// Gather the workspace snapshot from the given absolute paths and upload it.
 ///

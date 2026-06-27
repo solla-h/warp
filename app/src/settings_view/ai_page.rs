@@ -139,7 +139,7 @@ use crate::ai::{AIRequestUsageModel, AIRequestUsageModelEvent};
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::editor::{EditorView, Event as EditorEvent, TextOptions};
 use crate::menu::{MenuItem, MenuItemFields};
-use crate::server::telemetry::{
+use crate::telemetry::{
     AgentModeAutoDetectionSettingOrigin, AutonomySettingToggleSource,
     ToggleCodeSuggestionsSettingSource,
 };

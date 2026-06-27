@@ -9,7 +9,7 @@ use crate::cloud_object::UpdateManager;
 use crate::cloud_object::UpdateManagerEvent;
 use crate::env_vars::view::env_var_collection::EnvVarCollectionView;
 use crate::pane_group::{EnvVarCollectionPane, PaneContent};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::{safe_warn, PaneViewLocator, WindowId};
 
 pub struct EnvVarCollectionManager {

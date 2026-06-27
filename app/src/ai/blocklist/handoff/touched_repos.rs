@@ -32,7 +32,7 @@ use crate::ai::agent::conversation::AIConversation;
 use crate::ai::agent::{AIAgentAction, AIAgentActionType, AIAgentOutputMessageType};
 use crate::ai::blocklist::agent_view::agent_input_footer::sort_environments_by_recency;
 use crate::ai::cloud_environments::{CloudAmbientAgentEnvironment, GithubRepo};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 /// Cap on how many of the conversation's action results we scan for paths,
 /// counted from most-recent backwards. Conversations with more than this many

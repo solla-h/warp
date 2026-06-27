@@ -3,7 +3,7 @@ use async_trait::async_trait;
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::workspaces::user_workspaces::WorkspacesMetadataResponse;
 use crate::workspaces::workspace::AiOverages;
 

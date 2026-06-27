@@ -103,7 +103,7 @@ fn add_model(app: &mut App) -> warpui::ModelHandle<AmbientAgentViewModel> {
 fn retry_request(prompt: impl Into<String>) -> SpawnAgentRequest {
     SpawnAgentRequest {
         prompt: Some(prompt.into()),
-        mode: crate::server::server_api::ai::UserQueryMode::Normal,
+        mode: crate::infra::ai::UserQueryMode::Normal,
         config: Some(AgentConfigSnapshot {
             environment_id: Some("env-123".to_string()),
             model_id: Some("model-123".to_string()),

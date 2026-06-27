@@ -10,7 +10,7 @@ use regex::Regex;
 use string_offset::{ByteOffset, CharCounter, CharOffset};
 
 use super::workflow::{ArgumentType, Workflow};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 lazy_static! {
     /// Regex for escaped arguments in workflow command.

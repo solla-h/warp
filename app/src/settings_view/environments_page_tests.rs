@@ -16,8 +16,8 @@ use crate::ai::cloud_environments::{
 use crate::auth::AuthStateProvider;
 use crate::network::NetworkStatus;
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ClientId, ServerId, SyncId};
+use crate::infra::ServiceProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::view::init_environment::mode_selector::EnvironmentSetupModeSelector;
@@ -91,7 +91,7 @@ fn init_env_page_view_test_models(app: &mut App) {
     initialize_settings_for_tests(app);
 
     // Most Settings views assume these singleton models exist.
-    app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_ctx| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(|_| Appearance::mock());
     app.add_singleton_model(CloudModel::mock);
@@ -110,7 +110,7 @@ fn init_env_page_view_test_models(app: &mut App) {
     // The agent-assisted modal reads locally indexed repos via CodebaseIndexManager.
     // We register a test instance to avoid singleton lookup panics in unit tests.
     app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
+        CodebaseIndexManager::new_for_test(ServiceProvider::as_ref(ctx).get(), ctx)
     });
 }
 

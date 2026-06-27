@@ -38,7 +38,7 @@ use crate::code::editor_management::{CodeEditorStatus, CodeEditorSummary};
 use crate::env_vars::manager::EnvVarCollectionManager;
 use crate::notebooks::manager::NotebookManager;
 use crate::palette::PaletteMode;
-use crate::server::telemetry::{PaletteSource, TelemetryEvent};
+use crate::telemetry::{PaletteSource, TelemetryEvent};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::{
     CloudPreferencesSettings, PrivacySettings, CRASH_REPORTING_ENABLED_DEFAULTS_KEY,

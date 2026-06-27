@@ -19,7 +19,7 @@ use warpui::{
 use crate::ai::agent::SuggestedAgentModeWorkflow;
 use crate::modal::{Modal, ModalEvent};
 use crate::pane_group::PaneEvent;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::ui_components::blended_colors;
 use crate::workflows::workflow_view::{WorkflowView, WorkflowViewEvent};
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};

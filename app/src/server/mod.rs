@@ -1,13 +1,10 @@
 pub mod cloud_objects;
 pub mod block;
 pub mod experiments;
-pub mod ids;
 pub mod network_log_pane_manager;
 pub mod network_log_view;
 pub mod network_logging;
 pub mod retry_strategies;
-pub mod server_api;
-pub mod telemetry;
 pub(crate) mod telemetry_ext;
 pub mod voice_transcriber;
 
@@ -18,7 +15,7 @@ pub mod sync_queue {
     use std::sync::Arc;
     use warpui::{Entity, SingletonEntity};
     use crate::cloud_object::InitiatedBy;
-    use crate::server::ids::{ClientId, SyncId};
+    use crate::ids::{ClientId, SyncId};
     pub use cloud_objects::cloud_object::SerializedModel;
 
     #[derive(Default)]

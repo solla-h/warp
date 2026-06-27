@@ -7,7 +7,7 @@ use super::{
     ServerOutputId,
 };
 use crate::ai::llms::LLMId;
-use crate::server::telemetry::AgentModeCitation as CitationForTelemetry;
+use crate::telemetry::AgentModeCitation as CitationForTelemetry;
 use crate::terminal::view::block_onboarding::onboarding_agentic_suggestions_block::OnboardingChipType;
 use crate::CloudModel;
 

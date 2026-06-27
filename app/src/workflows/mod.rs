@@ -32,7 +32,7 @@ use crate::cloud_object::{CloudObjectTypeAndId,
 };
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 use cloud_object_models::ObjectClient;
 
 pub fn init(app: &mut AppContext) {

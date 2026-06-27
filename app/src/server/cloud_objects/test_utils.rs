@@ -14,8 +14,8 @@ use crate::cloud_object::model::actions::ObjectActions;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::network::NetworkStatus;
 use crate::persistence::ModelEvent;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::{PrivacySettings, WarpDrivePrivacySettings};
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
@@ -38,9 +38,9 @@ pub fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| SettingsManager::default());
     app.add_singleton_model(TeamTesterStatus::mock);
     app.update(crate::settings::init_and_register_user_preferences);
-    // This ServerApiProvider is used for the PrivacySettings model, but not the UpdateManager
+    // This ServiceProvider is used for the PrivacySettings model, but not the UpdateManager
     // under test.
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
     app.add_singleton_model(AuthManager::new_for_test);

@@ -8,9 +8,9 @@ use warpui::{AddSingletonModel, App};
 use warpui_extras::user_preferences;
 
 use super::*;
-use crate::server::server_api::team::MockTeamClient;
-use crate::server::server_api::workspace::MockWorkspaceClient;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::team::MockTeamClient;
+use crate::infra::workspace::MockWorkspaceClient;
+use crate::infra::ServiceProvider;
 use crate::workspaces::team::Team;
 use crate::workspaces::workspace::{HostEnablementSetting, LlmHostSettings, Workspace};
 
@@ -199,7 +199,7 @@ fn initialize_app(app: &mut App, workspaces: Vec<Workspace>) {
     app.add_singleton_model(|_| {
         PrivatePreferences::new(Box::<user_preferences::in_memory::InMemoryPreferences>::default())
     });
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     let auth_state_provider = crate::auth::AuthStateProvider::new_for_test();
     let auth_state = auth_state_provider.get().clone();
     app.add_singleton_model(|_| auth_state_provider);
@@ -214,7 +214,7 @@ fn initialize_app(app: &mut App, workspaces: Vec<Workspace>) {
     });
     app.add_singleton_model(|ctx| {
         ManagedSecretManager::new(
-            ServerApiProvider::as_ref(ctx).get_managed_secrets_client(),
+            ServiceProvider::as_ref(ctx).get_managed_secrets_client(),
             auth_state,
         )
     });

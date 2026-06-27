@@ -244,12 +244,12 @@ use crate::search::ai_context_menu::search::is_valid_search_query;
 use crate::search::ai_context_menu::view::AIContextMenuAction;
 use crate::search::slash_command_menu::static_commands::commands::{self, COMMAND_REGISTRY};
 use crate::search::QueryFilter;
-use crate::server::ids::SyncId;
-use crate::server::server_api::ai::AttachmentFileInfo;
+use crate::ids::SyncId;
+use crate::infra::ai::AttachmentFileInfo;
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use crate::server::server_api::ai::AttachmentInput;
-use crate::server::server_api::ServerApi;
-use crate::server::telemetry::{
+use crate::infra::ai::AttachmentInput;
+use crate::infra::ServerApi;
+use crate::telemetry::{
     AICommandSearchEntrypoint, AgentModeAutoDetectionFalsePositivePayload,
     AgentModeAutoDetectionSettingOrigin, AnonymousUserSignupEntrypoint, CommandXRayTrigger,
     EnvVarTelemetryMetadata, PaletteSource, QueuedPromptSendNowTrigger,
@@ -344,7 +344,7 @@ use crate::ASSETS;
 #[allow(unused_imports)]
 use crate::{
     cmd_or_ctrl_shift, report_if_error, send_telemetry_from_ctx, AgentModeEntrypoint,
-    ServerApiProvider,
+    ServiceProvider,
 };
 
 /// Drop target data for dropping content on the [`Input`].
@@ -14247,8 +14247,8 @@ impl Input {
         queued_query_retry: Option<(AIConversationId, usize, QueuedQuery)>,
         ctx: &mut ViewContext<Self>,
     ) {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get();
 
         // Decode all images upfront; drop any that fail so that file_infos
         // and files_to_upload stay in sync (they're zipped later).

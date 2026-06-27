@@ -3,7 +3,7 @@ use warpui::{async_assert, async_assert_eq, App, ViewHandle};
 
 use crate::integration_testing::cloud_object::assert_metadata_revision;
 use crate::integration_testing::view_getters::workflow_view;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::workflows::workflow_view::WorkflowView;
 use crate::workflows::{CloudWorkflowModel, WorkflowId};
 

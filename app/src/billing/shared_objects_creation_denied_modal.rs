@@ -14,7 +14,7 @@ use super::shared_objects_creation_denied_body::{
     SharedObjectsCreationDeniedBody, SharedObjectsCreationDeniedBodyEvent,
 };
 use crate::modal::{Modal, ModalEvent};
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::CustomerType;
 

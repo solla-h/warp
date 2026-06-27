@@ -28,8 +28,8 @@ use crate::ai::agent_events::{
 };
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::server::retry_strategies::is_transient_http_error;
-use crate::server::server_api::ai::{AIClient, AgentRunEvent, TaskListFilter};
-use crate::server::server_api::{ServerApi, ServerApiProvider};
+use crate::infra::ai::{AIClient, AgentRunEvent, TaskListFilter};
+use crate::infra::{ServerApi, ServiceProvider};
 
 /// Backoff schedule (seconds) for the post-restore
 /// `get_ambient_agent_task` retry on transient errors: 1s, 2s, 5s, then 10s max.
@@ -419,7 +419,7 @@ impl OrchestrationEventStreamer {
         self.persist_event_cursor(conversation_id, wake_message.sequence, ctx);
     }
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        let provider = ServerApiProvider::as_ref(ctx);
+        let provider = ServiceProvider::as_ref(ctx);
         let ai_client = provider.get_ai_client();
         let server_api = provider.get();
         let history_model = BlocklistAIHistoryModel::handle(ctx);
@@ -439,7 +439,7 @@ impl OrchestrationEventStreamer {
     }
 
     /// Constructs a streamer wired to the supplied (mock) clients instead of
-    /// looking them up via `ServerApiProvider`. Lets unit tests inject a
+    /// looking them up via `ServiceProvider`. Lets unit tests inject a
     /// `MockAIClient` while still subscribing to `BlocklistAIHistoryModel`.
     #[cfg(test)]
     pub(super) fn new_with_clients_for_test(

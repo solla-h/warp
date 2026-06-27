@@ -34,14 +34,14 @@ use crate::ai::harness_availability::HarnessAvailabilityModel;
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::CloudObjectLookup as _;
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 #[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use crate::server::server_api::ai::InitialSnapshotToken;
-use crate::server::server_api::ai::{
+use crate::infra::ai::InitialSnapshotToken;
+use crate::infra::ai::{
     AgentConfigSnapshot, AmbientAgentTaskState, AttachmentInput, SpawnAgentRequest,
 };
-use crate::server::server_api::{
-    AIApiError, ClientError, CloudAgentCapacityError, ServerApiProvider,
+use crate::infra::{
+    AIApiError, ClientError, CloudAgentCapacityError, ServiceProvider,
 };
 use crate::settings::PrivacySettings;
 use crate::terminal::view::ambient_agent::{SetupCommandGroupId, SetupCommandState};
@@ -961,7 +961,7 @@ impl AmbientAgentViewModel {
         task_id: AmbientAgentTaskId,
         ctx: &mut ModelContext<Self>,
     ) {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
 
         // Store the task ID for later use
         self.task_id = Some(task_id);
@@ -1082,7 +1082,7 @@ impl AmbientAgentViewModel {
         let previous_session_id = self
             .active_execution_session_id
             .or(self.last_ended_execution_session_id);
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let stream = submit_run_followup(
             prompt.clone(),
             task_id,
@@ -1282,7 +1282,7 @@ impl AmbientAgentViewModel {
         request.interactive = Some(true);
         self.request = Some(request.clone());
         self.source = None;
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         let stream = spawn_task(request, ai_client, None);
         ctx.spawn_stream_local(
             stream,
@@ -1337,7 +1337,7 @@ impl AmbientAgentViewModel {
                         "Received task_id after cancellation, sending server cancellation for task {}",
                         task_id
                     );
-                    let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+                    let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
                     ctx.spawn(
                         async move {
                             if let Err(e) = ai_client.cancel_ambient_agent_task(&task_id).await {
@@ -1747,7 +1747,7 @@ impl AmbientAgentViewModel {
 
         // If we have a task_id, send cancellation request to the server
         if let Some(task_id) = self.task_id {
-            let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+            let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
             ctx.spawn(
                 async move { ai_client.cancel_ambient_agent_task(&task_id).await },
                 |_me, result, _ctx| {

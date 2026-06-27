@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use thiserror::Error;
 
 use crate::auth::credentials::{Credentials, LoginToken};
-use crate::server::ids::ApiKeyUid;
+use crate::ids::ApiKeyUid;
 
 use crate::auth::user::AnonymousUserType;
 use crate::auth::user_properties::UserProperties;

@@ -164,8 +164,8 @@ use crate::code_review::CodeReviewTelemetryEvent;
 use crate::editor::InteractionState;
 use crate::notebooks::editor::model::FileLinkResolutionContext;
 use crate::notebooks::editor::view::{EditorViewEvent, RichTextEditorView};
-use crate::server::ids::SyncId;
-use crate::server::telemetry::{
+use crate::ids::SyncId;
+use crate::telemetry::{
     AgentModeRewindEntrypoint, AutonomySettingToggleSource, InteractionSource, TelemetryEvent,
 };
 use crate::settings::{

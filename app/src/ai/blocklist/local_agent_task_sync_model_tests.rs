@@ -17,7 +17,7 @@ use crate::ai::agent::{
 };
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::llms::LLMId;
-use crate::server::server_api::ai::{AIClient, MockAIClient, TaskStatusUpdate};
+use crate::infra::ai::{AIClient, MockAIClient, TaskStatusUpdate};
 use crate::terminal::cli_agent_sessions::{CLIAgentSessionStatus, CLIAgentSessionsModel};
 
 /// Helper to assert a (state, Option<TaskStatusUpdate>) tuple.

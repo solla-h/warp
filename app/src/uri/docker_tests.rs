@@ -3,14 +3,14 @@ use warpui::App;
 use super::*;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::infra::ServiceProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 
 #[test]
 // Tests behavior based on which query parameters are required.
 fn test_open_docker_container() {
     App::test((), |mut app| async move {
-        app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+        app.add_singleton_model(|_| ServiceProvider::new_for_test());
         app.add_singleton_model(|_| AuthStateProvider::new_for_test());
         app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
         app.add_singleton_model(AuthManager::new_for_test);

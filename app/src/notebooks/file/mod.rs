@@ -50,7 +50,7 @@ use crate::pane_group::pane::view::header::components::{
     CenteredHeaderEdgeWidth,
 };
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::telemetry::{NotebookActionEvent, NotebookTelemetryMetadata, TelemetryEvent};
+use crate::telemetry::{NotebookActionEvent, NotebookTelemetryMetadata, TelemetryEvent};
 use crate::settings::FontSettings;
 use crate::terminal::model::session::Session;
 use crate::ui_components::icons::Icon;

@@ -12,8 +12,8 @@ use super::*;
 use crate::ai::agent_events::{AgentMessageEventMetadata, MessageHydrator};
 use crate::ai::agent_sdk::driver::harness::claude_transcript::encode_cwd;
 use crate::ai::agent_sdk::driver::OZ_MESSAGE_LISTENER_MANAGED_EXTERNALLY_ENV;
-use crate::server::server_api::ai::{AIClient, MockAIClient, ReadAgentMessageResponse};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{AIClient, MockAIClient, ReadAgentMessageResponse};
+use crate::infra::ServiceProvider;
 
 fn sample_parent_bridge_message(
     sequence: i64,
@@ -347,7 +347,7 @@ async fn prepare_parent_bridge_hook_output_moves_selected_messages_to_surfaced_d
             })
         });
     let hydrator = MessageHydrator::new(
-        Arc::new(ai_client) as Arc<dyn crate::server::server_api::ai::AIClient>
+        Arc::new(ai_client) as Arc<dyn crate::infra::ai::AIClient>
     );
 
     let max_context_chars = parent_bridge_char_count(MESSAGE_BRIDGE_CONTEXT_PREAMBLE)
@@ -405,7 +405,7 @@ async fn acknowledge_parent_bridge_hook_output_marks_messages_delivered_and_clea
         .times(1)
         .returning(|_| Ok(()));
     let hydrator = MessageHydrator::new(
-        Arc::new(ai_client) as Arc<dyn crate::server::server_api::ai::AIClient>
+        Arc::new(ai_client) as Arc<dyn crate::infra::ai::AIClient>
     );
 
     acknowledge_parent_bridge_hook_output(&hydrator, &state_dir)
@@ -434,7 +434,7 @@ async fn prepare_parent_bridge_hook_output_reuses_surfaced_records_without_rehyd
     let mut ai_client = MockAIClient::new();
     ai_client.expect_read_agent_message().times(0);
     let hydrator = MessageHydrator::new(
-        Arc::new(ai_client) as Arc<dyn crate::server::server_api::ai::AIClient>
+        Arc::new(ai_client) as Arc<dyn crate::infra::ai::AIClient>
     );
 
     let max_context_chars = parent_bridge_char_count(MESSAGE_BRIDGE_CONTEXT_PREAMBLE)
@@ -480,7 +480,7 @@ async fn prepare_parent_bridge_hook_output_truncates_single_large_message() {
             })
         });
     let hydrator = MessageHydrator::new(
-        Arc::new(ai_client) as Arc<dyn crate::server::server_api::ai::AIClient>
+        Arc::new(ai_client) as Arc<dyn crate::infra::ai::AIClient>
     );
 
     let max_context_chars = parent_bridge_char_count(MESSAGE_BRIDGE_CONTEXT_PREAMBLE) + 48;
@@ -517,7 +517,7 @@ async fn acknowledge_parent_bridge_hook_output_ignores_missing_ack_marker() {
     let mut ai_client = MockAIClient::new();
     ai_client.expect_mark_message_delivered().times(0);
     let hydrator = MessageHydrator::new(
-        Arc::new(ai_client) as Arc<dyn crate::server::server_api::ai::AIClient>
+        Arc::new(ai_client) as Arc<dyn crate::infra::ai::AIClient>
     );
 
     acknowledge_parent_bridge_hook_output(&hydrator, &state_dir)
@@ -788,7 +788,7 @@ fn prepare_local_wake_command_rehydrates_transcript_with_self_managed_listener()
     let parent_run_id = "parent-run-456".to_string();
 
     let command = futures::executor::block_on(ClaudeHarness::prepare_local_wake_command(
-        ServerApiProvider::new_for_test().get(),
+        ServiceProvider::new_for_test().get(),
         task_id,
         Some(parent_run_id.clone()),
         Some(working_dir.clone()),

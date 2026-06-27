@@ -19,7 +19,7 @@ use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModelEvent, UpdateSource};
 use crate::cloud_object::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::settings::AgentModeCommandExecutionPredicate;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{send_telemetry_from_ctx, CloudModel, LaunchMode, TelemetryEvent};

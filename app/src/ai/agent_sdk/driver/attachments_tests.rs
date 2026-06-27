@@ -8,7 +8,7 @@ use tempfile::{Builder as TempDirBuilder, NamedTempFile, TempDir};
 use super::*;
 use crate::ai::agent_sdk::test_support::build_test_http_client;
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::server_api::ai::MockAIClient;
+use crate::infra::ai::MockAIClient;
 
 #[test]
 fn process_attachment_text_file() {

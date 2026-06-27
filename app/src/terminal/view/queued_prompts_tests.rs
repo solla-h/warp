@@ -27,7 +27,7 @@ use crate::ai::blocklist::{
     QueuedQueryOrigin, ResponseStreamId,
 };
 use crate::features::FeatureFlag;
-use crate::server::server_api::ai::SpawnAgentRequest;
+use crate::infra::ai::SpawnAgentRequest;
 use crate::terminal::input::{Event as InputEvent, Input};
 use crate::terminal::shared_session::SharedSessionStatus;
 use crate::terminal::view::ambient_agent::AmbientAgentViewModelEvent;

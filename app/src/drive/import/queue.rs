@@ -7,7 +7,7 @@ use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, InitiatedBy, Owner, UpdateManagerEvent, UpdateManager};
 use crate::drive::folders::FolderId;
 use crate::notebooks::CloudNotebookModel;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 use crate::workflows::workflow::Workflow;
 use crate::workflows::workflow_enum::WorkflowEnum;
 

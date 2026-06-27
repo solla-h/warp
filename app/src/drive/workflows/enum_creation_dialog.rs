@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_variables, unused_imports)]
 use warpui::{ViewContext, View, Element, AppContext};
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 #[derive(Default, Clone, Debug)]
 pub struct WorkflowEnumData {

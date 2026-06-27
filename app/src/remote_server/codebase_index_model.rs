@@ -17,7 +17,7 @@ use crate::ai::codebase_auto_indexing::{
     auto_index_candidate_roots, should_auto_index_codebase, should_use_codebase_indexing,
     CodebaseAutoIndexingSurface,
 };
-use crate::server::telemetry::{
+use crate::telemetry::{
     RemoteCodebaseAutoIndexTrigger, RemoteCodebaseIndexStatusTelemetrySource,
 };
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};

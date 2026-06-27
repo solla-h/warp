@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use warpui::{AppContext, Entity, View, ViewContext, TypedActionView};
 use warpui::elements::Element;
-use crate::server::ids::HashedSqliteId;
+use crate::ids::HashedSqliteId;
 
 #[derive(Debug, Clone)]
 pub enum ImportModalEvent {

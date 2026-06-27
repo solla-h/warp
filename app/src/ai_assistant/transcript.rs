@@ -30,7 +30,7 @@ use super::utils::{
 use super::AI_ASSISTANT_SVG_PATH;
 use crate::appearance::Appearance;
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::{SaveAsWorkflowModalSource, TelemetryEvent, WarpAIActionType};
+use crate::telemetry::{SaveAsWorkflowModalSource, TelemetryEvent, WarpAIActionType};
 use crate::ui_components::blended_colors;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 

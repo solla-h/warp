@@ -10,8 +10,8 @@ use super::history_model::{
 use crate::ai::agent::conversation::{AIConversation, AIConversationId, ConversationStatus};
 use crate::ai::agent::{AIAgentOutputStatus, FinishedAIAgentOutput, RenderableAIError};
 use crate::ai::ambient_agents::{AmbientAgentTaskId, AmbientAgentTaskState};
-use crate::server::server_api::ai::{AIClient, PlatformErrorCode, TaskStatusUpdate};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{AIClient, PlatformErrorCode, TaskStatusUpdate};
+use crate::infra::ServiceProvider;
 use crate::terminal::cli_agent_sessions::{
     CLIAgentSessionStatus, CLIAgentSessionsModel, CLIAgentSessionsModelEvent,
 };
@@ -60,7 +60,7 @@ struct LocalTaskUpdate {
 
 impl LocalAgentTaskSyncModel {
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
         Self::new_with_ai_client(ai_client, ctx)
     }
 

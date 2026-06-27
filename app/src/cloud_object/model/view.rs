@@ -12,7 +12,7 @@ use crate::safe_info;
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
-use crate::server::ids::{ObjectUid, SyncId};
+use crate::ids::{ObjectUid, SyncId};
 use crate::workspaces::user_profiles::UserProfiles;
 use cloud_object_models::CloudFolder;
 

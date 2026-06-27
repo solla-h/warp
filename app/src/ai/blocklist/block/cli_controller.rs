@@ -19,7 +19,7 @@ use crate::ai::blocklist::context_model::block_context_from_terminal_model;
 use crate::ai::blocklist::{
     BlocklistAIActionEvent, BlocklistAIActionModel, BlocklistAIController, BlocklistAIHistoryEvent,
 };
-use crate::server::telemetry::{CLISubagentControlState, TelemetryEvent};
+use crate::telemetry::{CLISubagentControlState, TelemetryEvent};
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
 use crate::terminal::TerminalModel;

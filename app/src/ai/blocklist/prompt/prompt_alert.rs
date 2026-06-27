@@ -11,7 +11,7 @@ use crate::ai::blocklist::error_color;
 use crate::ai::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
 use crate::network::NetworkStatus;
-use crate::server::ids::ServerId;
+use crate::ids::ServerId;
 use crate::settings_view::SettingsSection;
 use crate::ui_components::icons::Icon;
 use crate::workspace::WorkspaceAction;

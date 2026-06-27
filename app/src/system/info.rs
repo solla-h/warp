@@ -11,7 +11,7 @@ use sysinfo::ProcessesToUpdate;
 use warp_core::channel::ChannelState;
 use warpui::{App, AppContext, Entity, ModelContext, SingletonEntity};
 
-use crate::server::telemetry;
+use crate::telemetry;
 use crate::system::memory_footprint;
 use crate::terminal::TerminalView;
 use crate::{send_telemetry_from_app_ctx, send_telemetry_sync_from_ctx, TelemetryEvent};

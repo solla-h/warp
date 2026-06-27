@@ -24,9 +24,9 @@ use crate::cloud_object::{
     RevisionAndLastEditor, ServerCreationInfo, UpdateCloudObjectResult,
 };
 use crate::notebooks::{CloudNotebookModel, NotebookId};
-use crate::server::ids::{ClientId, HashableId, ServerId, ServerIdAndType, SyncId, SyncIdExt};
-use crate::server::server_api::auth::UserAuthenticationError;
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ClientId, HashableId, ServerId, ServerIdAndType, SyncId, SyncIdExt};
+use crate::infra::auth::UserAuthenticationError;
+use crate::infra::ServiceProvider;
 use crate::server::sync_queue::{
     CreationFailureReason, GenericStringObjectToCreate, QueueItemId, SerializedModel,
     SyncQueueEvent,
@@ -52,7 +52,7 @@ impl Index<usize> for Events {
 }
 
 fn initialize_app(app: &mut App) {
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(|_| SystemStats::new());
 }

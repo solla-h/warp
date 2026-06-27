@@ -7,7 +7,7 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::UserWorkspaces;
@@ -363,7 +363,7 @@ fn reconcile_preserves_custom_models_saved_on_execution_profile() {
         let _custom_inference_flag = FeatureFlag::CustomInferenceEndpoints.override_enabled(true);
 
         initialize_settings_for_tests(&mut app);
-        app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+        app.add_singleton_model(|_| ServiceProvider::new_for_test());
         app.add_singleton_model(|_| AuthStateProvider::new_for_test());
         app.add_singleton_model(AuthManager::new_for_test);
         app.add_singleton_model(|_| NetworkStatus::new());

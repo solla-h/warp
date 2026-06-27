@@ -65,9 +65,9 @@ use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::send_telemetry_sync_from_app_ctx;
-use crate::server::ids::{ServerId, SyncId};
-use crate::server::server_api::ai::{AIClient, AgentConfigSnapshot, GitCredential};
-use crate::server::server_api::ServerApiProvider;
+use crate::ids::{ServerId, SyncId};
+use crate::infra::ai::{AIClient, AgentConfigSnapshot, GitCredential};
+use crate::infra::ServiceProvider;
 use crate::terminal::view::ConversationRestorationInNewPaneType;
 use crate::workflows::workflow::Workflow;
 
@@ -271,7 +271,7 @@ fn run_agent(
                 ));
             }
 
-            let server_api = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+            let server_api = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
 
             // Start the agent driver runner, which will handle the rest of the setup steps
             // (managing both sync and async steps) as well as triggering the driver.
@@ -816,7 +816,7 @@ impl AgentDriverRunner {
     ) -> Result<(), AgentDriverError> {
         foreground
             .spawn(move |_, ctx| {
-                ServerApiProvider::handle(ctx)
+                ServiceProvider::handle(ctx)
                     .as_ref(ctx)
                     .get()
                     .set_ambient_agent_task_id(task_id);
@@ -858,7 +858,7 @@ impl AgentDriverRunner {
             .spawn({
                 let task_id_str = task_id_str.to_string();
                 move |_, ctx| {
-                    let ai_client = ServerApiProvider::handle(ctx)
+                    let ai_client = ServiceProvider::handle(ctx)
                         .as_ref(ctx)
                         .get_ai_client()
                         .clone();
@@ -1141,11 +1141,11 @@ impl AgentDriverRunner {
                     let task_secrets = ManagedSecretManager::handle(ctx)
                         .as_ref(ctx)
                         .get_task_secrets(task_id_str);
-                    let ai_client = ServerApiProvider::handle(ctx)
+                    let ai_client = ServiceProvider::handle(ctx)
                         .as_ref(ctx)
                         .get_ai_client()
                         .clone();
-                    let server_api = ServerApiProvider::handle(ctx).as_ref(ctx).get();
+                    let server_api = ServiceProvider::handle(ctx).as_ref(ctx).get();
                     (task_secrets, ai_client, server_api)
                 }
             })
@@ -1331,7 +1331,7 @@ impl AgentDriverRunner {
             HarnessKind::Oz => {
                 let server_api = foreground
                     .spawn(|_, ctx| {
-                        ServerApiProvider::handle(ctx)
+                        ServiceProvider::handle(ctx)
                             .as_ref(ctx)
                             .get_ai_client()
                             .clone()
@@ -1363,7 +1363,7 @@ impl AgentDriverRunner {
             }
             HarnessKind::ThirdParty(h) => {
                 let harness_support_client = foreground
-                    .spawn(|_, ctx| ServerApiProvider::as_ref(ctx).get_harness_support_client())
+                    .spawn(|_, ctx| ServiceProvider::as_ref(ctx).get_harness_support_client())
                     .await?;
                 let resume_conversation_id = AIConversationId::try_from(conversation_id.clone())
                     .map_err(|err| AgentDriverError::ConversationLoadFailed(format!("{err:#}")))?;

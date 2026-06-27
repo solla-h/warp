@@ -11,7 +11,7 @@ use crate::code_review::diff_state::{
     DiffStateModelEvent, DiffStats, FileDiff, FileDiffAndContent, GitDiffData,
     GitDiffWithBaseContent, GitFileStatus, RemoteDiffStateModel,
 };
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
+use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::util::git::Commit;
 
 impl RemoteDiffStateModel {

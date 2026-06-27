@@ -23,7 +23,7 @@ use crate::search::mixer::{
 };
 use crate::search::result_renderer::ItemHighlightState;
 use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
-use crate::server::server_api::ai::AIClient;
+use crate::infra::ai::AIClient;
 use crate::themes::theme::Blend;
 use crate::ui_components::icons::Icon as UIIcon;
 use crate::util::color::{ContrastingColor, MinimumAllowedContrast};

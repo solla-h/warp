@@ -23,7 +23,7 @@ use crate::code::editor_management::CodeSource;
 use crate::notebooks::{CloudNotebook, CloudNotebookModel};
 use crate::persistence::model::ObjectPermissions;
 use crate::persistence::{BlockCompleted, ModelEvent, PersistenceScope};
-use crate::server::ids::ClientId;
+use crate::ids::ClientId;
 use crate::tab::SelectedTabColor;
 use crate::terminal::model::block::SerializedBlock;
 use crate::terminal::ShellLaunchData;

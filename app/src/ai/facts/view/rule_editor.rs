@@ -23,7 +23,7 @@ use crate::editor::{
     PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
 use crate::network::NetworkStatus;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{ActionButton, DangerSecondaryTheme, PrimaryTheme};

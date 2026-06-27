@@ -68,10 +68,10 @@ use crate::features::FeatureFlag;
 use crate::network::NetworkStatus;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "voice_input")]
-use crate::server::server_api::TranscribeError;
+use crate::infra::TranscribeError;
 #[cfg(not(target_family = "wasm"))]
-use crate::server::telemetry::PluginChipTelemetryAction;
-use crate::server::telemetry::{PluginChipTelemetryKind, TelemetryEvent};
+use crate::telemetry::PluginChipTelemetryAction;
+use crate::telemetry::{PluginChipTelemetryKind, TelemetryEvent};
 use crate::settings::{
     AISettings, AISettingsChangedEvent, PrivacySettings, PrivacySettingsChangedEvent,
 };

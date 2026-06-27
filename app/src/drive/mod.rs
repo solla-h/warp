@@ -7,7 +7,7 @@ use warpui::{AppContext, Entity, View, ViewContext};
 use crate::appearance::Appearance;
 use crate::cloud_object::model::view::{CloudViewModel, UpdateTimestamp};
 use crate::cloud_object::CloudObject;
-use crate::server::ids::{ServerId, SyncId};
+use crate::ids::{ServerId, SyncId};
 
 pub mod cloud_object_naming_dialog;
 pub mod cloud_object_styling;
@@ -48,7 +48,7 @@ pub struct OpenWarpDriveObjectArgs {
 impl Default for OpenWarpDriveObjectArgs {
     fn default() -> Self {
         Self {
-            cloud_object_type_and_id: CloudObjectTypeAndId::Notebook(SyncId::ClientId(crate::server::ids::ClientId::new())),
+            cloud_object_type_and_id: CloudObjectTypeAndId::Notebook(SyncId::ClientId(crate::ids::ClientId::new())),
             settings: OpenWarpDriveObjectSettings::default(),
             object_type: crate::cloud_object::ObjectType::Notebook,
             server_id: ServerId::default(),

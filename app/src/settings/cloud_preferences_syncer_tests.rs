@@ -21,7 +21,7 @@ use crate::cloud_object::{
     Revision, RevisionAndLastEditor, ServerMetadata, ServerObject, ServerPermissions,
     ServerPreference, UniquePer, UpdateCloudObjectResult,
 };
-use crate::server::ids::{ClientId, ServerId, ServerIdAndType, SyncId};
+use crate::ids::{ClientId, ServerId, ServerIdAndType, SyncId};
 use crate::settings::cloud_preferences::{
     CloudPreferenceModel, CloudPreferencesSettings, Platform,
 };

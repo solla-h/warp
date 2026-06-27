@@ -2,7 +2,7 @@ use warpui::App;
 
 use super::HandoffComposeState;
 use crate::ai::ambient_agents::telemetry::HandoffEntryPoint;
-use crate::server::ids::{ClientId, SyncId};
+use crate::ids::{ClientId, SyncId};
 
 #[test]
 fn preserves_explicit_environment_selection() {

@@ -15,8 +15,8 @@ use warp_types::ServerTimestamp;
 use warpui::r#async::FutureId;
 use warpui::{Entity, ModelContext, RequestState, RetryOption, SingletonEntity};
 
-use super::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
-use super::server_api::auth::UserAuthenticationError;
+use crate::ids::{ClientId, HashableId, ObjectUid, ServerId, SyncId, ToServerId};
+use crate::infra::server_api::auth::UserAuthenticationError;
 use cloud_object_models::{CloudFolderModel, ObjectClient};
 use crate::ai::ambient_agents::scheduled::CloudScheduledAmbientAgentModel;
 use crate::ai::cloud_agent_config::CloudAgentConfigModel;
@@ -354,11 +354,11 @@ pub struct SyncQueue {
 impl SyncQueue {
     #[cfg(test)]
     pub fn mock(ctx: &mut ModelContext<Self>) -> Self {
-        use super::server_api::ServerApiProvider;
+        use crate::infra::ServiceProvider;
 
         Self::new(
             Default::default(),
-            ServerApiProvider::new_for_test().get(),
+            ServiceProvider::new_for_test().get(),
             ctx,
         )
     }

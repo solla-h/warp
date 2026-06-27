@@ -5,7 +5,7 @@ use warpui::{
 };
 
 use crate::appearance::Appearance;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 use crate::ui_components::dialog::{dialog_styles, Dialog};
 use crate::view_components::action_button::{ActionButton, DangerPrimaryTheme, NakedTheme};
 

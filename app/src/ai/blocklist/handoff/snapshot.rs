@@ -16,8 +16,8 @@ use warpui::{ModelHandle, SingletonEntity, ViewContext};
 use crate::ai::agent_sdk::driver::upload_snapshot_for_handoff;
 use crate::ai::blocklist::handoff::touched_repos::{derive_touched_workspace, TouchedWorkspace};
 use crate::remote_server::manager::RemoteServerManager;
-use crate::server::server_api::ai::{AIClient, InitialSnapshotToken};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::{AIClient, InitialSnapshotToken};
+use crate::infra::ServiceProvider;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::view::ambient_agent::{AmbientAgentViewModel, SnapshotUploadStatus};
 use crate::workspace::Workspace;
@@ -199,7 +199,7 @@ pub(crate) fn resolve_upload_target(
             handle: RemoteServerManager::as_ref(ctx).host_request_handle(&host_id),
         },
         None => {
-            let server_api_provider = ServerApiProvider::as_ref(ctx);
+            let server_api_provider = ServiceProvider::as_ref(ctx);
             SnapshotUploadTarget::Local {
                 ai_client: server_api_provider.get_ai_client(),
                 http: server_api_provider.get_http_client(),

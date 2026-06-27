@@ -20,7 +20,7 @@ use crate::ai::AIRequestUsageModel;
 use crate::autoupdate::AutoupdateState;
 use crate::persistence;
 use crate::persistence::ModelEvent;
-use crate::server::server_api::auth::{
+use crate::infra::auth::{
     AnonymousUserCreationError, AuthClient, AuthClientImpl, FetchUserResult, MintCustomTokenError,
     UserAuthenticationError,
 };
@@ -30,7 +30,7 @@ use std::time::Duration;
 use warp_core::report_if_error;
 
 use super::credentials::LoginToken;
-use crate::server::server_api::{ServerApi, ServerApiProvider};
+use crate::infra::{ServerApi, ServiceProvider};
 use settings::Setting as _;
 use crate::terminal::general_settings::GeneralSettings;
 use crate::settings::privacy::PrivacySettings;
@@ -39,7 +39,7 @@ use crate::settings::cloud_preferences_syncer::CloudPreferencesSyncer;
 use crate::global_resource_handles::GlobalResourceHandlesProvider;
 use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
 use crate::workspaces::team_tester::TeamTesterStatus;
-use crate::server::telemetry::AnonymousUserSignupEntrypoint;
+use crate::telemetry::AnonymousUserSignupEntrypoint;
 use crate::{send_telemetry_from_ctx, TelemetryEvent};
 use crate::cloud_object::UpdateManager;
 
@@ -109,7 +109,7 @@ impl AuthManager {
 
     #[cfg(test)]
     pub fn new_for_test(ctx: &mut ModelContext<Self>) -> Self {
-        let server_api_provider = ServerApiProvider::as_ref(ctx);
+        let server_api_provider = ServiceProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
         let auth_client = Arc::new(AuthClientImpl);
@@ -278,7 +278,7 @@ impl AuthManager {
                     ctx,
                 );
 
-                ServerApiProvider::handle(ctx).update(ctx, |provider, ctx| {
+                ServiceProvider::handle(ctx).update(ctx, |provider, ctx| {
                     provider.handle_experiments_fetched(server_experiments, ctx);
                 });
 

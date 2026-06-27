@@ -136,7 +136,7 @@ mod testing {
     use warpui::{App, Element, SingletonEntity};
 
     use super::*;
-    use crate::server::server_api::ServerApiProvider;
+    use crate::infra::ServiceProvider;
     use crate::terminal::shell::{ShellName, ShellType};
     use crate::terminal::ShellLaunchState;
 
@@ -167,7 +167,7 @@ mod testing {
             app: &mut App,
             restored_blocks: Option<&[SerializedBlockListItem]>,
         ) -> ViewHandle<TerminalView> {
-            let server_api = app.read(|ctx| ServerApiProvider::as_ref(ctx).get());
+            let server_api = app.read(|ctx| ServiceProvider::as_ref(ctx).get());
             let tips_model = app.add_model(|_| Default::default());
 
             let (window_id, _) = app.add_window(WindowStyle::NotStealFocus, |ctx| {

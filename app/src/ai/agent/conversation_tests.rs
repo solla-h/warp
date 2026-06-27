@@ -15,7 +15,7 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
 use crate::network::NetworkStatus;
 use crate::persistence::model::AgentConversationData;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
@@ -115,7 +115,7 @@ fn restored_conversation_with_queries(queries: &[&str]) -> AIConversation {
 
 fn initialize_custom_endpoint_usage_test_app(app: &mut App) {
     initialize_settings_for_tests(app);
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
+    app.add_singleton_model(|_| ServiceProvider::new_for_test());
     app.add_singleton_model(|_| NetworkStatus::new());
     app.add_singleton_model(UserWorkspaces::default_mock);
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());

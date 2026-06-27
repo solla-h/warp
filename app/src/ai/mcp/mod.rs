@@ -23,7 +23,7 @@ use crate::cloud_object::{CloudObjectTypeAndId,
 };
 #[cfg(not(target_family = "wasm"))]
 use crate::persistence::model::MCPEnvironmentVariables;
-use crate::server::ids::SyncId;
+use crate::ids::SyncId;
 
 cfg_if::cfg_if! {
     if #[cfg(not(feature = "local_fs"))] {

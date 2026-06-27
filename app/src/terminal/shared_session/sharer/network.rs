@@ -42,7 +42,7 @@ use websocket::{Message, Sink, Stream, WebSocket, WebsocketMessage as _};
 
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::editor::{CrdtOperation, ReplicaId};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::shared_session::network::heartbeat::{Event as HeartbeatEvent, Heartbeat};
 use crate::terminal::shared_session::{
@@ -52,7 +52,7 @@ use crate::terminal::shared_session::{
 use crate::terminal::TerminalModel;
 use crate::throttle::throttle;
 #[cfg(not(any(test, feature = "integration_tests")))]
-use crate::{report_error, server::telemetry::telemetry_context};
+use crate::{report_error, telemetry::telemetry_context};
 
 /// The amount of time we will wait to batch consecutive PTY read events before sending an event to the server
 const PTY_READS_BATCH_THRESHOLD: Duration = Duration::from_millis(50);
@@ -790,7 +790,7 @@ impl Network {
             }
         }
 
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let server_api = ServiceProvider::as_ref(ctx).get();
         let anonymous_id = AuthStateProvider::as_ref(ctx).get().anonymous_id();
         let iap_headers: Vec<(&str, String)> = Vec::new();
         let connect_handle = ctx.spawn(
@@ -1052,7 +1052,7 @@ impl Network {
             return;
         };
 
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let server_api = ServiceProvider::as_ref(ctx).get();
         let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
 
         let abort_handle = ctx

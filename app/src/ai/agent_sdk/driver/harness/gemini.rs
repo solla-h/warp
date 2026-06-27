@@ -26,8 +26,8 @@ use crate::ai::agent_sdk::setup_observability::{
 };
 use crate::ai::ambient_agents::task::HarnessModelConfig;
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::server_api::harness_support::HarnessSupportClient;
-use crate::server::server_api::ServerApi;
+use crate::infra::harness_support::HarnessSupportClient;
+use crate::infra::ServerApi;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::CLIAgent;
 

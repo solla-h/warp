@@ -14,9 +14,9 @@ use crate::ai::{RequestLimitInfo, RequestUsageInfo};
 use crate::ai_assistant::utils::{AssistantTranscriptPart, TranscriptPartSubType};
 use crate::auth::AuthStateProvider;
 use crate::send_telemetry_from_ctx;
-use crate::server::server_api::ai::AIClient;
-use crate::server::server_api::ServerApi;
-use crate::server::telemetry::{TelemetryEvent, WarpAIRequestResult};
+use crate::infra::ai::AIClient;
+use crate::infra::ServerApi;
+use crate::telemetry::{TelemetryEvent, WarpAIRequestResult};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// The key for the corresponding entry in UserDefaults.
@@ -415,11 +415,11 @@ impl Requests {
 #[cfg(test)]
 impl Requests {
     pub fn new_with_transcript(transcript: Vec<TranscriptPart>) -> Self {
-        use crate::server::server_api::ServerApiProvider;
+        use crate::infra::ServiceProvider;
 
         Self {
-            server_api: ServerApiProvider::new_for_test().get(),
-            ai_client: ServerApiProvider::new_for_test().get_ai_client(),
+            server_api: ServiceProvider::new_for_test().get(),
+            ai_client: ServiceProvider::new_for_test().get_ai_client(),
             current_transcript: transcript,
             current_transcript_summarized: false,
             old_transcript_parts: Vec::new(),

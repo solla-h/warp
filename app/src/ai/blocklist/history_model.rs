@@ -41,7 +41,7 @@ use crate::persistence::model::{AgentConversation, AgentConversationData};
 use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]
 use crate::persistence::{database_file_path_for_scope, establish_ro_connection, PersistenceScope};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::view::blocklist_filter;
 use crate::ui_components::icons::Icon;
@@ -1825,7 +1825,7 @@ impl BlocklistAIHistoryModel {
                 .as_str()
                 .to_string();
 
-            let server_api = ServerApiProvider::as_ref(ctx).get_ai_client();
+            let server_api = ServiceProvider::as_ref(ctx).get_ai_client();
             ctx.spawn(
                 async move {
                     server_api

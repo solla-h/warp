@@ -38,7 +38,7 @@ use crate::cloud_object::CloudObjectLookup as _;
 use crate::editor::{
     EditorOptions, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, TextOptions,
 };
-use crate::server::ids::{ClientId, HashableId, ServerId, SyncId};
+use crate::ids::{ClientId, HashableId, ServerId, SyncId};
 use crate::ui_components::icons::Icon;
 use crate::view_components::copyable_text_field::{
     render_copyable_text_field, CopyButtonPlacement, CopyableTextFieldConfig,

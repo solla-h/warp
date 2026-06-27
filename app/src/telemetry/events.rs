@@ -50,7 +50,7 @@ use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search::command_search::searcher::CommandSearchItemAction;
 use crate::search::QueryFilter;
 use crate::server::block::DisplaySetting;
-use crate::server::ids::{ObjectUid, ServerId};
+use crate::ids::{ObjectUid, ServerId};
 use crate::settings::import::config::{ParsedTerminalSetting, SettingType};
 use crate::settings::import::model::TerminalType;
 use crate::settings::AgentModeCodingPermissionsType;

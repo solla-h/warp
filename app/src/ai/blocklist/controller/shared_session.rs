@@ -20,7 +20,7 @@ use crate::ai::attachment_utils::{
 };
 use crate::ai::blocklist::agent_view::AgentViewEntryOrigin;
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ServiceProvider;
 use crate::terminal::model::block::BlockId;
 
 #[derive(Default)]
@@ -732,8 +732,8 @@ impl BlocklistAIController {
             return;
         };
 
-        let ai_client = ServerApiProvider::as_ref(ctx).get_ai_client();
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let ai_client = ServiceProvider::as_ref(ctx).get_ai_client();
+        let server_api = ServiceProvider::as_ref(ctx).get();
         let attachment_ids: Vec<String> = file_downloads.iter().map(|(id, _)| id.clone()).collect();
 
         // Fetch presigned download URLs from the server, download files to disk,

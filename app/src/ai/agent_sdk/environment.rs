@@ -21,9 +21,9 @@ use crate::ai::cloud_environments::{
 use crate::auth::UserUid;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::{CloudObject, CloudObjectLookup as _, UpdateManager, UpdateManagerEvent, ObjectOperation, OperationSuccessType};
-use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::server::server_api::ServerApiProvider;
-use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
+use crate::ids::{ClientId, ServerId, SyncId};
+use crate::infra::ServiceProvider;
+use crate::infra::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::cloud_object::CloudObjectTypeAndId;
@@ -424,7 +424,7 @@ impl EnvironmentCommandRunner {
         }
 
         // Get IntegrationsClient for auth checks and polling
-        let integrations_client = ServerApiProvider::as_ref(ctx).get_integrations_client();
+        let integrations_client = ServiceProvider::as_ref(ctx).get_integrations_client();
 
         let repo_tuples: Vec<(String, String)> = repos
             .iter()
@@ -520,7 +520,7 @@ impl EnvironmentCommandRunner {
                             println!("Opening browser for GitHub authorization: {auth_url}\n");
                             ctx.open_url(&auth_url);
 
-                            let integrations_client = ServerApiProvider::as_ref(ctx)
+                            let integrations_client = ServiceProvider::as_ref(ctx)
                                 .get_integrations_client();
                             let poll_future = poll_oauth_until_terminal(integrations_client, tx_id);
 
@@ -673,7 +673,7 @@ impl EnvironmentCommandRunner {
     ) where
         F: FnOnce(&mut ModelContext<Self>) + Send + 'static,
     {
-        let integrations_client = ServerApiProvider::as_ref(ctx).get_integrations_client();
+        let integrations_client = ServiceProvider::as_ref(ctx).get_integrations_client();
 
         let check_integrations_future = async move {
             integrations_client

@@ -3,7 +3,7 @@ use warpui::elements::MouseStateHandle;
 use warpui::ui_components::components::UiComponent;
 use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
-use crate::server::ids::ApiKeyUid;
+use crate::ids::ApiKeyUid;
 use crate::ui_components::buttons::icon_button;
 use crate::ui_components::icons::Icon;
 

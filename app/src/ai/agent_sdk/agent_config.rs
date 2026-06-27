@@ -6,9 +6,9 @@ use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::ai::agent_sdk::oauth_flow::poll_oauth_until_terminal;
 use crate::ai::cloud_environments::GithubRepo;
-use crate::server::server_api::ai::AgentSkillItem;
-use crate::server::server_api::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
-use crate::server::server_api::ServerApiProvider;
+use crate::infra::ai::AgentSkillItem;
+use crate::infra::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
+use crate::infra::ServiceProvider;
 
 const MAX_LINE_WIDTH: usize = 90;
 const MAX_AUTH_ATTEMPTS: u32 = 8;
@@ -84,7 +84,7 @@ impl AgentConfigRunner {
             return;
         }
 
-        let integrations_client = ServerApiProvider::handle(ctx)
+        let integrations_client = ServiceProvider::handle(ctx)
             .as_ref(ctx)
             .get_integrations_client();
 
@@ -138,7 +138,7 @@ impl AgentConfigRunner {
                             println!("Opening browser for GitHub authorization: {auth_url}\n");
                             ctx.open_url(&auth_url);
 
-                            let integrations_client = ServerApiProvider::handle(ctx)
+                            let integrations_client = ServiceProvider::handle(ctx)
                                 .as_ref(ctx)
                                 .get_integrations_client();
                             let tx_id = tx_id;
@@ -213,7 +213,7 @@ impl AgentConfigRunner {
     }
 
     fn fetch_and_display_agents(&self, repo: Option<String>, ctx: &mut ModelContext<Self>) {
-        let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
+        let ai_client = ServiceProvider::handle(ctx).as_ref(ctx).get_ai_client();
 
         if repo.is_some() {
             println!("Fetching agent skills from the specified repository...");

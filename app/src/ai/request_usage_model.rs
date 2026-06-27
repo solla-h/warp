@@ -19,7 +19,7 @@ pub enum BonusGrantType {
 use crate::ai::agent::AIAgentExchangeId;
 use crate::auth::AuthStateProvider;
 use crate::pricing::PricingInfoModel;
-use crate::server::server_api::ai::AIClient;
+use crate::infra::ai::AIClient;
 use crate::settings::AISettings;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::WorkspaceUid;
