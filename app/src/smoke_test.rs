@@ -101,8 +101,17 @@ async fn execute_stream(
     let adapter_kind = adapter_kind_for(api_type);
     let model_iden = ModelIden::new(adapter_kind, model_id.to_string());
 
-    let endpoint_url = if base_url.ends_with('/') { base_url.to_string() } else { format!("{}/", base_url) };
+    let endpoint_url = {
+        let trimmed = base_url.trim().trim_end_matches('/');
+        match api_type {
+            AgentProviderApiType::Anthropic => format!("{trimmed}/v1/"),
+            AgentProviderApiType::OpenAi | AgentProviderApiType::OpenAiResp | AgentProviderApiType::DeepSeek => format!("{trimmed}/v1/"),
+            AgentProviderApiType::Gemini => format!("{trimmed}/v1beta/"),
+            AgentProviderApiType::Ollama => format!("{trimmed}/"),
+        }
+    };
     let key = api_key.to_string();
+    eprintln!("[smoke-test] normalized_url={} key_len={}", &endpoint_url, key.len());
     let resolver = ServiceTargetResolver::from_resolver_fn(
         move |service_target: ServiceTarget| -> Result<ServiceTarget, genai::resolver::Error> {
             let ServiceTarget { model, .. } = service_target;
@@ -113,6 +122,7 @@ async fn execute_stream(
             })
         },
     );
+
 
     let client = Client::builder()
         .with_service_target_resolver(resolver)

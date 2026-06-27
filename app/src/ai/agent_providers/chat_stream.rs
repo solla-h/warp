@@ -2802,7 +2802,7 @@ pub(crate) fn adapter_kind_for(api_type: AgentProviderApiType) -> AdapterKind {
 ///    Gemini→`/v1beta/`,Ollama 不补)。
 /// 2. 完整带版本路径(`https://ai.zerx.dev/v1`)— 仅补尾 `/`,不动 path。
 /// 3. 留空 — 用 [`AgentProviderApiType::default_base_url`]。
-fn normalize_endpoint_url(api_type: AgentProviderApiType, base_url: &str) -> String {
+pub(crate) fn normalize_endpoint_url(api_type: AgentProviderApiType, base_url: &str) -> String {
     let trimmed = base_url.trim();
     if trimmed.is_empty() {
         return api_type.default_base_url().to_owned();
