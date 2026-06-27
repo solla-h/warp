@@ -359,7 +359,7 @@ fn determine_agent_source(
         }
         // RemoteServerProxy and RemoteServerDaemon are headless server
         // processes that don't use the agent subsystem.
-        LaunchMode::SmokeTest | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => None,
+        LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => None,
     }
 }
 
@@ -376,6 +376,7 @@ fn daemon_codebase_index_snapshot_storage(launch_mode: &LaunchMode) -> Option<Sn
         LaunchMode::App { .. }
         | LaunchMode::CommandLine { .. }
         | LaunchMode::SmokeTest
+        | LaunchMode::AgentChat { .. }
         | LaunchMode::RemoteServerProxy
         | LaunchMode::Test { .. } => None,
     }
@@ -411,6 +412,9 @@ pub enum LaunchMode {
     /// Run headless BYOP smoke test and exit.
     SmokeTest,
 
+    /// Run headless agent chat: send a message and stream the response.
+    AgentChat { message: String, model_override: Option<String> },
+
     /// Remote server proxy — bridges SSH stdio to the daemon's Unix socket.
     /// This is a short-lived process that runs for the lifetime of an SSH session.
     RemoteServerProxy,
@@ -429,6 +433,7 @@ impl LaunchMode {
         match self {
             LaunchMode::App { args, .. } => Cow::Borrowed(args),
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::CommandLine { .. }
             | LaunchMode::Test { .. }
             | LaunchMode::RemoteServerProxy
@@ -446,6 +451,7 @@ impl LaunchMode {
             LaunchMode::App { .. }
             | LaunchMode::CommandLine { .. }
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::RemoteServerProxy
             | LaunchMode::RemoteServerDaemon { .. } => false,
         }
@@ -457,6 +463,7 @@ impl LaunchMode {
             LaunchMode::App { .. }
             | LaunchMode::CommandLine { .. }
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::RemoteServerProxy
             | LaunchMode::RemoteServerDaemon { .. } => None,
         }
@@ -474,7 +481,7 @@ impl LaunchMode {
         match self {
             LaunchMode::App { .. } => ExecutionMode::App,
             LaunchMode::CommandLine { .. } => ExecutionMode::Sdk,
-            LaunchMode::Test { .. } | LaunchMode::SmokeTest => ExecutionMode::App,
+            LaunchMode::Test { .. } | LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } => ExecutionMode::App,
             // RemoteServerProxy is a thin byte bridge; Sdk is the closest match.
             LaunchMode::RemoteServerProxy => ExecutionMode::Sdk,
             // RemoteServerDaemon gets its own mode for distinct Sentry tagging.
@@ -488,6 +495,7 @@ impl LaunchMode {
             LaunchMode::App { .. }
             | LaunchMode::Test { .. }
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::RemoteServerProxy
             | LaunchMode::RemoteServerDaemon { .. } => false,
         }
@@ -500,7 +508,7 @@ impl LaunchMode {
                 CliCommand::Agent(AgentCommand::Run(args)) => !args.gui,
                 _ => true,
             },
-            LaunchMode::SmokeTest | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => true,
+            LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } | LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => true,
             LaunchMode::App { .. } | LaunchMode::Test { .. } => false,
         }
     }
@@ -515,7 +523,7 @@ impl LaunchMode {
                 FeatureFlag::RemoteCodebaseIndexing.is_enabled()
             }
             LaunchMode::App { .. } | LaunchMode::Test { .. } => true,
-            LaunchMode::SmokeTest | LaunchMode::RemoteServerProxy => false,
+            LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } | LaunchMode::RemoteServerProxy => false,
         }
     }
 
@@ -527,6 +535,7 @@ impl LaunchMode {
             LaunchMode::CommandLine { .. }
             | LaunchMode::Test { .. }
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::RemoteServerProxy
             | LaunchMode::RemoteServerDaemon { .. } => false,
         }
@@ -536,7 +545,7 @@ impl LaunchMode {
     #[cfg_attr(not(feature = "crash_reporting"), allow(dead_code))]
     pub(crate) fn needs_crash_reporting(&self) -> bool {
         match self {
-            LaunchMode::SmokeTest => false,
+            LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } => false,
             LaunchMode::App { .. }
             | LaunchMode::CommandLine { .. }
             | LaunchMode::Test { .. }
@@ -552,6 +561,7 @@ impl LaunchMode {
             | LaunchMode::CommandLine { .. }
             | LaunchMode::Test { .. }
             | LaunchMode::SmokeTest
+            | LaunchMode::AgentChat { .. }
             | LaunchMode::RemoteServerDaemon { .. }
             | LaunchMode::RemoteServerProxy => true,
         }
@@ -567,7 +577,7 @@ impl LaunchMode {
                     Some(LogDestination::File)
                 }
             }
-            LaunchMode::SmokeTest => Some(LogDestination::Stderr),
+            LaunchMode::SmokeTest | LaunchMode::AgentChat { .. } => Some(LogDestination::Stderr),
             // Proxy must log to stderr because stdout is the protocol channel.
             LaunchMode::RemoteServerProxy => Some(LogDestination::Stderr),
             LaunchMode::RemoteServerDaemon { .. } => Some(LogDestination::File),
@@ -786,6 +796,11 @@ pub fn run() -> Result<()> {
     }
 
     let app_args = args.into_app_args();
+    if let Some(message) = app_args.agent_chat.clone() {
+        #[cfg(windows)]
+        warp_util::windows::attach_to_parent_console();
+        return run_internal(LaunchMode::AgentChat { message, model_override: app_args.chat_model.clone() });
+    }
     if app_args.smoke_test {
         #[cfg(windows)]
         warp_util::windows::attach_to_parent_console();
@@ -1255,6 +1270,7 @@ pub(crate) fn initialize_app(
         LaunchMode::App { .. }
         | LaunchMode::CommandLine { .. }
         | LaunchMode::SmokeTest
+        | LaunchMode::AgentChat { .. }
         | LaunchMode::RemoteServerProxy
         | LaunchMode::Test { .. } => persistence::PersistenceScope::App,
     };
@@ -2677,6 +2693,9 @@ fn launch(ctx: &mut warpui::AppContext, app_state: Option<AppState>, launch_mode
         // Proxy should never reach launch() — it's a thin byte bridge.
         LaunchMode::SmokeTest => {
             smoke_test::run_smoke_test(ctx);
+        }
+        LaunchMode::AgentChat { message, model_override } => {
+            smoke_test::run_agent_chat(ctx, message, model_override);
         }
         LaunchMode::RemoteServerProxy => {
             log::error!("Proxy mode should not use the launch() path");

@@ -162,6 +162,14 @@ pub struct AppArgs {
     #[arg(long = "smoke-test")]
     pub smoke_test: bool,
 
+    /// Send a message to BYOP agent and print the streamed response.
+    #[arg(long = "agent-chat")]
+    pub agent_chat: Option<String>,
+
+    /// Override model for --agent-chat.
+    #[arg(long = "chat-model", requires = "agent_chat")]
+    pub chat_model: Option<String>,
+
     /// Crash recovery mechanism to use if we detect the parent process terminated.
     #[cfg(enable_crash_recovery)]
     #[arg(long = "crash-recovery-mechanism", value_enum, requires = "ParentOpts")]

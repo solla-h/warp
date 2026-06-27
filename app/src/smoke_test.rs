@@ -159,3 +159,104 @@ async fn execute_stream(
 
     Ok(chunk_count)
 }
+
+
+pub(crate) fn run_agent_chat(ctx: &mut AppContext, message: String, model_override: Option<String>) {
+    eprintln!("[agent-chat] resolving endpoint...");
+
+    let (base_url, api_key, mut model_id, api_type) = match resolve_byop_endpoint(ctx) {
+        Some(info) => info,
+        None => {
+            eprintln!("[agent-chat] ERROR: no BYOP endpoint configured");
+            std::process::exit(1);
+        }
+    };
+
+    if let Some(m) = model_override {
+        model_id = m;
+    }
+
+    eprintln!("[agent-chat] endpoint={} model={} api_type={:?}", base_url, model_id, api_type);
+
+    ctx.background_executor().spawn(async move {
+        match tokio::time::timeout(Duration::from_secs(120), execute_agent_chat(&base_url, &api_key, &model_id, api_type, &message)).await {
+            Ok(Ok(())) => {
+                println!();
+                std::process::exit(0);
+            }
+            Ok(Err(e)) => {
+                eprintln!("\n[agent-chat] ERROR: {e:#}");
+                std::process::exit(1);
+            }
+            Err(_) => {
+                eprintln!("\n[agent-chat] ERROR: timeout after 120s");
+                std::process::exit(1);
+            }
+        }
+    }).detach();
+}
+
+async fn execute_agent_chat(
+    base_url: &str,
+    api_key: &str,
+    model_id: &str,
+    api_type: AgentProviderApiType,
+    message: &str,
+) -> anyhow::Result<()> {
+    use std::io::Write;
+    use crate::ai::agent_providers::chat_stream::adapter_kind_for;
+
+    let adapter_kind = adapter_kind_for(api_type);
+    let model_iden = ModelIden::new(adapter_kind, model_id.to_string());
+
+    let endpoint_url = {
+        let trimmed = base_url.trim().trim_end_matches('/');
+        match api_type {
+            AgentProviderApiType::Anthropic => format!("{trimmed}/v1/"),
+            AgentProviderApiType::OpenAi | AgentProviderApiType::OpenAiResp | AgentProviderApiType::DeepSeek => format!("{trimmed}/v1/"),
+            AgentProviderApiType::Gemini => format!("{trimmed}/v1beta/"),
+            AgentProviderApiType::Ollama => format!("{trimmed}/"),
+        }
+    };
+    let key = api_key.to_string();
+    let resolver = ServiceTargetResolver::from_resolver_fn(
+        move |service_target: ServiceTarget| -> Result<ServiceTarget, genai::resolver::Error> {
+            let ServiceTarget { model, .. } = service_target;
+            Ok(ServiceTarget {
+                endpoint: Endpoint::from_owned(endpoint_url.clone()),
+                auth: AuthData::from_single(key.clone()),
+                model,
+            })
+        },
+    );
+
+    let client = Client::builder()
+        .with_service_target_resolver(resolver)
+        .build();
+
+    let mut chat_req = ChatRequest::default();
+    chat_req = chat_req.append_message(ChatMessage::new(ChatRole::User, message));
+
+    let chat_opts = ChatOptions::default();
+    let stream_resp = client
+        .exec_chat_stream(&model_iden, chat_req, Some(&chat_opts))
+        .await
+        .map_err(|e| anyhow::anyhow!("exec_chat_stream failed: {e}"))?;
+
+    let mut stream = stream_resp.stream;
+    while let Some(event) = stream.next().await {
+        match event {
+            Ok(ChatStreamEvent::Chunk(chunk)) => {
+                if !chunk.content.is_empty() {
+                    print!("{}", chunk.content);
+                    use std::io::Write;
+                    let _ = std::io::stdout().flush();
+                }
+            }
+            Ok(_) => {}
+            Err(e) => return Err(anyhow::anyhow!("stream error: {e}")),
+        }
+    }
+
+    Ok(())
+}
