@@ -146,7 +146,7 @@ pub struct EnterprisePayAsYouGoPolicy { pub enabled: bool }
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct WarpAiPolicy { pub limit: u64 }
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-pub struct SharedObjectsPolicy { pub is_unlimited: bool, pub limit: u64 }
+pub struct SharedObjectsPolicy { pub is_unlimited: bool, pub limit: i64 }
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct SessionSharingPolicy { pub max_session_size: u64 }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -169,13 +169,13 @@ pub struct TierSettings {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LlmSettings { pub enabled: bool, pub host_configs: HashMap<String, String> }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct AddonCreditsSettings { pub auto_reload_enabled: bool, pub max_monthly_spend_cents: Option<u64>, pub selected_auto_reload_credit_denomination: Option<u64> }
+pub struct AddonCreditsSettings { pub auto_reload_enabled: bool, pub max_monthly_spend_cents: Option<i32>, pub selected_auto_reload_credit_denomination: Option<i32> }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct UsageBasedPricingSettings { pub enabled: bool, pub max_monthly_spend_cents: Option<u32> }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct WorkspaceSettings { pub tier: TierSettings, pub addon_credits_settings: AddonCreditsSettings, pub usage_based_pricing_settings: UsageBasedPricingSettings, pub llm_settings: LlmSettings }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct BonusGrantsPurchasedThisMonth { pub cents_spent: u64, pub total_credits_purchased: u64 }
+pub struct BonusGrantsPurchasedThisMonth { pub cents_spent: i32, pub total_credits_purchased: i32 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BillingMetadata {
@@ -235,7 +235,7 @@ impl Workspace {
     pub fn is_at_addon_credits_monthly_limit(&self) -> bool { false }
     pub fn is_gemini_enterprise_credentials_enabled(&self) -> bool { false }
     pub fn workspaces(&self) -> &[Self] { &[] }
-    pub fn would_addon_purchase_reach_limit(&self, _amount: u64) -> bool { false }
+    pub fn would_addon_purchase_reach_limit(&self, _amount: i32) -> bool { false }
     pub fn to_display_string(&self) -> String { self.name.clone() }
 }
 impl std::fmt::Display for Workspace {

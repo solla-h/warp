@@ -35,8 +35,8 @@ pub struct PlanPricing {
 /// Placeholder for the former GraphQL `AddonCreditsOption` type.
 #[derive(Debug, Clone)]
 pub struct AddonCreditsOption {
-    pub credits: u64,
-    pub price_usd_cents: u64,
+    pub credits: i32,
+    pub price_usd_cents: i32,
 }
 
 impl AddonCreditsOption {

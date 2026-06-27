@@ -45,7 +45,7 @@ impl Team {
     pub fn leave_team<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
     pub fn rename_team<A: 'static, B: 'static>(&mut self, _a: A, _b: B) {}
     pub fn stop_polling_for_workspace_metadata_updates(&mut self) {}
-    pub fn num_members(&self) -> usize { self.members.len() }
+    pub fn num_members(&self) -> i64 { self.members.len() as i64 }
 }
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DiscoverableTeam { pub uid: WorkspaceUid, pub team_uid: WorkspaceUid, pub name: String, pub member_count: isize, pub num_members: isize, pub team_accepting_invites: bool }

@@ -2610,7 +2610,7 @@ pub enum TelemetryEvent {
     /// User closed the auto-reload modal (either dismissed or enabled auto-reload)
     AutoReloadModalClosed {
         action: AutoReloadModalAction,
-        selected_credits: Option<u64>,
+        selected_credits: Option<i32>,
         banner_toggle_flag_enabled: bool,
         post_purchase_modal_flag_enabled: bool,
     },

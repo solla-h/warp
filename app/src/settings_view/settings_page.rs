@@ -207,9 +207,9 @@ pub enum PaneEventWrapper {
     Close,
 }
 
-pub fn render_customer_type_badge(appearance: &Appearance, text: String) -> Box<dyn Element> {
+pub fn render_customer_type_badge(appearance: &Appearance, text: impl Into<String>) -> Box<dyn Element> {
     Container::new(
-        Text::new_inline(text, appearance.ui_font_family(), appearance.ui_font_size())
+        Text::new_inline(text.into(), appearance.ui_font_family(), appearance.ui_font_size())
             .with_color(
                 appearance
                     .theme()

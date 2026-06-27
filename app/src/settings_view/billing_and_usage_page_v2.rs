@@ -100,7 +100,7 @@ pub(super) const AGGREGATE_CREDITS_DOT_COLOR: ColorU = ColorU {
     b: 140,
     a: 255,
 };
-const DEFAULT_MAX_MONTHLY_SPEND_CENTS: u64 = 20_000;
+const DEFAULT_MAX_MONTHLY_SPEND_CENTS: i32 = 20_000;
 const AMBIENT_AGENT_TRIAL_TITLE: &str = "Cloud agent trial";
 
 #[derive(Default)]
