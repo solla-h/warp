@@ -43,7 +43,7 @@ use crate::ai::agent::conversation::AIConversationId;
 use crate::ai::agent::redaction::redact_secrets;
 use crate::ai::blocklist::agent_view::{AgentViewDisplayMode, AgentViewState};
 use crate::context_chips::prompt_snapshot::PromptSnapshot;
-use crate::server::block::DisplaySetting;
+use crate::server_block::DisplaySetting;
 use crate::ids::SyncId;
 use crate::terminal::block_filter::BlockFilterQuery;
 use crate::terminal::block_list_element::GridType;

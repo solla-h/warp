@@ -8,7 +8,7 @@ use super::CloudWorkflowModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{GenericCloudObject, Owner};
 use crate::pane_group::{PaneContent, WorkflowPane};
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

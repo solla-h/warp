@@ -76,7 +76,7 @@ use crate::persistence::model::{
     NewPersistedObjectAction, NewTeamSettings, ProjectRules, UserProfile, CODE_REVIEW_PANE_KIND,
     GET_STARTED_PANE_KIND,
 };
-use crate::server::experiments::ServerExperiment;
+use crate::server_experiments::ServerExperiment;
 use crate::ids::{ClientId, HashableId, ServerId, SyncId, SyncIdExt};
 use crate::telemetry::TelemetryEvent;
 use crate::settings_view::SettingsSection;

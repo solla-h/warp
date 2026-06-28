@@ -26,7 +26,7 @@ use crate::editor::InteractionState;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view::{self, HeaderContent, StandardHeader, StandardHeaderOptions};
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent, PaneHeaderAction};
-use crate::server::network_logging::NetworkLogModel;
+use crate::network_logging::NetworkLogModel;
 use crate::ui_components::buttons::icon_button_with_color;
 use crate::ui_components::{blended_colors, icons};
 

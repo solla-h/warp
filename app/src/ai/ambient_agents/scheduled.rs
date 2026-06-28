@@ -16,7 +16,7 @@ use crate::cloud_object::{CloudObjectTypeAndId,
     CloudObjectLookup as _, GenericStringObjectFormat, GenericStringObjectUniqueKey,
     JsonObjectType, Owner, Revision,
 };
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

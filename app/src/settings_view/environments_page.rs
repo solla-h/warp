@@ -50,7 +50,7 @@ use crate::editor::{
     EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };
 use crate::root_view::CreateEnvironmentArg;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, ServerId, SyncId};

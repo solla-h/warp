@@ -58,7 +58,7 @@ use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::network::NetworkStatus;
 use crate::pricing::PricingInfoModel;
 use crate::send_telemetry_from_ctx;
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::ids::ServerId;
 use crate::telemetry::TelemetryEvent;
 use crate::themes::theme::Blend;

@@ -79,7 +79,19 @@ mod reward_view;
 mod safe_triangle;
 mod search_bar;
 #[cfg(feature = "cloud")]
-mod server;
+mod server_experiments;
+#[cfg(feature = "cloud")]
+mod network_log_pane_manager;
+#[cfg(feature = "cloud")]
+mod network_log_view;
+#[cfg(feature = "cloud")]
+mod network_logging;
+#[cfg(feature = "cloud")]
+mod voice_transcriber;
+#[cfg(feature = "cloud")]
+mod server_block;
+#[cfg(feature = "cloud")]
+mod sync_queue;
 #[cfg(feature = "cloud")]
 pub mod infra;
 mod session_management;
@@ -169,13 +181,13 @@ use repo_metadata::{
     repositories::DetectedRepositories, watcher::DirectoryWatcher, RepoMetadataModel,
 };
 #[cfg(feature = "cloud")]
-use server::network_log_pane_manager::NetworkLogPaneManager;
+use crate::network_log_pane_manager::NetworkLogPaneManager;
 #[cfg(feature = "cloud")]
-use server::network_logging::NetworkLogModel;
+use crate::network_logging::NetworkLogModel;
 #[cfg(feature = "cloud")]
 use crate::telemetry::context_provider::AppTelemetryContextProvider;
 #[cfg(feature = "cloud")]
-use server::voice_transcriber::ServerVoiceTranscriber;
+use crate::voice_transcriber::ServerVoiceTranscriber;
 #[cfg(feature = "local_fs")]
 use settings::import::model::ImportedConfigModel;
 use settings_view::pane_manager::SettingsPaneManager;
@@ -306,7 +318,7 @@ use crate::root_view::{
     quake_mode_window_id, quake_mode_window_is_open, OpenFromRestoredArg, OpenPath,
 };
 #[cfg(feature = "cloud")]
-use crate::server::experiments::ServerExperiments;
+use crate::server_experiments::ServerExperiments;
 #[cfg(feature = "cloud")]
 pub use crate::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,

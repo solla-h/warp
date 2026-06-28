@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "local-only", allow(dead_code, unused_imports, unused_variables))]
 
+pub mod retry_strategies;
 pub mod server_api;
 
 pub use server_api::ai;

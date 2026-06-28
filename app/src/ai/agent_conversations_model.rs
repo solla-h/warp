@@ -46,7 +46,7 @@ use crate::auth::AuthStateProvider;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::ids::{ServerId, SyncId};
-use crate::server::retry_strategies::{
+use crate::infra::retry_strategies::{
     is_transient_http_error, OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL_RETRY_STRATEGY,
 };
 use crate::infra::ai::TaskListFilter;

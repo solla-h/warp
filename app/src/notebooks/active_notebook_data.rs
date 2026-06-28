@@ -7,7 +7,7 @@ use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
 use crate::cloud_object::{CloudObject, Owner, Space};
 use crate::notebooks::CloudNotebook;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

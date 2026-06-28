@@ -6,7 +6,7 @@ use crate::cloud_object::model::persistence::CloudModelEvent;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{CloudObject, Owner, Revision, Space};
 use crate::env_vars::CloudEnvVarCollection;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, ServerId, SyncId};

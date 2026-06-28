@@ -1,6 +1,6 @@
 use super::user::User;
 use super::UserUid;
-use crate::server::experiments::ServerExperiment;
+use crate::server_experiments::ServerExperiment;
 
 /// Intermediate app model state converted from a user response returned by the auth client.
 pub(crate) struct UserProperties {

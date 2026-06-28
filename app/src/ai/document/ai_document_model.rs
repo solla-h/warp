@@ -35,7 +35,7 @@ use crate::notebooks::editor::rich_text_styles;
 use crate::notebooks::file::MarkdownDisplayMode;
 use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     InitiatedBy, ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, ServerId, SyncId};

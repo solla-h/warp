@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use mockall::automock;
 
 use crate::ai::generate_block_title::api::{GenerateBlockTitleRequest, GenerateBlockTitleResponse};
-use crate::server::block::{Block, DisplaySetting};
+use crate::server_block::{Block, DisplaySetting};
 
 #[cfg_attr(test, automock)]
 #[cfg_attr(not(target_family = "wasm"), async_trait)]

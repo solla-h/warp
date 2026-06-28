@@ -52,7 +52,7 @@ use crate::pricing::PricingInfoModel;
 #[cfg(not(target_family = "wasm"))]
 use crate::remote_server::codebase_index_model::RemoteCodebaseIndexModel;
 use crate::resource_center::Tip;
-use crate::server::experiments::ServerExperiments;
+use crate::server_experiments::ServerExperiments;
 use crate::infra::ServiceProvider;
 use crate::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::cloud_preferences_syncer::CloudPreferencesSyncer;

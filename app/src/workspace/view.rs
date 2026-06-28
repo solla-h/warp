@@ -308,7 +308,7 @@ use crate::search::command_search::view::{CommandSearchEvent, CommandSearchView}
 use crate::search::slash_command_menu::static_commands::commands;
 use crate::search::{self, QueryFilter};
 use crate::ids::{ObjectUid, ServerId, SyncId};
-use crate::server::network_log_pane_manager::NetworkLogPaneManager;
+use crate::network_log_pane_manager::NetworkLogPaneManager;
 use crate::infra::ai::AIClient;
 use crate::infra::{ServerApi, ServiceProvider, ServerTime};
 use crate::telemetry::{

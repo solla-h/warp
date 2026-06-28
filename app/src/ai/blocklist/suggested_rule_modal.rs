@@ -27,7 +27,7 @@ use crate::editor::{
 use crate::modal::{Modal, ModalEvent};
 use crate::network::NetworkStatus;
 use crate::send_telemetry_from_ctx;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::SyncId;

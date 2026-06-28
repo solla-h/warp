@@ -9,7 +9,7 @@ use super::persistence::{CloudModel, CloudModelEvent};
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::cloud_object::{CloudObject, CloudObjectLocation, Space};
 use crate::safe_info;
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ObjectUid, SyncId};

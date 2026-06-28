@@ -18,7 +18,7 @@ use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::model::persistence::{CloudModelEvent, UpdateSource};
 use crate::cloud_object::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::ids::{ClientId, SyncId};
 use crate::settings::AgentModeCommandExecutionPredicate;
 use crate::workspaces::user_workspaces::UserWorkspaces;

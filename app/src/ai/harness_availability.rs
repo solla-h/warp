@@ -15,7 +15,7 @@ use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::report_error;
-use crate::server::retry_strategies::{
+use crate::infra::retry_strategies::{
     is_transient_graphql_or_http_error, OUT_OF_BAND_REQUEST_RETRY_STRATEGY,
 };
 use crate::infra::ServiceProvider;

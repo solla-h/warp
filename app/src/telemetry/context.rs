@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use warpui::platform::wasm;
 
 use super::rudder_message::Message as RudderMessage;
-use crate::server::OperatingSystemInfo;
+use warp_core::operating_system_info::OperatingSystemInfo;
 
 static TELEMETRY_CONTEXT: OnceLock<TelemetryContext> = OnceLock::new();
 

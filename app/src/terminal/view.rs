@@ -335,7 +335,7 @@ use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipHint, TipsCompleted,
 };
 use crate::search::slash_command_menu::static_commands::commands;
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::cloud_object::UpdateManager;
 use crate::ids::SyncId;
 use crate::infra::ServerApi;
 use crate::telemetry::{

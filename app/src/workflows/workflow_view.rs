@@ -55,7 +55,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
     UpdateManagerEvent,
 };

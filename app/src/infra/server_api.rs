@@ -45,7 +45,7 @@ use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
 
-use crate::server::experiments::{ServerExperiment, ServerExperiments};
+use crate::server_experiments::{ServerExperiment, ServerExperiments};
 use crate::ai::ambient_agents::AmbientAgentTaskId;
 use crate::ai::get_relevant_files::api::{GetRelevantFiles, GetRelevantFilesResponse};
 use crate::ai::predict::generate_ai_input_suggestions::GenerateAIInputSuggestionsRequest;
@@ -420,7 +420,7 @@ impl ServerApi {
         let mut client = http_client::Client::new();
         let mut telemetry_api = TelemetryApi::new();
         if ContextFlag::NetworkLogConsole.is_enabled() {
-            crate::server::network_logging::init([&mut client, &mut telemetry_api.client], ctx);
+            crate::network_logging::init([&mut client, &mut telemetry_api.client], ctx);
         }
         Self::new_with_parts(
             Arc::new(client),

@@ -33,9 +33,9 @@ use crate::editor::{
 };
 use crate::network::NetworkStatus;
 use crate::search_bar::SearchBar;
-use crate::server::cloud_objects::update_manager::{UpdateManager, UpdateManagerEvent};
+use crate::cloud_object::{UpdateManager, UpdateManagerEvent};
 use crate::ids::{ClientId, SyncId};
-use crate::server::sync_queue::SyncQueue;
+use crate::sync_queue::SyncQueue;
 use crate::settings::{AISettings, AISettingsChangedEvent};
 use crate::ui_components::icons::Icon;
 use crate::util::path::display_path_with_host;

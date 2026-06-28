@@ -12,7 +12,7 @@ use super::CloudNotebook;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::Owner;
 use crate::pane_group::{NotebookPane, PaneContent};
-use crate::server::cloud_objects::update_manager::{
+use crate::cloud_object::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::SyncId;

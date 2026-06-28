@@ -10,7 +10,7 @@ use futures::{select, FutureExt, Stream, StreamExt};
 use session_sharing_protocol::common::SessionId;
 
 use super::{AmbientAgentTask, AmbientAgentTaskId, AmbientAgentTaskState};
-use crate::server::retry_strategies::with_bounded_retry;
+use crate::infra::retry_strategies::with_bounded_retry;
 use crate::infra::ai::{
     AIClient, RunFollowupRequest, SpawnAgentRequest, TaskStatusMessage,
 };

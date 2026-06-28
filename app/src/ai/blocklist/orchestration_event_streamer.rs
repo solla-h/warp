@@ -27,7 +27,7 @@ use crate::ai::agent_events::{
     ServerApiAgentEventSource,
 };
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::server::retry_strategies::is_transient_http_error;
+use crate::infra::retry_strategies::is_transient_http_error;
 use crate::infra::ai::{AIClient, AgentRunEvent, TaskListFilter};
 use crate::infra::{ServerApi, ServiceProvider};
 

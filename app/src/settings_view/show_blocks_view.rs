@@ -29,7 +29,7 @@ use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::channel::{Channel, ChannelState};
 use crate::menu::{Event as MenuEvent, Event, Menu, MenuItem, MenuItemFields};
-use crate::server::block::Block;
+use crate::server_block::Block;
 use crate::infra::block::BlockClient;
 use crate::view_components::ToastFlavor;
 

@@ -9,7 +9,7 @@ use instant::Instant;
 use warp_core::errors::AnyhowErrorExt as _;
 use warpui::r#async::Timer;
 
-use crate::server::retry_strategies::is_transient_http_error;
+use crate::infra::retry_strategies::is_transient_http_error;
 use crate::infra::ai::AgentRunEvent;
 use crate::infra::presigned_upload::HttpStatusError;
 use crate::infra::ServerApi;

@@ -40,7 +40,7 @@ use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions,
 };
 use crate::send_telemetry_from_ctx;
-use crate::server::block::{Block as ServerBlock, DisplaySetting};
+use crate::server_block::{Block as ServerBlock, DisplaySetting};
 use crate::infra::block::BlockClient;
 use crate::telemetry::TelemetryEvent;
 use crate::settings::{

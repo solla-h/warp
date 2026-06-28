@@ -49,7 +49,7 @@ use crate::cloud_object::{
     CloudObject, CloudObjectMetadata, ObjectIdType, RevisionAndLastEditor, ServerCreationInfo,
 };
 use crate::notebooks::CloudNotebook;
-use crate::server::experiments::ServerExperiment;
+use crate::server_experiments::ServerExperiment;
 use crate::ids::SyncId;
 use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::terminal::history::PersistedCommand;
