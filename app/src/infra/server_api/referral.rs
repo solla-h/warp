@@ -32,10 +32,10 @@ use super::ServerApi;
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl ReferralsClient for ServerApi {
     async fn get_referral_info(&self) -> Result<ReferralInfo> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn send_invite(&self, _emails: Vec<String>) -> Result<Vec<String>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }

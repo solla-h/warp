@@ -112,7 +112,7 @@ use super::ServerApi;
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl TeamClient for ServerApi {
     async fn workspaces_metadata(&self) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn add_invite_link_domain_restriction(
@@ -120,7 +120,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _domain: String,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn delete_invite_link_domain_restriction(
@@ -128,7 +128,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _domain_uid: ServerId,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_team(
@@ -137,7 +137,7 @@ impl TeamClient for ServerApi {
         _entrypoint: CloudObjectEventEntrypoint,
         _discoverable: Option<bool>,
     ) -> Result<CreateTeamResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn remove_user_from_team(
@@ -146,7 +146,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _entrypoint: CloudObjectEventEntrypoint,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn leave_team(
@@ -155,14 +155,14 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _entrypoint: CloudObjectEventEntrypoint,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn join_team_with_team_discovery(
         &self,
         _team_uid: ServerId,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn send_team_invite_email(
@@ -170,7 +170,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _email: String,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn delete_team_invite(
@@ -178,11 +178,11 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _email: String,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_discoverable_teams(&self) -> Result<Vec<DiscoverableTeam>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn rename_team(
@@ -190,14 +190,14 @@ impl TeamClient for ServerApi {
         _new_name: String,
         _team_uid: ServerId,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn reset_invite_links(
         &self,
         _team_uid: ServerId,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn set_is_invite_link_enabled(
@@ -205,7 +205,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _new_value: bool,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn set_team_discoverability(
@@ -213,14 +213,14 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _discoverable: bool,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn transfer_team_ownership(
         &self,
         _new_owner_email: String,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn set_team_member_role(
@@ -229,7 +229,7 @@ impl TeamClient for ServerApi {
         _team_uid: ServerId,
         _role: MembershipRole,
     ) -> Result<WorkspacesMetadataWithPricing> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }
 

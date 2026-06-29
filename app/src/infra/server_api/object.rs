@@ -46,7 +46,7 @@ impl ObjectClient for ServerApi {
         &self,
         _request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_workflow(
@@ -55,7 +55,7 @@ impl ObjectClient for ServerApi {
         _data: SerializedModel,
         _revision: Option<Revision>,
     ) -> Result<UpdateCloudObjectResult<ServerWorkflow>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn bulk_create_generic_string_objects(
@@ -63,7 +63,7 @@ impl ObjectClient for ServerApi {
         _owner: Owner,
         _objects: &[BulkCreateGenericStringObjectsRequest],
     ) -> Result<BulkCreateCloudObjectResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_generic_string_object(
@@ -72,14 +72,14 @@ impl ObjectClient for ServerApi {
         _uniqueness_key: Option<GenericStringObjectUniqueKey>,
         _request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_notebook(
         &self,
         _request: CreateObjectRequest,
     ) -> Result<CreateCloudObjectResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_notebook(
@@ -89,11 +89,11 @@ impl ObjectClient for ServerApi {
         _data: Option<SerializedModel>,
         _revision: Option<Revision>,
     ) -> Result<UpdateCloudObjectResult<ServerNotebook>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_folder(&self, _request: CreateObjectRequest) -> Result<CreateCloudObjectResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_folder(
@@ -101,7 +101,7 @@ impl ObjectClient for ServerApi {
         _folder_id: FolderId,
         _name: SerializedModel,
     ) -> Result<UpdateCloudObjectResult<ServerFolder>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_generic_string_object(
@@ -110,21 +110,21 @@ impl ObjectClient for ServerApi {
         _model: SerializedModel,
         _revision: Option<Revision>,
     ) -> Result<UpdateCloudObjectResult<Box<dyn ServerObject>>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn grab_notebook_edit_access(
         &self,
         _notebook_id: cloud_object_models::NotebookId,
     ) -> Result<ServerMetadata> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn give_up_notebook_edit_access(
         &self,
         _notebook_id: cloud_object_models::NotebookId,
     ) -> Result<ServerMetadata> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_warp_drive_updates(
@@ -132,7 +132,7 @@ impl ObjectClient for ServerApi {
         _message_sender: Sender<ObjectUpdateMessage>,
         _stream_ready_sender: Sender<()>,
     ) -> Result<()> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn fetch_changed_objects(
@@ -140,11 +140,11 @@ impl ObjectClient for ServerApi {
         _objects_to_update: ObjectsToUpdate,
         _force_refresh: bool,
     ) -> Result<InitialLoadResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn fetch_single_cloud_object(&self, _id: ServerId) -> Result<GetCloudObjectResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn transfer_notebook_owner(
@@ -152,11 +152,11 @@ impl ObjectClient for ServerApi {
         _notebook_id: cloud_object_models::NotebookId,
         _owner: Owner,
     ) -> Result<bool> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn transfer_workflow_owner(&self, _workflow_id: WorkflowId, _owner: Owner) -> Result<bool> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn transfer_generic_string_object_owner(
@@ -164,23 +164,23 @@ impl ObjectClient for ServerApi {
         _object_id: GenericStringObjectId,
         _owner: Owner,
     ) -> Result<bool> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn trash_object(&self, _id: ServerId) -> Result<bool> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn untrash_object(&self, _id: ServerId) -> Result<ObjectMetadataUpdateResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn delete_object(&self, _id: ServerId) -> Result<ObjectDeleteResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn empty_trash(&self, _owner: Owner) -> Result<ObjectDeleteResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn move_object(
@@ -190,7 +190,7 @@ impl ObjectClient for ServerApi {
         _owner: Owner,
         _object_type: ObjectType,
     ) -> Result<bool> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn record_object_action(
@@ -200,11 +200,11 @@ impl ObjectClient for ServerApi {
         _timestamp: DateTime<Utc>,
         _data: Option<String>,
     ) -> Result<ObjectActionHistory> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn leave_object(&self, _id: ServerId) -> Result<ObjectDeleteResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn set_object_link_permissions(
@@ -212,14 +212,14 @@ impl ObjectClient for ServerApi {
         _object_id: ServerId,
         _access_level: SharingAccessLevel,
     ) -> Result<ObjectPermissionUpdateResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn remove_object_link_permissions(
         &self,
         _object_id: ServerId,
     ) -> Result<ObjectPermissionUpdateResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn add_object_guests(
@@ -228,7 +228,7 @@ impl ObjectClient for ServerApi {
         _guest_emails: Vec<String>,
         _access_level: SharingAccessLevel,
     ) -> Result<ObjectPermissionsUpdateData> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_object_guests(
@@ -237,7 +237,7 @@ impl ObjectClient for ServerApi {
         _guest_emails: Vec<String>,
         _access_level: SharingAccessLevel,
     ) -> Result<ServerPermissions> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn remove_object_guest(
@@ -245,12 +245,12 @@ impl ObjectClient for ServerApi {
         _object_id: ServerId,
         _guest: GuestIdentifier,
     ) -> Result<ServerPermissions> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn fetch_environment_last_task_run_timestamps(
         &self,
     ) -> Result<HashMap<String, DateTime<Utc>>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }

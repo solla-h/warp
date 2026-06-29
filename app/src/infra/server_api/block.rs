@@ -35,7 +35,7 @@ use super::ServerApi;
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl BlockClient for ServerApi {
     async fn unshare_block(&self, _block_id: String) -> Result<(), anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn save_block(
@@ -45,18 +45,18 @@ impl BlockClient for ServerApi {
         _show_prompt: bool,
         _display_setting: DisplaySetting,
     ) -> Result<String, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn blocks_owned_by_user(&self) -> Result<Vec<Block>, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn generate_shared_block_title(
         &self,
         _request: GenerateBlockTitleRequest,
     ) -> Result<GenerateBlockTitleResponse, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }
 

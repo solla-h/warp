@@ -1129,6 +1129,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         // overrides.
         ctx.add_singleton_model(move |_ctx| ::settings::PublicPreferences::new(public_preferences));
         ctx.add_singleton_model(move |_ctx| private_preferences);
+        ctx.add_singleton_model(|_ctx| drive::settings::WarpDriveSettings::default());
         let startup_toml_parse_error = startup_toml_parse_error;
 
         #[cfg(enable_crash_recovery)]

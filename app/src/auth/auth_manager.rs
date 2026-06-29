@@ -650,7 +650,7 @@ impl AuthManager {
         _entrypoint: Option<AnonymousUserSignupEntrypoint>,
         _ctx: &mut ModelContext<Self>,
     ) {
-        todo!("GraphQL backend removed")
+        log::warn!("create_anonymous_user: cloud backend removed")
     }
 }
 

@@ -1333,7 +1333,7 @@ impl AIClient for ServerApi {
         _prompt: String,
         _ai_execution_context: Option<WarpAiExecutionContext>,
     ) -> Result<Vec<AIGeneratedCommand>, GenerateCommandsFromNaturalLanguageError> {
-        todo!("GraphQL backend removed")
+        Err(GenerateCommandsFromNaturalLanguageError::Other)
     }
 
     async fn generate_dialogue_answer(
@@ -1342,7 +1342,7 @@ impl AIClient for ServerApi {
         _prompt: String,
         _ai_execution_context: Option<WarpAiExecutionContext>,
     ) -> anyhow::Result<GenerateDialogueResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
 
@@ -1366,7 +1366,7 @@ impl AIClient for ServerApi {
         _limit: Option<i32>,
         _last_updated_end_timestamp: Option<warp_types::ServerTimestamp>,
     ) -> Result<Vec<ConversationUsage>, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_feature_model_choices(&self) -> Result<ModelsByFeature, anyhow::Error> {
@@ -1390,7 +1390,7 @@ impl AIClient for ServerApi {
         _embedding_config: EmbeddingConfig,
         _nodes: Vec<IntermediateNode>,
     ) -> anyhow::Result<HashMap<NodeHash, bool>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     #[cfg(feature = "full_source_code_embedding")]
@@ -1401,7 +1401,7 @@ impl AIClient for ServerApi {
         _root_hash: NodeHash,
         _repo_metadata: RepoMetadata,
     ) -> anyhow::Result<HashMap<ContentHash, bool>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn provide_negative_feedback_response_for_ai_conversation(
@@ -1409,7 +1409,7 @@ impl AIClient for ServerApi {
         _conversation_id: String,
         _request_ids: Vec<String>,
     ) -> anyhow::Result<i32, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     #[tracing::instrument(skip_all, err, fields(
@@ -1424,7 +1424,7 @@ impl AIClient for ServerApi {
         _parent_run_id: Option<String>,
         _config: Option<AgentConfigSnapshot>,
     ) -> anyhow::Result<AmbientAgentTaskId, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     #[tracing::instrument(skip_all, err, fields(tags.cloud_agent = true, ?task_state))]
@@ -1437,7 +1437,7 @@ impl AIClient for ServerApi {
         _status_message: Option<TaskStatusUpdate>,
     ) -> anyhow::Result<(), anyhow::Error> {
         let _ = task_state;
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn spawn_agent(
@@ -1590,7 +1590,7 @@ impl AIClient for ServerApi {
         &self,
         _server_conversation_token: String,
     ) -> anyhow::Result<(), anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn list_skills(
@@ -1671,21 +1671,21 @@ impl AIClient for ServerApi {
         _task_id: String,
         _workload_token: String,
     ) -> anyhow::Result<Vec<GitCredential>, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_task_attachments(
         &self,
         _task_id: String,
     ) -> anyhow::Result<Vec<TaskAttachment>, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_file_artifact_upload_target(
         &self,
         _request: CreateFileArtifactUploadRequest,
     ) -> anyhow::Result<CreateFileArtifactUploadResponse, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn confirm_file_artifact_upload(
@@ -1693,7 +1693,7 @@ impl AIClient for ServerApi {
         _artifact_uid: String,
         _checksum: String,
     ) -> anyhow::Result<FileArtifactRecord, anyhow::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_artifact_download(
@@ -1924,7 +1924,7 @@ impl StoreClient for ServerApi {
         _root_hash: NodeHash,
         _repo_metadata: RepoMetadata,
     ) -> Result<bool, full_source_code_embedding::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed").into())
     }
 
     async fn sync_merkle_tree(
@@ -1932,7 +1932,7 @@ impl StoreClient for ServerApi {
         _nodes: Vec<NodeHash>,
         _embedding_config: EmbeddingConfig,
     ) -> Result<HashSet<NodeHash>, full_source_code_embedding::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed").into())
     }
 
     async fn rerank_fragments(
@@ -1940,7 +1940,7 @@ impl StoreClient for ServerApi {
         _query: String,
         _fragments: Vec<full_source_code_embedding::Fragment>,
     ) -> Result<Vec<full_source_code_embedding::Fragment>, full_source_code_embedding::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed").into())
     }
 
     async fn get_relevant_fragments(
@@ -1950,13 +1950,13 @@ impl StoreClient for ServerApi {
         _root_hash: NodeHash,
         _repo_metadata: RepoMetadata,
     ) -> Result<Vec<ContentHash>, full_source_code_embedding::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed").into())
     }
 
     async fn codebase_context_config(
         &self,
     ) -> Result<CodebaseContextConfig, full_source_code_embedding::Error> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed").into())
     }
 }
 

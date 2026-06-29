@@ -79,6 +79,6 @@ pub trait ManagedSecretsClient: 'static + Send + Sync {
         &self,
         _harness: Harness,
     ) -> Result<Vec<AuthSecretEntry>> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }

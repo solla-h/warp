@@ -43,7 +43,7 @@ use super::ServerApi;
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]
 impl WorkspaceClient for ServerApi {
     async fn generate_stripe_billing_portal_link(&self, _team_uid: ServerId) -> Result<String> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_usage_based_pricing_settings(
@@ -52,11 +52,11 @@ impl WorkspaceClient for ServerApi {
         _usage_based_pricing_enabled: bool,
         _max_monthly_spend_cents: Option<u32>,
     ) -> Result<WorkspacesMetadataResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn refresh_ai_overages(&self) -> Result<AiOverages> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn purchase_addon_credits(
@@ -64,7 +64,7 @@ impl WorkspaceClient for ServerApi {
         _team_uid: ServerId,
         _credits: i32,
     ) -> Result<WorkspacesMetadataResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn update_addon_credits_settings(
@@ -74,7 +74,7 @@ impl WorkspaceClient for ServerApi {
         _max_monthly_spend_cents: Option<i32>,
         _selected_auto_reload_credit_denomination: Option<i32>,
     ) -> Result<WorkspacesMetadataResponse> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }
 

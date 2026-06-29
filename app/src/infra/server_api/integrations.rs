@@ -213,7 +213,7 @@ impl IntegrationsClient for ServerApi {
         &self,
         _repos: Vec<(String, String)>,
     ) -> Result<UserRepoAuthStatusOutput> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn create_or_update_simple_integration(
@@ -228,36 +228,36 @@ impl IntegrationsClient for ServerApi {
         _worker_host: Option<String>,
         _enabled: bool,
     ) -> Result<CreateSimpleIntegrationOutput> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn list_simple_integrations(
         &self,
         _providers: Vec<String>,
     ) -> Result<SimpleIntegrationsOutput> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn poll_oauth_connect_status(&self, _tx_id: String) -> Result<OauthConnectTxStatus> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_integrations_using_environment(
         &self,
         _environment_id: String,
     ) -> Result<GetIntegrationsUsingEnvironmentOutput> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn get_user_github_info(&self) -> Result<UserGithubInfoResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn suggest_cloud_environment_image(
         &self,
         _repos: Vec<(String, String)>,
     ) -> Result<SuggestCloudEnvironmentImageResult> {
-        todo!("GraphQL backend removed")
+        Err(anyhow::anyhow!("cloud backend removed"))
     }
 }
 
