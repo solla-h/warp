@@ -75,7 +75,7 @@ impl UserWorkspaces {
     pub fn is_byo_api_key_enabled(&self, _ctx: &AppContext) -> bool { true }
     pub fn is_code_suggestions_toggleable(&self) -> bool { true }
     pub fn is_codebase_context_enabled(&self, _ctx: &AppContext) -> bool { true }
-    pub fn is_custom_inference_enabled(&self, _ctx: &AppContext) -> bool { false }
+    pub fn is_custom_inference_enabled(&self, _ctx: &AppContext) -> bool { true }
     pub fn is_delinquent_due_to_payment_issue(&self) -> bool { false }
     pub fn is_direct_link_sharing_enabled(&self) -> bool { false }
     pub fn is_enterprise_secret_redaction_enabled(&self) -> bool { false }
