@@ -314,6 +314,14 @@ impl CustomEndpointModal {
         ctx: &mut ViewContext<Self>,
     ) {
         self.editing_index = editing_index;
+        self.selected_api_type = endpoint
+            .map(|ep| {
+                Self::API_TYPE_OPTIONS
+                    .iter()
+                    .position(|(_, v)| *v == ep.api_type)
+                    .unwrap_or(0)
+            })
+            .unwrap_or(0);
         self.endpoint_name_editor.update(ctx, |editor, ctx| {
             editor.set_buffer_text(endpoint.map(|e| e.name.as_str()).unwrap_or(""), ctx);
         });
