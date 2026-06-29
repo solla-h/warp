@@ -691,7 +691,7 @@ impl ConvertAPIToolCallToAIAgentAction for api::message::ToolCall {
         params: ConversionParams,
     ) -> Result<MaybeAIAgentAction, ToolToAIAgentActionError> {
         let Some(tool) = self.tool else {
-            return Err(ToolToAIAgentActionError::MissingTool);
+            return Ok(MaybeAIAgentAction::NoClientRepresentation);
         };
 
         let create_standard_action = |action: AIAgentActionType| {

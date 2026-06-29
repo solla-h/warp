@@ -28,6 +28,12 @@ lazy_static! {
     static ref AGENT_FOLLOW_UP_INPUTS: HashSet<&'static str> = HashSet::from(["yes", "continue", "do it", "approve"]);
 }
 
+/// Returns true if the first word of input contains any non-ASCII character.
+/// Shell commands are always ASCII, so non-ASCII first word = natural language.
+pub fn first_word_is_non_ascii(input: &str) -> bool {
+    let first_word = input.trim().split_whitespace().next().unwrap_or("");
+    first_word.chars().any(|c| !c.is_ascii())
+}
 pub fn is_agent_follow_up_input(input: &str) -> bool {
     AGENT_FOLLOW_UP_INPUTS.contains(input)
 }

@@ -28,6 +28,8 @@ pub enum InputClassifierDecisionSource {
     ShellCommandAllowList,
     // Classification result coming from is_likely_shell_command
     ShellHeuristic,
+    // First word contains non-ASCII characters (CJK, Cyrillic, etc.)
+    NonAsciiFirstWord,
 }
 
 /// The detected input type along with the decision source that produced it.

@@ -296,7 +296,7 @@ fn init_subshell_script_for_shell(
             load_and_escape_script("bundled/bootstrap/fish_init_subshell.sh", assets)
         }
         // TODO(PLAT-750)
-        ShellType::PowerShell => todo!(),
+        ShellType::PowerShell => String::new(),
     };
     let shell_init_script =
         shell_init_script.replace(SESSION_ID_PLACEHOLDER, &session_id.as_u64().to_string());

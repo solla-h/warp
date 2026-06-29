@@ -142,7 +142,7 @@ pub struct PlatformPageView {
 
 impl PlatformPageView {
     fn fetch_api_keys(&mut self, _ctx: &mut ViewContext<PlatformPageView>) {
-        todo!()
+        log::warn!("fetch_api_keys: cloud platform API keys not available in BYOP mode");
     }
     pub fn new(ctx: &mut ViewContext<PlatformPageView>) -> Self {
         let api_key_search_editor = ctx.add_typed_action_view(|ctx| {

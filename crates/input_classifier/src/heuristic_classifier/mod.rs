@@ -46,6 +46,14 @@ impl InputClassifier for HeuristicClassifier {
         context: &Context,
     ) -> InputClassificationResult {
         let word_tokens = parse_query_into_tokens(input.buffer_text.as_str());
+        // Non-ASCII first word = definitely natural language
+        if crate::util::first_word_is_non_ascii(&input.buffer_text) {
+            return InputClassificationResult::new(
+                InputType::AI,
+                InputClassifierDecisionSource::NonAsciiFirstWord,
+            );
+        }
+
         let total_word_token_count = word_tokens.len();
 
         if total_word_token_count == 1
