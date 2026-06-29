@@ -3342,6 +3342,7 @@ pub async fn generate_byop_output(
     }
 
     let stream = async_stream::stream! {
+        let mut chat_req = chat_req;
         // 1) StreamInit — 始终先发,UI 能立刻显示 "thinking..."
         yield Ok(api::ResponseEvent {
             r#type: Some(api::response_event::Type::Init(
@@ -3532,9 +3533,13 @@ pub async fn generate_byop_output(
             current_task_id = subtask_id;
         }
 
+        let mut saved_stream_end: Option<genai::chat::StreamEnd> = None;
+        loop {
+        let mut intercepted_tool_responses: Vec<genai::chat::ToolResponse> = Vec::new();
+        let mut has_non_intercepted_tool = false;
         log::info!("[byop] opening stream: model={model_id}");
         let mut sdk_stream = match client
-            .exec_chat_stream(&model_id, chat_req, Some(&chat_opts))
+            .exec_chat_stream(&model_id, chat_req.clone(), Some(&chat_opts))
             .await
         {
             Ok(resp) => {
@@ -4086,6 +4091,7 @@ pub async fn generate_byop_output(
                         ));
                     }
                 }
+                intercepted_tool_responses.push(genai::chat::ToolResponse::new(call.call_id.clone(), final_messages.last().map(|m| m.server_message_data.clone()).unwrap_or_default()));
                 continue;
             }
 
@@ -4189,13 +4195,15 @@ pub async fn generate_byop_output(
                     &current_task_id,
                     &request_id,
                     call.call_id.clone(),
-                    result_content,
+                    result_content.clone(),
                 ));
+                intercepted_tool_responses.push(genai::chat::ToolResponse::new(call.call_id.clone(), result_content));
                 continue;
             }
 
             match parse_incoming_tool_call(&call, mcp_context.as_ref()) {
                 Ok(warp_tool) => {
+                    has_non_intercepted_tool = true;
                     // 如果 ToolCallChunk 阶段已经 emit 过占位卡(同 call_id),
                     // 改用 update_message 原地刷新为最终 args(覆盖 chunk 中可能后到
                     // 的 args delta)。占位与终帧共用同一 message.id,
@@ -4275,6 +4283,22 @@ pub async fn generate_byop_output(
             yield Ok(make_add_messages_event(&current_task_id, final_messages));
         }
 
+        // BYOP agentic loop: if ALL tool_calls were locally-intercepted,
+        // append results to chat_req and re-invoke model.
+        if !intercepted_tool_responses.is_empty() && !has_non_intercepted_tool {
+            if let Some(end) = saved_stream_end.take() {
+                if let Some(content) = end.captured_content {
+                    chat_req.messages.push(genai::chat::ChatMessage::assistant(content));
+                }
+                for tr in intercepted_tool_responses.drain(..) {
+                    chat_req.messages.push(genai::chat::ChatMessage::from(tr));
+                }
+            }
+            log::info!("[byop] agentic loop: re-invoking model after locally-intercepted tools");
+            continue;
+        }
+
+
         // 把 captured token usage 折算成 ConversationUsageMetadata.context_window_usage
         // 注入 StreamFinished — controller 的 handle_response_stream_finished 会把它写到
         // conversation.conversation_usage_metadata,footer 监听 UpdatedStreamingExchange/
@@ -4306,6 +4330,8 @@ pub async fn generate_byop_output(
             })
         });
         yield Ok(make_finished_done(usage_metadata));
+        break;
+        } // end loop
     };
 
     Ok(Box::pin(stream))
