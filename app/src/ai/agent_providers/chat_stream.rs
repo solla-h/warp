@@ -3534,6 +3534,7 @@ pub async fn generate_byop_output(
         }
 
         let mut saved_stream_end: Option<genai::chat::StreamEnd> = None;
+        let mut agentic_loop_iter: u32 = 0;
         loop {
         let mut intercepted_tool_responses: Vec<genai::chat::ToolResponse> = Vec::new();
         let mut has_non_intercepted_tool = false;
@@ -4285,7 +4286,8 @@ pub async fn generate_byop_output(
 
         // BYOP agentic loop: if ALL tool_calls were locally-intercepted,
         // append results to chat_req and re-invoke model.
-        if !intercepted_tool_responses.is_empty() && !has_non_intercepted_tool {
+        if !intercepted_tool_responses.is_empty() && !has_non_intercepted_tool && agentic_loop_iter < 8 {
+            agentic_loop_iter += 1;
             if let Some(end) = saved_stream_end.take() {
                 if let Some(content) = end.captured_content {
                     chat_req.messages.push(genai::chat::ChatMessage::assistant(content));
