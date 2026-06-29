@@ -723,10 +723,10 @@ impl AgentProviderApiType {
     pub fn default_base_url(self) -> &'static str {
         match self {
             Self::OpenAi | Self::OpenAiResp => "https://api.openai.com/v1",
-            Self::Anthropic => "https://api.anthropic.com",
+            Self::Anthropic => "https://api.anthropic.com/v1/",
             Self::Gemini => "https://generativelanguage.googleapis.com",
             Self::Ollama => "http://localhost:11434",
-            Self::DeepSeek => "https://api.deepseek.com",
+            Self::DeepSeek => "https://api.deepseek.com/v1/",
         }
     }
 }
