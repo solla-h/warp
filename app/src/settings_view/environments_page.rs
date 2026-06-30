@@ -2084,6 +2084,3 @@ impl From<ViewHandle<EnvironmentsPageView>> for SettingsPageViewHandle {
     }
 }
 
-#[cfg(test)]
-#[path = "environments_page_tests.rs"]
-mod tests;

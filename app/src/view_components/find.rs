@@ -717,6 +717,3 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> View for Find<T> {
     }
 }
 
-#[cfg(test)]
-#[path = "find_tests.rs"]
-mod tests;

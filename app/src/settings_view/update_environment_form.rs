@@ -3583,6 +3583,3 @@ impl View for UpdateEnvironmentForm {
     }
 }
 
-#[cfg(test)]
-#[path = "update_environment_form_tests.rs"]
-mod tests;

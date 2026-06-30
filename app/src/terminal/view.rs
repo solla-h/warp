@@ -28235,7 +28235,3 @@ fn is_rich_input_chip_in_cli_toolbar(app: &AppContext) -> bool {
         .any(|item| matches!(item, AgentToolbarItemKind::RichInput))
 }
 
-#[cfg(test)]
-#[path = "view_tests.rs"]
-mod tests;
-

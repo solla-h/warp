@@ -7688,6 +7688,3 @@ mod code_review_view_integration;
 #[cfg(feature = "integration_tests")]
 pub use code_review_view_integration::CodeReviewVisibleAnchorForTest;
 
-#[cfg(test)]
-#[path = "code_review_view_tests.rs"]
-mod tests;

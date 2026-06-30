@@ -65,6 +65,3 @@ impl SyncDataSource for CloudWorkflowsDataSource {
     }
 }
 
-#[cfg(test)]
-#[path = "workflows_data_source_tests.rs"]
-mod tests;

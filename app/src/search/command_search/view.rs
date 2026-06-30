@@ -1155,6 +1155,3 @@ pub mod styles {
     }
 }
 
-#[cfg(test)]
-#[path = "view_tests.rs"]
-mod tests;

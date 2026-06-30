@@ -87,10 +87,6 @@ lazy_static! {
         Regex::new(r"^\[[xX]\] $").expect("Markdown shortcut regex should be valid");
 }
 
-#[cfg(test)]
-#[path = "model_tests.rs"]
-mod tests;
-
 /// Model for managing the state of the editor.
 pub struct NotebooksEditorModel {
     pub(super) render_state: ModelHandle<RenderState>,

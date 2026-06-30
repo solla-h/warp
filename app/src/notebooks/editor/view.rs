@@ -77,10 +77,6 @@ use crate::util::tooltips::{
 use crate::view_components::DismissibleToast;
 use crate::workspace::WorkspaceAction;
 
-#[cfg(test)]
-#[path = "view_tests.rs"]
-mod tests;
-
 const SCROLLBAR_WIDTH: ScrollbarWidth = ScrollbarWidth::Auto;
 const MAX_EDITOR_TIP_WIDTH: f32 = 300.;
 

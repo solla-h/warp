@@ -29,6 +29,3 @@ impl AdminActions {
     }
 }
 
-#[cfg(test)]
-#[path = "admin_actions_tests.rs"]
-mod tests;

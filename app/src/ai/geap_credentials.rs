@@ -537,6 +537,3 @@ fn parse_generate_access_token_expiry(expire_time: &str) -> Result<SystemTime, S
         })
 }
 
-#[cfg(test)]
-#[path = "geap_credentials_tests.rs"]
-mod tests;

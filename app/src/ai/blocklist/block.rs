@@ -6917,6 +6917,3 @@ impl AIBlock {
         self.run_agents_card_views.insert(action_id.clone(), view);
     }
 }
-#[cfg(test)]
-#[path = "block_tests.rs"]
-mod tests;

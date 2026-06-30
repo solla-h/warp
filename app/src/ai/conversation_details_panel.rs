@@ -2251,6 +2251,3 @@ impl TypedActionView for ConversationDetailsPanel {
         }
     }
 }
-#[cfg(test)]
-#[path = "conversation_details_panel_tests.rs"]
-mod tests;

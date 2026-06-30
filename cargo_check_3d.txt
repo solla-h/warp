@@ -1,0 +1,120 @@
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+    Blocking waiting for file lock on build directory
+    Checking warp v0.1.0 (D:\workspace\open_source\warp\app)
+warning: unreachable pattern
+    --> app\src\settings_view\mod.rs:1725:13
+     |
+1725 |             _ => (),
+     |             ^ no value can reach this
+     |
+note: multiple earlier patterns match some of the same values
+    --> app\src\settings_view\mod.rs:1725:13
+     |
+1721 |             MainSettingsPageEvent::CheckForUpdate => ctx.emit(SettingsViewEvent::CheckForUpdate),
+     |             ------------------------------------- matches some of the same values
+1722 |             MainSettingsPageEvent::SignupAnonymousUser => {
+     |             ------------------------------------------ matches some of the same values
+...
+1725 |             _ => (),
+     |             ^ collectively making this unreachable
+     = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> app\src\terminal\buy_credits_banner.rs:97:13
+   |
+97 |         let mut me = Self {
+   |             ----^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> app\src\workflows\workflow_view.rs:1933:13
+     |
+1933 |         let mut cancel_button = self.build_footer_button(
+     |             ----^^^^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> app\src\workspace\view\cloud_agent_capacity_modal\mod.rs:160:13
+    |
+160 |         let mut content = Flex::column()
+    |             ----^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> app\src\workspace\view\conversation_list\item.rs:433:9
+    |
+433 |     let mut item_stack = Stack::new().with_child(event_handler);
+    |         ----^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: type `DriveIndexVariant` is more private than the item `CloudModel::collapse_all_in_location`
+   --> app\src\cloud_object\model\persistence.rs:935:5
+    |
+935 | /     pub fn collapse_all_in_location(
+936 | |         &mut self,
+937 | |         location: CloudObjectLocation,
+938 | |         index_variant: DriveIndexVariant,
+939 | |         ctx: &mut ModelContext<Self>,
+940 | |     ) {
+    | |_____^ method `CloudModel::collapse_all_in_location` is reachable at visibility `pub`
+    |
+note: but type `DriveIndexVariant` is only usable at visibility `pub(self)`
+   --> app\src\cloud_object\model\persistence.rs:35:1
+    |
+ 35 | enum DriveIndexVariant {
+    | ^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `UserProperties` is more private than the item `UserOutput`
+  --> app\src\infra\server_api\auth.rs:16:1
+   |
+16 | pub type UserOutput = UserProperties;
+   | ^^^^^^^^^^^^^^^^^^^ type alias `UserOutput` is reachable at visibility `pub`
+   |
+note: but type `UserProperties` is only usable at visibility `pub(crate)`
+  --> app\src\auth\user_properties.rs:6:1
+   |
+ 6 | pub(crate) struct UserProperties {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `UserProperties` is more private than the item `FetchUserResult::user_output`
+  --> app\src\infra\server_api\auth.rs:85:5
+   |
+85 |     pub user_output: UserOutput,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `FetchUserResult::user_output` is reachable at visibility `pub`
+   |
+note: but type `UserProperties` is only usable at visibility `pub(crate)`
+  --> app\src\auth\user_properties.rs:6:1
+   |
+ 6 | pub(crate) struct UserProperties {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: calls to `std::mem::drop` with a reference instead of an owned value does nothing
+   --> app\src\auth\auth_manager.rs:416:29
+    |
+416 | ...                   drop(&server_api);
+    |                       ^^^^^-----------^
+    |                            |
+    |                            argument has type `&Arc<ServerApi>`
+    |
+    = note: `#[warn(dropping_references)]` on by default
+help: use `let _ = ...` to ignore the expression or result
+    |
+416 -                             drop(&server_api);
+416 +                             let _ = &server_api;
+    |
+
+warning: `warp` (lib) generated 9 warnings (run `cargo fix --lib -p warp` to apply 4 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 19s

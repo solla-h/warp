@@ -1,0 +1,167 @@
+warning: patch `tink-core v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-hybrid v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+warning: patch `tink-proto v0.3.0 (https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9a)` was not used in the crate graph
+help: Check that the patched package version and available features are compatible
+      with the dependency requirements. If the patch has a different version from
+      what is locked in the Cargo.lock file, run `cargo update` to use the new
+      version. This may also occur with an optional dependency that is not enabled.
+   Compiling ai v0.1.0 (D:\workspace\open_source\warp\crates\ai)
+    Checking cloud_objects v0.1.0 (D:\workspace\open_source\warp\crates\cloud_objects)
+   Compiling warp v0.1.0 (D:\workspace\open_source\warp\app)
+    Checking cloud_object_models v0.1.0 (D:\workspace\open_source\warp\crates\cloud_object_models)
+    Checking onboarding v0.1.0 (D:\workspace\open_source\warp\crates\onboarding)
+error[E0432]: unresolved import `crate::pricing::StripeSubscriptionPlan`
+  --> app\src\root_view.rs:68:63
+   |
+68 | use crate::pricing::{PricingInfoModel, PricingInfoModelEvent, StripeSubscriptionPlan};
+   |                                                               ^^^^^^^^^^^^^^^^^^^^^^ no `StripeSubscriptionPlan` in `pricing`
+
+error[E0432]: unresolved import `crate::pricing::AddonCreditsOption`
+  --> app\src\terminal\enable_auto_reload_modal.rs:19:22
+   |
+19 | use crate::pricing::{AddonCreditsOption, PricingInfoModel, PricingInfoModelEvent};
+   |                      ^^^^^^^^^^^^^^^^^^ no `AddonCreditsOption` in `pricing`
+
+error[E0412]: cannot find type `AddonCreditsOption` in module `crate::pricing`
+   --> app\src\settings_view\billing_and_usage_page_v2.rs:137:34
+    |
+137 |     options: Vec<crate::pricing::AddonCreditsOption>,
+    |                                  ^^^^^^^^^^^^^^^^^^ not found in `crate::pricing`
+
+error[E0412]: cannot find type `AddonCreditsOption` in module `crate::pricing`
+  --> app\src\terminal\buy_credits_banner.rs:43:48
+   |
+43 |     addon_credits_options: Vec<crate::pricing::AddonCreditsOption>,
+   |                                                ^^^^^^^^^^^^^^^^^^ not found in `crate::pricing`
+
+error[E0599]: no method named `addon_credits_options` found for reference `&stub_impl::PricingInfoModel` in the current scope
+   --> app\src\ai\request_usage_model.rs:415:22
+    |
+414 |                   && PricingInfoModel::as_ref(ctx)
+    |  ____________________-
+415 | |                     .addon_credits_options()
+    | |                     -^^^^^^^^^^^^^^^^^^^^^ method not found in `&stub_impl::PricingInfoModel`
+    | |_____________________|
+    |
+
+error[E0599]: no method named `addon_credits_options` found for reference `&stub_impl::PricingInfoModel` in the current scope
+   --> app\src\ai\request_usage_model.rs:601:61
+    |
+601 |                 let options = PricingInfoModel::as_ref(ctx).addon_credits_options()?;
+    |                                                             ^^^^^^^^^^^^^^^^^^^^^ method not found in `&stub_impl::PricingInfoModel`
+
+error[E0599]: no method named `plan_pricing` found for reference `&stub_impl::PricingInfoModel` in the current scope
+    --> app\src\root_view.rs:1867:14
+     |
+1866 | /         PricingInfoModel::as_ref(ctx)
+1867 | |             .plan_pricing(&StripeSubscriptionPlan::Build)
+     | |             -^^^^^^^^^^^^ method not found in `&stub_impl::PricingInfoModel`
+     | |_____________|
+     |
+
+error[E0282]: type annotations needed
+    --> app\src\settings_view\billing_and_usage_page_v2.rs:2074:31
+     |
+2074 |                         .map(|c| c.separate_with_commas())
+     |                               ^  - type must be known at this point
+     |
+help: consider giving this closure parameter an explicit type
+     |
+2074 |                         .map(|c: /* Type */| c.separate_with_commas())
+     |                                ++++++++++++
+
+error[E0599]: no method named `plan_pricing` found for reference `&stub_impl::PricingInfoModel` in the current scope
+    --> app\src\settings_view\teams_page.rs:1784:47
+     |
+1784 |         let plan_pricing = pricing_info_model.plan_pricing(&stripe_subscription_plan)?;
+     |                                               ^^^^^^^^^^^^ method not found in `&stub_impl::PricingInfoModel`
+
+error[E0599]: no method named `plans` found for reference `&stub_impl::PricingInfoModel` in the current scope
+    --> app\src\settings_view\teams_page.rs:1862:14
+     |
+1861 | /         pricing_info
+1862 | |             .plans()
+     | |             -^^^^^ method not found in `&stub_impl::PricingInfoModel`
+     | |_____________|
+     |
+
+error[E0599]: no method named `addon_credits_options` found for reference `&stub_impl::PricingInfoModel` in the current scope
+   --> app\src\terminal\enable_auto_reload_modal.rs:142:14
+    |
+141 |           self.addon_credits_options = PricingInfoModel::as_ref(ctx)
+    |  ______________________________________-
+142 | |             .addon_credits_options()
+    | |             -^^^^^^^^^^^^^^^^^^^^^ method not found in `&stub_impl::PricingInfoModel`
+    | |_____________|
+    |
+
+error[E0282]: type annotations needed
+   --> app\src\terminal\enable_auto_reload_modal.rs:143:19
+    |
+143 |             .map(|opts| opts.to_vec())
+    |                   ^^^^  ---- type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type
+    |
+143 |             .map(|opts: /* Type */| opts.to_vec())
+    |                       ++++++++++++
+
+error[E0282]: type annotations needed
+   --> app\src\terminal\enable_auto_reload_modal.rs:149:26
+    |
+149 |             .map_or(0., |option| option.rate());
+    |                          ^^^^^^  ------ type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type
+    |
+149 |             .map_or(0., |option: /* Type */| option.rate());
+    |                                ++++++++++++
+
+warning: unreachable pattern
+    --> app\src\settings_view\mod.rs:1725:13
+     |
+1725 |             _ => (),
+     |             ^ no value can reach this
+     |
+note: multiple earlier patterns match some of the same values
+    --> app\src\settings_view\mod.rs:1725:13
+     |
+1721 |             MainSettingsPageEvent::CheckForUpdate => ctx.emit(SettingsViewEvent::CheckForUpdate),
+     |             ------------------------------------- matches some of the same values
+1722 |             MainSettingsPageEvent::SignupAnonymousUser => {
+     |             ------------------------------------------ matches some of the same values
+...
+1725 |             _ => (),
+     |             ^ collectively making this unreachable
+     = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> app\src\workflows\workflow_view.rs:1933:13
+     |
+1933 |         let mut cancel_button = self.build_footer_button(
+     |             ----^^^^^^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> app\src\workspace\view\cloud_agent_capacity_modal\mod.rs:160:13
+    |
+160 |         let mut content = Flex::column()
+    |             ----^^^^^^^
+    |             |
+    |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> app\src\workspace\view\conversation_list\item.rs:433:9
+    |
+433 |     let mut item_stack = Stack::new().with_child(event_handler);
+    |         ----^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+
+Some errors have detailed explanations: E0282, E0412, E0432, E0599.
+For more information about an error, try `rustc --explain E0282`.
+warning: `warp` (lib) generated 4 warnings
+error: could not compile `warp` (lib) due to 13 previous errors; 4 warnings emitted

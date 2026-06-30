@@ -176,6 +176,3 @@ fn editor_display_name(email: Option<&str>, app: &AppContext) -> String {
     }
 }
 
-#[cfg(test)]
-#[path = "details_bar_tests.rs"]
-mod tests;

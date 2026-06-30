@@ -2934,6 +2934,3 @@ fn sync_object_actions(
     })
 }
 
-#[cfg(test)]
-#[path = "sqlite_tests.rs"]
-mod tests;

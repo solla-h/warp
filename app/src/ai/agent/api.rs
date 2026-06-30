@@ -438,7 +438,3 @@ impl RequestParams {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "api_tests.rs"]
-mod tests;

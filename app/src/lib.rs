@@ -319,7 +319,6 @@ use crate::root_view::{
 };
 #[cfg(feature = "cloud")]
 use crate::server_experiments::ServerExperiments;
-#[cfg(feature = "cloud")]
 pub use crate::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
 };
