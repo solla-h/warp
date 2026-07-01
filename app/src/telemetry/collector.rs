@@ -10,7 +10,7 @@ use warp_core::{report_error, report_if_error};
 use warpui::r#async::{FutureExt as _, Timer};
 use warpui::{App, Entity, ModelContext, SingletonEntity};
 
-use super::{clear_event_queue, rudder_event_file_path, RUDDER_TELEMETRY_EVENTS_FILE_NAME};
+use super::clear_event_queue;
 use crate::auth::AuthStateProvider;
 use crate::channel::ChannelState;
 use crate::features::FeatureFlag;
@@ -135,34 +135,7 @@ impl TelemetryCollector {
     /// Events may be written to disk at the end of a session prior to app termination; this
     /// function should be called on startup to track events that were recorded at the end of the
     /// last session and were not flushed.
-    fn flush_persisted_events_from_disk(&self, ctx: &mut ModelContext<TelemetryCollector>) {
-        let privacy_settings_snapshot = PrivacySettings::as_ref(ctx).get_snapshot(ctx);
-        let server_api = self.server_api.clone();
-        let _ = ctx.spawn(
-            async move {
-                let new_path = rudder_event_file_path();
-                let old_path =
-                    warp_core::paths::state_dir().join(RUDDER_TELEMETRY_EVENTS_FILE_NAME);
-
-                // Try flushing from both new and legacy locations.
-                for path in [new_path, old_path] {
-                    report_if_error!(server_api
-                        .flush_persisted_events_to_rudder(&path, privacy_settings_snapshot)
-                        .await
-                        .context("Failed to flush rudder events from disk"));
-                    // Remove the file regardless of outcome  of flushing the events to avoid the
-                    // case where we accidentally try to re-flush the events on the next app startup.
-                    if let Err(e) = remove_file(&path) {
-                        if e.kind() != std::io::ErrorKind::NotFound {
-                            warp_core::report_error!(
-                                anyhow::anyhow!(e).context("Failed to remove persisted event file")
-                            );
-                        }
-                    }
-                }
-            },
-            |_, _, _| (),
-        );
+    fn flush_persisted_events_from_disk(&self, _ctx: &mut ModelContext<TelemetryCollector>) {
     }
 
     /// Schedules a background task to send an active usage event in a rudderstack request if

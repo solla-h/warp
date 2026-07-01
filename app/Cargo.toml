@@ -317,13 +317,8 @@ http_server.workspace = true
 hyper.workspace = true
 libsqlite3-sys = { version = "0.33.0", features = ["bundled"] }
 mio = { version = "1.1.1", features = ["os-poll", "os-ext"] }
-opentelemetry = { workspace = true, optional = true }
-opentelemetry-http = { workspace = true, optional = true }
-opentelemetry-otlp = { workspace = true, optional = true }
-opentelemetry_sdk = { workspace = true, optional = true }
 tokio.workspace = true
 tokio-util.workspace = true
-tracing-opentelemetry = { workspace = true, optional = true }
 tracing-subscriber.workspace = true
 
 # AWS SDK (loading credentials for BYO LLM)
@@ -464,7 +459,6 @@ local-only = ["skip_login"]
 cloud = ["persistence/cloud"]
 cloud_ui = ["cloud_environments", "cloud_conversations", "ambient_agents_rtc", "cloud_mode", "oz_platform_skills", "oz_identity_federation", "sync_ambient_plans", "conversation_artifacts", "oz_launch_modal", "scheduled_ambient_agents", "oz_handoff", "handoff_local_cloud", "handoff_cloud_cloud", "remote_codebase_indexing"]
 aws-bedrock = ["dep:aws-config", "dep:aws-credential-types", "dep:aws-sdk-sts", "dep:aws-types"]
-otel = ["dep:opentelemetry", "dep:opentelemetry-http", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk", "dep:tracing-opentelemetry"]
 ai_resume_button = []
 autoupdate = []
 figma_detection = []
