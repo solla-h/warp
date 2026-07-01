@@ -36,6 +36,7 @@ use warp_isolation_platform::IsolationPlatformError;
 #[cfg(not(target_family = "wasm"))]
 use warp_logging::log_file_path;
 use crate::managed_secrets::ManagedSecretManager;
+use crate::cloud_object::CloudObjectLookup as _;
 use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelSpawner, SingletonEntity};
 

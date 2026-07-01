@@ -11,16 +11,12 @@ mod app_menus;
 mod app_services;
 mod app_state;
 mod auth;
-#[cfg(feature = "cloud")]
 mod autoupdate;
 mod banner;
-#[cfg(feature = "cloud")]
 mod billing;
 mod changelog_model;
 mod chip_configurator;
-#[cfg(feature = "cloud")]
 mod workspaces;
-#[cfg(feature = "cloud")]
 mod cloud_object;
 mod code;
 mod code_review;
@@ -37,7 +33,6 @@ mod crash_reporting;
 mod debug_dump;
 mod default_terminal;
 mod download_method;
-#[cfg(feature = "cloud")]
 mod drive;
 #[cfg(windows)]
 mod dynamic_libraries;
@@ -81,19 +76,12 @@ mod resource_limits;
 mod reward_view;
 mod safe_triangle;
 mod search_bar;
-#[cfg(feature = "cloud")]
 mod server_experiments;
-#[cfg(feature = "cloud")]
 mod network_log_pane_manager;
-#[cfg(feature = "cloud")]
 mod network_log_view;
-#[cfg(feature = "cloud")]
 mod network_logging;
-#[cfg(feature = "cloud")]
 mod voice_transcriber;
-#[cfg(feature = "cloud")]
 mod server_block;
-#[cfg(feature = "cloud")]
 mod sync_queue;
 pub mod infra;
 mod session_management;
@@ -182,13 +170,9 @@ use quit_warning::UnsavedStateSummary;
 use repo_metadata::{
     repositories::DetectedRepositories, watcher::DirectoryWatcher, RepoMetadataModel,
 };
-#[cfg(feature = "cloud")]
 use crate::network_log_pane_manager::NetworkLogPaneManager;
-#[cfg(feature = "cloud")]
 use crate::network_logging::NetworkLogModel;
-#[cfg(feature = "cloud")]
 use crate::telemetry::context_provider::AppTelemetryContextProvider;
-#[cfg(feature = "cloud")]
 use crate::voice_transcriber::ServerVoiceTranscriber;
 #[cfg(feature = "local_fs")]
 use settings::import::model::ImportedConfigModel;
@@ -234,7 +218,6 @@ pub use persistence::testing as sqlite_testing;
 #[cfg(feature = "plugin_host")]
 pub use plugin::{run_plugin_host, PLUGIN_HOST_FLAG};
 use referral_theme_status::ReferralThemeStatus;
-#[cfg(feature = "cloud")]
 use infra::ServiceProvider;
 use settings::{ExtraMetaKeys, PrivacySettings};
 #[cfg(feature = "local_fs")]
@@ -254,9 +237,7 @@ pub use warp_core::{safe_debug, safe_error, safe_info, safe_warn};
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::LogDestination;
-#[cfg(feature = "cloud")]
 use crate::managed_secrets::ManagedSecretManager;
-#[cfg(feature = "cloud")]
 use crate::managed_secrets::ActorProvider;
 use warpui::integration::TestDriver;
 use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
@@ -286,13 +267,9 @@ use crate::app_state::AppState;
 use crate::autoupdate::AutoupdateState;
 use crate::autoupdate::RelaunchModel;
 use crate::changelog_model::ChangelogModel;
-#[cfg(feature = "cloud")]
 pub(crate) use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
-#[cfg(feature = "cloud")]
 pub(crate) use crate::cloud_object::model::persistence::CloudModel;
-#[cfg(feature = "cloud")]
 pub(crate) use crate::cloud_object::{FetchSingleObjectOption, GenericStringObjectInput, InitiatedBy, Listener, ObjectOperation, ObjectOperationResult, OperationSuccessType, UpdateManager, UpdateManagerEvent};
-#[cfg(feature = "cloud")]
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
@@ -300,7 +277,6 @@ use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager
 use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
 use crate::drive::export::ExportManager;
-#[cfg(feature = "cloud")]
 use crate::drive::CloudObjectTypeAndId;
 use crate::env_vars::manager::EnvVarCollectionManager;
 use crate::experiments::ImprovedPaletteSearch;
@@ -309,7 +285,6 @@ use crate::gpu_state::GPUState;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::manager::NotebookManager;
-#[cfg(feature = "cloud")]
 use crate::notebooks::CloudNotebook;
 use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
@@ -319,16 +294,13 @@ use crate::projects::ProjectManagementModel;
 use crate::root_view::{
     quake_mode_window_id, quake_mode_window_is_open, OpenFromRestoredArg, OpenPath,
 };
-#[cfg(feature = "cloud")]
 use crate::server_experiments::ServerExperiments;
 pub use crate::telemetry::{
     AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
 };
 use crate::telemetry::{AppStartupInfo, CloseTarget, PaletteSource};
-#[cfg(feature = "cloud")]
 use crate::telemetry::TelemetryCollector;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
-#[cfg(feature = "cloud")]
 use crate::settings::cloud_preferences_syncer::initialize_cloud_preferences_syncer;
 use crate::settings::manager::SettingsManager;
 use crate::settings::{AISettings, AccessibilitySettings, ScrollSettings, SelectionSettings};
@@ -354,7 +326,6 @@ use crate::workspace::{
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_profiles::UserProfiles;
-#[cfg(feature = "cloud")]
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
 /// Our embedded application assets.
@@ -2751,7 +2722,6 @@ fn init_logging_for_unit_tests_glue() {
     warp_logging::init_logging_for_unit_tests();
 }
 
-#[cfg(feature = "cloud")]
 impl managed_secrets::ActorProvider for AuthState {
     fn actor_uid(&self) -> Option<String> {
         self.user_id().map(|uid| uid.as_string())

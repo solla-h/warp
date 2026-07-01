@@ -16,7 +16,6 @@ pub struct StripeSubscriptionPlanInfo {
     pub max_team_size: Option<i32>,
 }
 
-#[cfg(feature = "cloud")]
 impl TryFrom<&crate::workspaces::workspace::BillingMetadata> for StripeSubscriptionPlan {
     type Error = ();
     fn try_from(

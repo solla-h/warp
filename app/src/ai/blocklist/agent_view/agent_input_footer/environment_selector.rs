@@ -19,6 +19,8 @@ use super::{AgentInputButtonTheme, AmbientAgentViewModel};
 use crate::ai::ambient_agents::telemetry::CloudAgentTelemetryEvent;
 use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
+use crate::cloud_object::CloudObjectLookup as _;
+use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::appearance::Appearance;
 use crate::context_chips::display_menu::{
     ChipMenuType, DisplayChipMenu, FixedFooter, GenericMenuItem, PromptDisplayMenuEvent,
