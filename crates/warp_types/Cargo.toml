@@ -6,7 +6,6 @@ license = "AGPL-3.0-only"
 publish = false
 
 [features]
-graphql = ["dep:cynic", "dep:warp_graphql_schema"]
 test-util = []
 
 [dependencies]
@@ -19,5 +18,3 @@ schemars = { version = "1", features = ["uuid1"] }
 settings_value = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
-cynic = { workspace = true, optional = true }
-warp_graphql_schema = { workspace = true, optional = true }

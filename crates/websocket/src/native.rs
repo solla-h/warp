@@ -78,11 +78,6 @@ impl WebSocket {
     ) {
         self.0.split()
     }
-
-    #[cfg(feature = "graphql")]
-    pub async fn into_graphql_client_builder(self) -> graphql_ws_client::ClientBuilder {
-        graphql_ws_client::Client::build(self.0)
-    }
 }
 
 pub type Error = async_tungstenite::tungstenite::Error;

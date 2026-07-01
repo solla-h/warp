@@ -3680,7 +3680,6 @@ dependencies = [
  "ouroboros",
  "proc-macro2",
  "quote",
- "rkyv",
  "strsim 0.10.0",
  "syn 2.0.117",
  "thiserror 1.0.63",
@@ -5826,25 +5825,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b47de2c5685b5bb3689d6b0977f38959f3d7d82d3556627cfebbfaa42eda05ea"
 dependencies = [
  "ordered_hashmap",
-]
-
-[[package]]
-name = "graphql-ws-client"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aa2e818b9e62654f2039d524c92a19495fcc2b0139ffc0354956865b3c7e939"
-dependencies = [
- "async-channel",
- "futures-lite 2.6.1",
- "futures-sink",
- "futures-timer",
- "pharos",
- "pin-project",
- "serde",
- "serde_json",
- "thiserror 1.0.63",
- "tungstenite",
- "ws_stream_wasm",
 ]
 
 [[package]]
@@ -15010,15 +14990,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "warp_graphql_schema"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "cynic",
- "cynic-codegen",
-]
-
-[[package]]
 name = "warp_isolation_platform"
 version = "0.1.0"
 dependencies = [
@@ -15170,7 +15141,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "cynic",
  "itertools 0.14.0",
  "lasso",
  "schemars 1.0.4",
@@ -15178,7 +15148,6 @@ dependencies = [
  "settings_value",
  "thiserror 2.0.17",
  "uuid",
- "warp_graphql_schema",
 ]
 
 [[package]]
@@ -15754,7 +15723,6 @@ dependencies = [
  "futures",
  "futures-test-sink",
  "futures-util",
- "graphql-ws-client",
  "http 1.4.0",
  "http-body-util",
  "hyper",
@@ -17344,18 +17312,3 @@ dependencies = [
  "syn 2.0.117",
  "winnow 0.7.12",
 ]
-
-[[patch.unused]]
-name = "tink-core"
-version = "0.3.0"
-source = "git+https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9af93b0c08b446a7bc0582836c9403a71b"
-
-[[patch.unused]]
-name = "tink-hybrid"
-version = "0.3.0"
-source = "git+https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9af93b0c08b446a7bc0582836c9403a71b"
-
-[[patch.unused]]
-name = "tink-proto"
-version = "0.3.0"
-source = "git+https://github.com/warpdotdev/tink-rust?rev=54b9ac9af93b0c08b446a7bc0582836c9403a71b#54b9ac9af93b0c08b446a7bc0582836c9403a71b"
