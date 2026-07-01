@@ -15,19 +15,11 @@ pub enum FeatureFlag {
     WithSandboxTelemetry,
     RecordAppActiveEvents,
 
-    WelcomeTips,
-    ThinStrokes,
-    WelcomeBlock,
     KnowledgeSidebar,
 
     RuntimeFeatureFlags,
 
-    /// Enables cloud object related features for an explicit allowlist of team testers.
-    CloudObjects,
 
-    /// If `true`, fetch updated Warp channel versions from the Warp server endpoint instead of
-    /// from GCP directly.
-    FetchChannelVersionsFromWarpServer,
 
     /// Does grid storage go forwards or backwards
     SequentialStorage,
@@ -57,8 +49,6 @@ pub enum FeatureFlag {
     /// Enables the joining / viewing of shared sessions (_not_ creation).
     ViewingSharedSessions,
 
-    /// Enabling context chips functionality for prompt
-    ContextChips,
 
     /// Ligature Support in the Editor and Grid
     Ligatures,
@@ -72,12 +62,7 @@ pub enum FeatureFlag {
     /// to get a sense of PTY throughput over time.
     RecordPtyThroughput,
 
-    /// Whether to fetch generic string objects from the server.
-    FetchGenericStringObjects,
 
-    /// Enables a setting on Intel Dual-GPU Macs to enable use of the integrated GPU over the
-    /// discrete GPU.
-    IntegratedGPU,
 
     /// Warp Agent Mode.
     AgentMode,
@@ -122,8 +107,6 @@ pub enum FeatureFlag {
     /// Enable dynamic enum parameter types for workflow arguments
     DynamicWorkflowEnums,
 
-    /// Enables next action prediction within Warp, powered by AI.
-    AgentPredict,
 
     /// Enables receiving shared Warp Drive objects.
     SharedWithMe,
@@ -170,8 +153,6 @@ pub enum FeatureFlag {
     SshDragAndDrop,
     DragTabsToWindows,
 
-    /// Enables the overflow menu on AI blocks.
-    AIBlockOverflowMenu,
 
     /// Enables cycling through the next command suggestions with down arrow.
     CycleNextCommandSuggestion,
@@ -187,7 +168,6 @@ pub enum FeatureFlag {
     /// Enables partial next command suggestions with a prefix.
     PartialNextCommandSuggestions,
 
-    AIGeneratedOnboardingSuggestions,
 
     /// Enables iTerm image rendering
     ITermImages,
@@ -221,8 +201,6 @@ pub enum FeatureFlag {
     /// Enables actual collection of AI analytics data per the revised AI analytics policy.
     GlobalAIAnalyticsCollection,
 
-    /// Enables auto-generated AI memories.
-    AIMemories,
 
     /// Enables the XML output system prompt for the primary (terminal) agent in Agent Mode.
     AgentModePrimaryXML,
@@ -550,8 +528,6 @@ pub enum FeatureFlag {
     /// Enables starting cloud mode from a local session.
     CloudModeFromLocalSession,
 
-    /// Enables host selection in cloud mode.
-    CloudModeHostSelector,
 
     /// Enables Warp Managed Secrets functionality.
     WarpManagedSecrets,
@@ -801,8 +777,6 @@ pub enum FeatureFlag {
 
     /// Enables the Custom Inference settings UI for adding user-provided third-party / OpenAI-compatible inference endpoints.
     CustomInferenceEndpoints,
-    /// Enables Custom Inference endpoints for enterprise users.
-    CustomInferenceEndpointsEnterprise,
 
     /// Replaces the in-block warpification banner with a warpify footer.
     WarpifyFooter,
@@ -1007,23 +981,10 @@ impl FeatureFlag {
         FLAG_STATES[self as usize].store(enabled, Ordering::Relaxed);
     }
 
-    /// Sets a user preference for this flag. User preferences take precedence
-    /// over the global feature flag state, and can be used to allow explicit opt-in
-    /// and explicit opt-out behavior.
     pub fn set_user_preference(self, enabled: bool) {
         USER_PREFERENCE_MAP[self as usize].set(enabled);
     }
 
-    /// Sets a thread-local test override for this flag. The override lasts
-    /// until the returned guard is dropped.
-    ///
-    /// **Warning**: overrides do not work for tests of multi-threaded code. If
-    /// you need to test multi-threaded code that's behind a feature flag, you'll
-    /// need to set an override in _each_ thread.
-    ///
-    /// Tests should create overrides early on and allow them to be
-    /// dropped automatically when they finish. This keeps overrides scoped to
-    /// the duration of the test, since Rust doesn't have test lifecycle hooks.
     #[cfg(feature = "test-util")]
     pub fn override_enabled(self, enabled: bool) -> overrides::OverrideGuard {
         overrides::override_flag(self, enabled)
@@ -1097,34 +1058,23 @@ mod overrides {
         static FLAG_OVERRIDES: RefCell<HashMap<FeatureFlag,bool>> = RefCell::new(HashMap::new());
     }
 
-    /// RAII guard to set feature flag overrides in tests. When the guard is
-    /// dropped, it reverts to the global flag state.
     #[must_use = "if unused the override will be immediately cleared"]
     pub struct OverrideGuard {
         flag: FeatureFlag,
     }
 
-    /// Gets the overridden state for a flag, if set.
     pub fn get_override(flag: FeatureFlag) -> Option<bool> {
         FLAG_OVERRIDES.with(|overrides| overrides.borrow().get(&flag).copied())
     }
 
-    /// Gets the set of overridden flags.
     pub fn get_overrides() -> HashMap<FeatureFlag, bool> {
         FLAG_OVERRIDES.with(|overrides| overrides.borrow().clone())
     }
 
-    /// Applies a set of overrides.
-    ///
-    /// This is intended to be used with [`get_overrides`] to apply a set of
-    /// existing overrides to a newly-spawned thread.  If you are trying to
-    /// override a single feature flag, use [`FeatureFlag::override_enabled`]
-    /// instead.
     pub fn set_overrides(new_overrides: HashMap<FeatureFlag, bool>) {
         FLAG_OVERRIDES.with(|overrides| *overrides.borrow_mut() = new_overrides);
     }
 
-    /// Set a thread-local override for a flag.
     pub fn override_flag(flag: FeatureFlag, enabled: bool) -> OverrideGuard {
         set_override(flag, enabled);
         OverrideGuard { flag }
