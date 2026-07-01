@@ -35,7 +35,6 @@ use crate::terminal::model::session::Sessions;
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
 use crate::terminal::TerminalModel;
 use crate::util::git::{PrInfo, RepositoryInfo};
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// A non-image file picked via the "attach file" button, stored until query submission.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -407,10 +406,9 @@ impl BlocklistAIContextModel {
             // source code embedding based context is still available.
             false
         } else {
-            UserWorkspaces::as_ref(app).is_codebase_context_enabled(app)
-                && pwd.as_ref().is_some_and(|pwd| {
-                    RepoOutlines::as_ref(app).is_directory_indexed(Path::new(&pwd))
-                })
+            pwd.as_ref().is_some_and(|pwd| {
+                RepoOutlines::as_ref(app).is_directory_indexed(Path::new(&pwd))
+            })
         };
 
         let project_rules = current_working_directory_location

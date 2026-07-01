@@ -9,7 +9,6 @@ use super::{
 use crate::ai::llms::LLMId;
 use crate::telemetry::AgentModeCitation as CitationForTelemetry;
 use crate::terminal::view::block_onboarding::onboarding_agentic_suggestions_block::OnboardingChipType;
-use crate::CloudModel;
 
 pub trait ForTelemetry {
     type Output;
@@ -22,14 +21,7 @@ impl ForTelemetry for AIAgentCitation {
 
     fn for_telemetry(&self, ctx: &AppContext) -> Option<Self::Output> {
         match self {
-            Self::WarpDriveObject { uid } => {
-                CloudModel::as_ref(ctx).get_by_uid(uid).map(|object| {
-                    CitationForTelemetry::WarpDriveObject {
-                        object_type: object.object_type(),
-                        uid: object.uid(),
-                    }
-                })
-            }
+            Self::WarpDriveObject { uid: _ } => None,
             Self::WarpDocumentation { path } => {
                 Some(CitationForTelemetry::WarpDocs { page: path.clone() })
             }

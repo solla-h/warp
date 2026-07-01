@@ -1,10 +1,10 @@
+use cloud_objects::UserUid;
 use serde::{Deserialize, Serialize};
 use warp_types::ServerTimestamp;
 use warpui_core::AppContext;
 use warpui_extras::secure_storage::{self, AppContextExt};
 
 use super::{AnonymousUserType, FirebaseAuthTokens, PersonalObjectLimits, UserMetadata};
-use cloud_objects::UserUid;
 
 const USER_STORAGE_KEY: &str = "User";
 

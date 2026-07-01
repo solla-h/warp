@@ -32,7 +32,6 @@ use crate::appearance::Appearance;
 use crate::send_telemetry_from_ctx;
 use crate::telemetry::{SaveAsWorkflowModalSource, TelemetryEvent, WarpAIActionType};
 use crate::ui_components::blended_colors;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 const TRANSCRIPT_POSITION_ID: &str = "ai_assistant::transcript";
 
@@ -858,9 +857,7 @@ impl View for Transcript {
                 );
             }
 
-            let is_custom_llm_enabled: bool = UserWorkspaces::as_ref(app)
-                .current_team()
-                .is_some_and(|team| team.is_custom_llm_enabled());
+            let is_custom_llm_enabled: bool = true; // BYOP: custom LLM always enabled
 
             if !is_custom_llm_enabled {
                 blocks.add_child(

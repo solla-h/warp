@@ -43,7 +43,6 @@ use crate::ai::local_harness_setup::{
     local_harness_setup_state, LocalHarnessSetupState,
 };
 use crate::appearance::Appearance;
-use crate::cloud_object::CloudObjectLookup as _;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
@@ -51,7 +50,6 @@ use crate::view_components::dropdown::{
     Dropdown, DropdownAction, DropdownItemAction, DropdownStyle,
 };
 use crate::view_components::FilterableDropdown;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{report_if_error, LLMPreferences};
 
 /// Env var override for the workspace default host (developer testing).
@@ -951,10 +949,7 @@ pub fn resolve_default_host_slug(ctx: &AppContext) -> Option<String> {
             return Some(trimmed.to_string());
         }
     }
-    UserWorkspaces::as_ref(ctx)
-        .default_host_slug()
-        .map(str::to_string)
-        .filter(|s| !s.trim().is_empty())
+    None
 }
 
 /// Returns the user's last-selected custom host slug from

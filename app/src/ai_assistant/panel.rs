@@ -46,7 +46,6 @@ use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;
 use crate::util::bindings::{cmd_or_ctrl_shift, CustomAction};
 use crate::workspace::{ActiveSession, TAB_BAR_HEIGHT};
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 const INFO_ICON_SVG_PATH: &str = "bundled/svg/info.svg";
 pub const HEXAGON_ALERT_SVG_PATH: &str = "bundled/svg/alert-hexagon.svg";
@@ -984,9 +983,7 @@ impl AIAssistantPanelView {
             .finish(),
         );
 
-        let is_custom_llm_enabled: bool = UserWorkspaces::as_ref(app)
-            .current_team()
-            .is_some_and(|team| team.is_custom_llm_enabled());
+        let is_custom_llm_enabled: bool = true; // BYOP: custom LLM always enabled
 
         if !is_custom_llm_enabled {
             column.add_child(

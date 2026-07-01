@@ -1,7 +1,7 @@
 use chrono::{DateTime, FixedOffset, Local};
+use cloud_objects::UserUid;
 use serde::{Deserialize, Serialize};
 use warp_types::ServerTimestamp;
-use cloud_objects::UserUid;
 pub use cloud_objects::auth::user_uid::{TEST_USER_EMAIL, TEST_USER_UID};
 
 pub mod persistence;

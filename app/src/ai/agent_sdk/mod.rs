@@ -62,8 +62,6 @@ use crate::ai::skills::{
 };
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::CloudObjectLookup as _;
 use crate::send_telemetry_sync_from_app_ctx;
 use crate::ids::{ServerId, SyncId};
 use crate::infra::ai::{AIClient, AgentConfigSnapshot, GitCredential};
@@ -543,14 +541,7 @@ fn resolve_prompt(prompt: &Prompt, ctx: &AppContext) -> Result<String, AgentDriv
     match prompt {
         Prompt::PlainText(prompt_str) => Ok(prompt_str.to_string()),
         Prompt::SavedPrompt(workflow_id) => {
-            let Some(workflow) = CloudModel::as_ref(ctx).get_workflow_by_uid(workflow_id) else {
-                return Err(AgentDriverError::AIWorkflowNotFound(workflow_id.to_owned()));
-            };
-
-            let Workflow::AgentMode { query, .. } = &workflow.model().data else {
-                return Err(AgentDriverError::AIWorkflowNotFound(workflow_id.to_owned()));
-            };
-            Ok(query.to_owned())
+            Err(AgentDriverError::AIWorkflowNotFound(workflow_id.to_owned()))
         }
     }
 }

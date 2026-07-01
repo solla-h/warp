@@ -8,7 +8,6 @@ use warpui::platform::TerminationMode;
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
 use crate::ai::agent_sdk::output::{self, TableFormat};
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Handle provider-related CLI commands.
 pub fn run(
@@ -58,13 +57,7 @@ impl ProviderCommandRunner {
         // TODO(bens): initiate the OAuth flow and use the login-less auth URL
         let slug = provider_type.slug();
         let url = if use_team_auth {
-            let team_uid = match UserWorkspaces::as_ref(ctx).current_team_uid() {
-                Some(uid) => uid,
-                None => {
-                    return Err(anyhow::anyhow!("User is not on a team"));
-                }
-            };
-            format!("{server_url}/oauth/connect/{slug}?principalType=team&principalId={team_uid}")
+            return Err(anyhow::anyhow!("Team auth not available in BYOP mode"));
         } else {
             format!("{server_url}/oauth/connect/{slug}")
         };

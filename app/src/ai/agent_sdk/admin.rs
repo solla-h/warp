@@ -9,7 +9,6 @@ use warpui::{AppContext, SingletonEntity};
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::user::PrincipalType;
 use crate::auth::AuthStateProvider;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Kick off a device authorization login flow and handle auth events.
 pub fn login(ctx: &mut AppContext) -> Result<()> {
@@ -164,11 +163,9 @@ pub fn whoami(ctx: &mut AppContext, output_format: OutputFormat) -> Result<()> {
                 log::warn!("Failed to refresh team metadata for whoami: {err:#}");
             }
 
-            let current_team = UserWorkspaces::as_ref(ctx).current_team();
-            info.team_uid = current_team.map(|t| t.uid.to_string());
-            info.team_name = current_team
-                .map(|t| t.name.clone())
-                .filter(|n| !n.is_empty());
+            let current_team: Option<()> = None; // BYOP: no team
+            info.team_uid = current_team.map(|_| String::new());
+            info.team_name = None;
 
             match output_format {
                 OutputFormat::Json => {

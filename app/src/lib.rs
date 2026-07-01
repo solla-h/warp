@@ -14,11 +14,13 @@ mod auth;
 #[cfg(feature = "cloud")]
 mod autoupdate;
 mod banner;
+#[cfg(feature = "cloud")]
 mod billing;
 mod changelog_model;
 mod chip_configurator;
 #[cfg(feature = "cloud")]
 mod workspaces;
+#[cfg(feature = "cloud")]
 mod cloud_object;
 mod code;
 mod code_review;
@@ -35,6 +37,7 @@ mod crash_reporting;
 mod debug_dump;
 mod default_terminal;
 mod download_method;
+#[cfg(feature = "cloud")]
 mod drive;
 #[cfg(windows)]
 mod dynamic_libraries;
@@ -92,7 +95,6 @@ mod voice_transcriber;
 mod server_block;
 #[cfg(feature = "cloud")]
 mod sync_queue;
-#[cfg(feature = "cloud")]
 pub mod infra;
 mod session_management;
 mod shell_indicator;

@@ -20,7 +20,6 @@ use crate::settings::{
     AISettings, AISettingsChangedEvent, CodeSettings, CodeSettingsChangedEvent, InputSettings,
     InputSettingsChangedEvent,
 };
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{safe_info, safe_warn, send_telemetry_from_ctx, TelemetryEvent};
 
 /// State for a repository outline, containing both the repository handle and the outline status.
@@ -135,7 +134,7 @@ impl RepoOutlines {
     /// outline codebase symbols for @ context menu settings.
     fn should_build_outlines(&self, ctx: &ModelContext<Self>) -> bool {
         self.indexing_enabled
-            && (UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx)
+            && (true // BYOP: codebase context always enabled
                 || *InputSettings::as_ref(ctx)
                     .outline_codebase_symbols_for_at_context_menu
                     .value())

@@ -37,7 +37,6 @@ use crate::terminal::shared_session::{self, IsSharedSessionCreator, SharedSessio
 use crate::terminal::shell::ShellType;
 use crate::terminal::view::{ConversationRestorationInNewPaneType, Event};
 use crate::terminal::TerminalView;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Describes why an agent's session-sharing request failed.
 #[derive(Debug, thiserror::Error)]
@@ -306,13 +305,7 @@ impl TerminalDriver {
 
                 match request.subject {
                     ShareSubject::Team => {
-                        if let Some(team_uid) = UserWorkspaces::as_ref(ctx).current_team_uid() {
-                            terminal_view.update_session_team_permissions(
-                                Some(role),
-                                team_uid.to_string(),
-                                ctx,
-                            );
-                        }
+                        // BYOP: no team sharing
                     }
                     ShareSubject::Public => {
                         // Apply an anyone-with-link ACL at the requested role.

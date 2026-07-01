@@ -20,9 +20,6 @@ use crate::ai::ambient_agents::telemetry::CloudAgentTelemetryEvent;
 use crate::ai::cloud_agent_settings::CloudAgentSettings;
 use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::appearance::Appearance;
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::CloudObjectLookup as _;
 use crate::context_chips::display_menu::{
     ChipMenuType, DisplayChipMenu, FixedFooter, GenericMenuItem, PromptDisplayMenuEvent,
 };
@@ -263,14 +260,6 @@ impl EnvironmentSelector {
             PromptDisplayMenuEvent::CloseMenu => {
                 me.set_menu_visibility(false, ctx);
             }
-        });
-
-        // Subscribe to CloudModel to refresh when environments are added/removed.
-        ctx.subscribe_to_model(&CloudModel::handle(ctx), |me, _, _, ctx| {
-            me.ensure_default_selection(ctx);
-            me.refresh_menu(ctx);
-            me.refresh_button(ctx);
-            ctx.notify();
         });
 
         match &target {

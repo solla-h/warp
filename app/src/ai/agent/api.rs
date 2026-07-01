@@ -45,10 +45,8 @@ use crate::ai::execution_profiles::AIExecutionProfileAppExt as _;
 use crate::ai::facts::AIFact;
 use mcp::TemplatableMCPServerInfo;
 use crate::ai::mcp::TemplatableMCPServerManager;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::settings::AISettings;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use warp_core::user_preferences::GetUserPreferences;
 use warpui::{AppContext, EntityId, SingletonEntity as _};
 
@@ -328,10 +326,9 @@ impl RequestParams {
 
         let should_redact_secrets = get_secret_obfuscation_mode(app).should_redact_secret();
 
-        let user_workspaces = UserWorkspaces::as_ref(app);
         let api_keys = ApiKeyManager::as_ref(app).api_keys_for_request(
-            user_workspaces.is_byo_api_key_enabled(app),
-            user_workspaces.is_aws_bedrock_credentials_enabled(app),
+            true, // BYOP: always allow BYO API keys
+            true, // BYOP: always allow AWS Bedrock credentials
             None,
         );
         let allow_use_of_warp_credits_with_byok =
