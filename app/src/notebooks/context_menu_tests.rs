@@ -7,8 +7,8 @@ use warpui::App;
 
 use super::MenuSource;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
 use crate::editor::InteractionState;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;

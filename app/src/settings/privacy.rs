@@ -14,12 +14,12 @@ use super::cloud_preferences_syncer::CloudPreferencesSyncer;
 use crate::ai::blocklist::telemetry_banner::should_collect_ai_ugc_telemetry;
 use crate::auth::auth_state::AuthState;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::report_error;
 use crate::infra::auth::SyncedUserSettings;
 use crate::terminal::safe_mode_settings::SafeModeSettings;
 use crate::workspaces::workspace::EnterpriseSecretRegex;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 
 pub trait RegexDisplayInfo {
     fn pattern(&self) -> &str;

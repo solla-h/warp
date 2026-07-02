@@ -6,8 +6,8 @@ use warpui::integration::TestStep;
 use warpui::windowing::WindowManager;
 use warpui::{async_assert, App, SingletonEntity, ViewHandle, WindowId};
 
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectEventEntrypoint, Space};
 use crate::integration_testing::view_getters::{notebook_view, workspace_view};
 use crate::notebooks::manager::NotebookSource;
 use crate::ids::{ClientId, SyncId};
@@ -54,7 +54,7 @@ pub fn create_a_personal_notebook(key: impl Into<String>, title: impl Into<Strin
             CloudModel::handle(app).read(app, |cloud_model, ctx| {
                 async_assert!(
                     cloud_model
-                        .active_cloud_objects_in_space(Space::Personal, ctx)
+                        .active_object_types_in_space(Space::Personal, ctx)
                         .count()
                         > 0,
                     "Notebook exists"

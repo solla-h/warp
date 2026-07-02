@@ -31,8 +31,8 @@ use super::workflow_view::env_var_selector::{EnvVarSelector, EnvVarSelectorEvent
 use super::{AIWorkflowOrigin, CloudWorkflow};
 use crate::ai::blocklist::ai_brand_color;
 use crate::appearance::Appearance;
-use crate::cloud_object::model::actions::{ObjectActionType, ObjectActions};
-use crate::cloud_object::CloudObjectMetadataExt;
+use crate::objects::model::actions::{ObjectActionType, ObjectActions};
+use crate::objects::CloudObjectMetadataExt;
 use crate::ids::SyncId;
 use crate::settings::InputModeSettings;
 use crate::terminal::block_list_viewport::InputMode;

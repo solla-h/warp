@@ -3,7 +3,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use persistence::model::ConversationUsageMetadata;
 use warp_cli::agent::Harness;
-use cloud_objects::cloud_object::AccessLevel;
+use object_types::cloud_object::AccessLevel;
 use warpui::{App, EntityId, SingletonEntity};
 
 use super::*;
@@ -19,7 +19,7 @@ use crate::ai::ambient_agents::{
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
 use crate::auth::user::TEST_USER_UID;
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::cloud_object::{
+use crate::objects::{
     Owner, Revision, ServerGuestSubject, ServerMetadata, ServerObjectGuest, ServerPermissions,
 };
 use crate::ids::ServerId;

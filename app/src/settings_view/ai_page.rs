@@ -71,9 +71,9 @@ use crate::ai::paths::host_native_absolute_path;
 use crate::auth::auth_manager::{AuthManager, LoginGatedFeature};
 use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::GenericStringObjectFormat::Json;
-use crate::cloud_object::{JsonObjectType, ObjectType};
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::GenericStringObjectFormat::Json;
+use crate::objects::{JsonObjectType, ObjectType};
 use crate::editor::{EditorOptions, InteractionState, SingleLineEditorOptions, TextColors};
 use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::settings::{

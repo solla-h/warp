@@ -1,4 +1,4 @@
-use cloud_object_models::CloudFolder;
+use object_models::CloudFolder;
 use std::collections::HashMap;
 
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -6,8 +6,8 @@ use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 use super::env_var_collection_search_item::EnvVarCollectionSearchItem;
 use super::notebook_search_item::NotebookSearchItem;
 use super::workflow_search_item::WorkflowSearchItem;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{
     CloudObject, CloudObjectLocation, GenericStringObjectFormat, JsonObjectType, ObjectType,
 };
 use crate::env_vars::CloudEnvVarCollection;
@@ -155,12 +155,12 @@ impl crate::search::mixer::SyncDataSource for DataSource {
         query: &Query,
         app: &AppContext,
     ) -> Result<Vec<QueryResult<Self::Action>>, DataSourceRunErrorWrapper> {
-        let mut filtered_cloud_objects = Vec::new();
+        let mut filtered_object_types = Vec::new();
 
         let should_include_all_drive_objects = Self::include_all_drive_objects_in_result(query);
 
         if query.filters.contains(&QueryFilter::Notebooks) || should_include_all_drive_objects {
-            filtered_cloud_objects.extend(
+            filtered_object_types.extend(
                 self.searcher
                     .search_notebook(&query.text.to_lowercase(), app)
                     .map_err(|err| {
@@ -173,7 +173,7 @@ impl crate::search::mixer::SyncDataSource for DataSource {
         }
 
         if query.filters.contains(&QueryFilter::Plans) || should_include_all_drive_objects {
-            filtered_cloud_objects.extend(
+            filtered_object_types.extend(
                 self.searcher
                     .search_plans(&query.text.to_lowercase(), app)
                     .map_err(|err| {
@@ -193,7 +193,7 @@ impl crate::search::mixer::SyncDataSource for DataSource {
             query.filters.contains(&QueryFilter::Workflows) || should_include_all_drive_objects;
 
         if should_include_agent_mode_prompts || should_include_command_workflows {
-            filtered_cloud_objects.extend(
+            filtered_object_types.extend(
                 self.search_workflows(
                     query,
                     should_include_agent_mode_prompts,
@@ -212,7 +212,7 @@ impl crate::search::mixer::SyncDataSource for DataSource {
         if query.filters.contains(&QueryFilter::EnvironmentVariables)
             || should_include_all_drive_objects
         {
-            filtered_cloud_objects.extend(
+            filtered_object_types.extend(
                 self.searcher
                     .search_env_var(&query.text.to_lowercase(), app)
                     .map_err(|err| {
@@ -224,7 +224,7 @@ impl crate::search::mixer::SyncDataSource for DataSource {
             );
         }
 
-        Ok(filtered_cloud_objects)
+        Ok(filtered_object_types)
     }
 }
 
@@ -365,7 +365,7 @@ impl WarpDriveSearcher for FuzzyWarpDriveSearcher {
                 if let Some(folder) = folder {
                     let location = CloudObjectLocation::Folder(folder.id);
                     for obj in CloudModel::as_ref(app)
-                        .active_cloud_objects_in_location_without_descendents(location, app)
+                        .active_object_types_in_location_without_descendents(location, app)
                     {
                         self.insert_searchable_object(obj, obj.object_type(), app)?
                     }
@@ -406,7 +406,7 @@ impl WarpDriveSearcher for FuzzyWarpDriveSearcher {
                 if let Some(folder) = folder {
                     let location = CloudObjectLocation::Folder(folder.id);
                     for obj in
-                        model.trashed_cloud_objects_in_location_without_descendents(location, app)
+                        model.trashed_object_types_in_location_without_descendents(location, app)
                     {
                         self.delete_searchable_object(obj.uid(), obj.object_type(), app)?
                     }
@@ -427,7 +427,7 @@ impl WarpDriveSearcher for FuzzyWarpDriveSearcher {
         let model = CloudModel::as_ref(app);
         // Single pass with memoized is_trashed: O(N) instead of O(3×N×D).
         let active_uids = model.active_object_uids();
-        for object in model.cloud_objects() {
+        for object in model.object_types() {
             if !active_uids.contains(&object.uid()) {
                 continue;
             }
@@ -545,8 +545,8 @@ mod full_text_searcher {
     use warpui::r#async::executor::Background;
     use warpui::{AppContext, SingletonEntity};
 
-    use crate::cloud_object::model::persistence::CloudModel;
-    use crate::cloud_object::{
+    use crate::objects::model::persistence::CloudModel;
+    use crate::objects::{
         CloudObject, CloudObjectLocation, GenericStringObjectFormat, JsonObjectType, ObjectType,
     };
     use crate::env_vars::CloudEnvVarCollection;
@@ -564,7 +564,7 @@ mod full_text_searcher {
     use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
     use crate::ids::ObjectUid;
     use crate::workflows::CloudWorkflow;
-use cloud_object_models::CloudFolder;
+use object_models::CloudFolder;
 
     /// Memory budget for the search index of warp drive.
     /// Warp could potentially have a lot of objects, so we increase it from the default of 50MB to 100MB
@@ -793,7 +793,7 @@ use cloud_object_models::CloudFolder;
                     if let Some(folder) = folder {
                         let location = CloudObjectLocation::Folder(folder.id);
                         for obj in CloudModel::as_ref(app)
-                            .active_cloud_objects_in_location_without_descendents(location, app)
+                            .active_object_types_in_location_without_descendents(location, app)
                         {
                             self.insert_searchable_object(obj, obj.object_type(), app)?
                         }
@@ -839,7 +839,7 @@ use cloud_object_models::CloudFolder;
                     if let Some(folder) = folder {
                         let location = CloudObjectLocation::Folder(folder.id);
                         for obj in CloudModel::as_ref(app)
-                            .trashed_cloud_objects_in_location_without_descendents(location, app)
+                            .trashed_object_types_in_location_without_descendents(location, app)
                         {
                             self.delete_searchable_object(obj.uid(), obj.object_type(), app)?
                         }
@@ -861,7 +861,7 @@ use cloud_object_models::CloudFolder;
 
             self.notebook_searcher.clear_search_index_async()?;
             let notebook_docs = model
-                .cloud_objects()
+                .object_types()
                 .filter(|obj| active_uids.contains(&obj.uid()))
                 .filter_map(|obj| {
                     let notebook: Option<&CloudNotebook> = obj.as_ref().into();
@@ -885,7 +885,7 @@ use cloud_object_models::CloudFolder;
 
             self.workflow_searcher.clear_search_index_async()?;
             let workflow_docs = model
-                .cloud_objects()
+                .object_types()
                 .filter(|obj| active_uids.contains(&obj.uid()))
                 .filter_map(|obj| {
                     let cloud_workflow: Option<&CloudWorkflow> = obj.as_ref().into();
@@ -911,7 +911,7 @@ use cloud_object_models::CloudFolder;
 
             self.env_var_searcher.clear_search_index_async()?;
             let env_var_docs = model
-                .cloud_objects()
+                .object_types()
                 .filter(|obj| active_uids.contains(&obj.uid()))
                 .filter_map(|obj| {
                     let cloud_env_var: Option<&CloudEnvVarCollection> = obj.as_ref().into();

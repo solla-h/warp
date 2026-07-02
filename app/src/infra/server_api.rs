@@ -1579,7 +1579,7 @@ impl ServerApiProvider {
         self.server_api.clone()
     }
 
-    pub fn get_cloud_objects_client(&self) -> Arc<dyn ObjectClient> {
+    pub fn get_object_types_client(&self) -> Arc<dyn ObjectClient> {
         self.server_api.clone()
     }
 

@@ -23,7 +23,7 @@ use crate::ai::ambient_agents::{
 };
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
 use crate::auth::user::TEST_USER_UID;
-use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
+use crate::objects::{Owner, Revision, ServerMetadata, ServerPermissions};
 use crate::context_chips::prompt_type::PromptType;
 use crate::editor::InteractionState;
 use crate::ids::ServerId;

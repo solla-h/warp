@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use cloud_object_models::MockObjectClient;
+use object_models::MockObjectClient;
 use warp_core::settings::macros::define_settings_group;
 use warp_core::settings::{RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud};
 use warp_core::user_preferences::GetUserPreferences;
@@ -14,8 +14,8 @@ use super::{
     ForceCloudToMatchLocal, SETTINGS_FILE_LAST_SYNCED_HASH_KEY,
 };
 use crate::auth::auth_state::AuthState;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::{
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::{
     BulkCreateCloudObjectResult, CreatedCloudObject, GenericStringObjectFormat,
     GenericStringObjectUniqueKey, JsonObjectType, ObjectDeleteResult, ObjectIdType, Owner,
     Revision, RevisionAndLastEditor, ServerMetadata, ServerObject, ServerPermissions,
@@ -268,7 +268,7 @@ fn expect_bulk_create_generic_string_objects(
                 })
                 .collect();
             Ok(BulkCreateCloudObjectResult::Success {
-                created_cloud_objects: res,
+                created_object_types: res,
             })
         });
     client_ids
@@ -378,7 +378,7 @@ fn test_sync_local_pref_to_cloud_after_initial_sync() {
                     }
 
                     Ok(BulkCreateCloudObjectResult::Success {
-                        created_cloud_objects: vec![CreatedCloudObject {
+                        created_object_types: vec![CreatedCloudObject {
                             client_id: per_platform_client_id,
                             revision_and_editor: RevisionAndLastEditor {
                                 revision: Revision::now(),

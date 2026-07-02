@@ -1,4 +1,4 @@
-use cloud_objects::drive::sharing::SharingAccessLevel;
+use object_types::drive::sharing::SharingAccessLevel;
 use session_sharing_protocol::common::{Guest, PendingGuest, Role, SessionId, TeamAclData};
 use warpui::{Entity, ModelContext, SingletonEntity};
 

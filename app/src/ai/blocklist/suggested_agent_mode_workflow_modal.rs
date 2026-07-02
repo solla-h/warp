@@ -88,7 +88,7 @@ impl SuggestedAgentModeWorkflowModal {
         let workflow_view = ctx.add_typed_action_view(|ctx| {
             let mut workflow_view = WorkflowView::new_in_suggestion_dialog(ctx);
             if let Some(owner) = UserWorkspaces::as_ref(ctx)
-                .space_to_owner(crate::cloud_object::Space::Personal, ctx)
+                .space_to_owner(crate::objects::Space::Personal, ctx)
             {
                 workflow_view.open_new_workflow(
                     Some(workflow_and_id.workflow.name.clone()),

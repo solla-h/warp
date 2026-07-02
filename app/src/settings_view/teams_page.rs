@@ -48,8 +48,8 @@ use crate::auth::auth_state::AuthState;
 use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::channel::ChannelState;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectEventEntrypoint, Space};
 use crate::editor::{
     EditorView, Event as EditorEvent, InteractionState, SingleLineEditorOptions, TextOptions,
 };
@@ -58,7 +58,7 @@ use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::network::NetworkStatus;
 use crate::pricing::PricingInfoModel;
 use crate::send_telemetry_from_ctx;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 use crate::ids::ServerId;
 use crate::telemetry::TelemetryEvent;
 use crate::themes::theme::Blend;

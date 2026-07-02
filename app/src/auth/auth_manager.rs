@@ -41,7 +41,7 @@ use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::telemetry::AnonymousUserSignupEntrypoint;
 use crate::{send_telemetry_from_ctx, TelemetryEvent};
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 
 #[derive(Debug)]
 pub enum AuthManagerEvent {

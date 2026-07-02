@@ -7,9 +7,9 @@ use warp_core::define_settings_group;
 use warp_core::settings::{RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud};
 use warpui::{AppContext, ModelContext, SingletonEntity};
 
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::CloudObjectTypeAndId;
-use crate::cloud_object::CloudObject as _;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::CloudObjectTypeAndId;
+use crate::objects::CloudObject as _;
 use crate::ids::SyncId;
 
 define_settings_group!(WorkflowAliases, settings: [

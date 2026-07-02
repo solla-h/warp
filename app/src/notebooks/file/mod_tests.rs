@@ -18,7 +18,7 @@ use warpui::{App, SingletonEntity, View};
 use super::{FileNotebookView, FileState, MarkdownDisplayMode, SourceFile};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::notebooks::context_menu::MenuSource;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::file::is_markdown_file;

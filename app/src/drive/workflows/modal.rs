@@ -3,7 +3,7 @@ use std::sync::Arc;
 use warpui::{AppContext, Element, Entity, View, ViewContext, TypedActionView};
 
 use crate::auth::UserUid;
-use crate::cloud_object::Owner;
+use crate::objects::Owner;
 use crate::drive::items::WarpDriveItemId;
 use crate::ids::{ServerId, SyncId};
 use crate::infra::ai::AIClient;

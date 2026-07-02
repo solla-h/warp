@@ -15,7 +15,7 @@ use crate::ai::ambient_agents::task::{AgentConfigSnapshot, HarnessConfig, TaskPr
 use crate::ai::ambient_agents::{AmbientAgentTask, AmbientAgentTaskState};
 use crate::ai::blocklist::history_model::BlocklistAIHistoryModel;
 use crate::auth::UserUid;
-use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
+use crate::objects::{Revision, ServerMetadata, ServerPermissions};
 use crate::ids::ServerId;
 use crate::workspaces::user_profiles::UserProfileWithUID;
 

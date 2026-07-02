@@ -30,7 +30,7 @@ use warpui::{
 use super::workflow::Workflow;
 use super::WorkflowSource;
 use crate::appearance::Appearance;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::editor::Event as EditorEvent;
 use crate::send_telemetry_from_ctx;
 use crate::telemetry::TelemetryEvent;

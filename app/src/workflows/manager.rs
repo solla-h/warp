@@ -5,10 +5,10 @@ use warpui::{Entity, EntityId, ModelContext, SingletonEntity};
 
 use super::workflow::Workflow;
 use super::CloudWorkflowModel;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{GenericCloudObject, Owner};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{GenericCloudObject, Owner};
 use crate::pane_group::{PaneContent, WorkflowPane};
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

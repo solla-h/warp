@@ -1,8 +1,8 @@
 use warpui::integration::TestStep;
 use warpui::{async_assert, async_assert_eq, SingletonEntity};
 
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, CloudObjectLocation, Space};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectEventEntrypoint, CloudObjectLocation, Space};
 use crate::network::{NetworkStatus, NetworkStatusKind};
 use crate::ids::ClientId;
 use crate::util::bindings::keybinding_name_to_display_string;
@@ -112,7 +112,7 @@ pub fn create_a_personal_workflow() -> TestStep {
             CloudModel::handle(app).read(app, |cloud_model, ctx| {
                 async_assert!(
                     cloud_model
-                        .active_cloud_objects_in_location_without_descendents(
+                        .active_object_types_in_location_without_descendents(
                             CloudObjectLocation::Space(Space::Personal),
                             ctx,
                         )

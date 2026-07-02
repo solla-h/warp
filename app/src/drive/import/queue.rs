@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use warpui::{Entity, ModelContext, SingletonEntity};
 
 use super::nodes::{self, FileId};
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, InitiatedBy, Owner, UpdateManagerEvent, UpdateManager};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectEventEntrypoint, InitiatedBy, Owner, UpdateManagerEvent, UpdateManager};
 use crate::drive::folders::FolderId;
 use crate::notebooks::CloudNotebookModel;
 use crate::ids::{ClientId, SyncId};

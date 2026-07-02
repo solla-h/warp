@@ -40,8 +40,8 @@ use crate::ai::mcp::{
     TemplatableMCPServerInstallation,
 };
 use crate::appearance::Appearance;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{CloudObjectTypeAndId, GenericStringObjectFormat, JsonObjectType};
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{CloudObjectTypeAndId, GenericStringObjectFormat, JsonObjectType};
 use crate::editor::{
     EditorView, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
 };

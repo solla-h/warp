@@ -3,10 +3,10 @@ use std::collections::HashMap;
 
 use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WeakViewHandle};
 
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::Owner;
-use crate::cloud_object::UpdateManager;
-use crate::cloud_object::UpdateManagerEvent;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::Owner;
+use crate::objects::UpdateManager;
+use crate::objects::UpdateManagerEvent;
 use crate::env_vars::view::env_var_collection::EnvVarCollectionView;
 use crate::pane_group::{EnvVarCollectionPane, PaneContent};
 use crate::ids::SyncId;

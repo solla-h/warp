@@ -18,8 +18,8 @@ use warpui::{
     ViewHandle,
 };
 
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::CloudObject;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::CloudObject;
 use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions, ValidInputType,

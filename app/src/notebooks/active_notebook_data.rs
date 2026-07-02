@@ -2,12 +2,12 @@ use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use super::{CloudNotebookModel, NotebookId};
 use crate::ai::document::ai_document_model::AIDocumentId;
-use crate::cloud_object::breadcrumbs::ContainingObject;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
-use crate::cloud_object::{CloudObject, Owner, Space};
+use crate::objects::breadcrumbs::ContainingObject;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::model::view::{CloudViewModel, Editor, EditorState};
+use crate::objects::{CloudObject, Owner, Space};
 use crate::notebooks::CloudNotebook;
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

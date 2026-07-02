@@ -21,8 +21,8 @@ use super::CloudObjectTypeAndId;
 fn get_duplicate_object_name(name: &str) -> String {
     format!("{} (1)", name)
 }
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::Space;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::Space;
 use crate::safe_warn;
 use crate::view_components::DismissibleToast;
 use crate::workspace::{active_terminal_in_window, ToastStack};

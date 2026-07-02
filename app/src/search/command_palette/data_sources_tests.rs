@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
 use chrono::Utc;
-use cloud_object_models::MockObjectClient;
+use object_models::MockObjectClient;
 use settings::manager::SettingsManager;
 use warpui::{App, SingletonEntity};
 
 use super::*;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{
     Owner, Revision, ServerMetadata, ServerNotebook, ServerPermissions, ServerWorkflow,
 };
 use crate::network::NetworkStatus;

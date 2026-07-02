@@ -2,8 +2,8 @@ use itertools::Itertools;
 use warpui::{AppContext, SingletonEntity};
 
 use super::notebook_search_item::NotebookSearchItem;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObject, Space};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObject, Space};
 use crate::notebooks::CloudNotebook;
 use crate::search::data_source::{Query, QueryResult};
 use crate::search::mixer::{DataSourceRunErrorWrapper, SyncDataSource};

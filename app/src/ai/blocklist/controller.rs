@@ -61,7 +61,7 @@ use crate::ai::document::ai_document_model::{
 };
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::ai::AIRequestUsageModel;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::features::FeatureFlag;
 use crate::global_resource_handles::GlobalResourceHandlesProvider;
 use crate::network::NetworkStatus;

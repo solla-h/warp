@@ -9,14 +9,14 @@ use futures::FutureExt;
 use itertools::Itertools;
 use warpui::{App, SingletonEntity};
 
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::Space;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::Space;
 /// Clears the cloud model of all non-welcome objects in the user's personal space.
 /// Returns a future that resolves when the cloud model is cleared.
 pub fn clear_cloud_model(app: &mut App) -> Pin<Box<dyn Future<Output = ()> + Send>> {
     let object_ids_to_delete = CloudModel::handle(app).read(app, |cloud_model, ctx| {
         cloud_model
-            .active_non_welcome_cloud_objects_in_space(Space::Personal, ctx)
+            .active_non_welcome_object_types_in_space(Space::Personal, ctx)
             .map(|object| object.cloud_object_type_and_id())
             .collect_vec()
     });

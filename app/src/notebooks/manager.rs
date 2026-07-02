@@ -9,10 +9,10 @@ use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WeakViewHandle, Wi
 
 use super::notebook::NotebookView;
 use super::CloudNotebook;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::Owner;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::Owner;
 use crate::pane_group::{NotebookPane, PaneContent};
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::SyncId;

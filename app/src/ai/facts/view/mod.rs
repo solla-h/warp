@@ -14,7 +14,7 @@ use warpui::{
 };
 
 use super::{AIFact, CloudAIFact, CloudAIFactModel};
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObject, CloudObjectSyncStatus, GenericStringObjectFormat, JsonObjectType,
 };
 use crate::network::NetworkStatus;

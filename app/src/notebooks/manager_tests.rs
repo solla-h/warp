@@ -8,10 +8,10 @@ use super::NotebookManager;
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::actions::ObjectActions;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::Owner;
+use crate::objects::model::actions::ObjectActions;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::Owner;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::notebook::NotebookView;
@@ -97,7 +97,7 @@ fn initialize_app(app: &mut App) -> TestState {
     app.add_singleton_model(voice_input::VoiceInput::new);
 
     let (sender, receiver) = mpsc::sync_channel(10);
-    let objects_client = ServiceProvider::new_for_test().get_cloud_objects_client();
+    let objects_client = ServiceProvider::new_for_test().get_object_types_client();
     let sync_queue = app
         .add_singleton_model(|ctx| SyncQueue::new(Default::default(), objects_client.clone(), ctx));
     app.add_singleton_model(|ctx| UpdateManager::new(Some(sender), objects_client.clone(), ctx));

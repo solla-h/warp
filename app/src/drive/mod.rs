@@ -1,12 +1,12 @@
 #![allow(dead_code, unused_variables, unused_imports)]
 use std::cmp::Ordering;
 use std::fmt::Debug;
-pub use cloud_objects::drive::CloudObjectTypeAndId;
-use cloud_objects::cloud_object::Owner;
+pub use object_types::drive::CloudObjectTypeAndId;
+use object_types::cloud_object::Owner;
 use warpui::{AppContext, Entity, View, ViewContext};
 use crate::appearance::Appearance;
-use crate::cloud_object::model::view::{CloudViewModel, UpdateTimestamp};
-use crate::cloud_object::CloudObject;
+use crate::objects::model::view::{CloudViewModel, UpdateTimestamp};
+use crate::objects::CloudObject;
 use crate::ids::{ServerId, SyncId};
 
 pub mod cloud_object_naming_dialog;
@@ -41,7 +41,7 @@ impl DriveSortOrder {
 pub struct OpenWarpDriveObjectArgs {
     pub cloud_object_type_and_id: CloudObjectTypeAndId,
     pub settings: OpenWarpDriveObjectSettings,
-    pub object_type: crate::cloud_object::ObjectType,
+    pub object_type: crate::objects::ObjectType,
     pub server_id: ServerId,
 }
 
@@ -50,7 +50,7 @@ impl Default for OpenWarpDriveObjectArgs {
         Self {
             cloud_object_type_and_id: CloudObjectTypeAndId::Notebook(SyncId::ClientId(crate::ids::ClientId::new())),
             settings: OpenWarpDriveObjectSettings::default(),
-            object_type: crate::cloud_object::ObjectType::Notebook,
+            object_type: crate::objects::ObjectType::Notebook,
             server_id: ServerId::default(),
         }
     }
@@ -109,7 +109,7 @@ pub enum DrivePanelEvent {
     InvokeEnvironmentVariables { env_var_collection: std::sync::Arc<crate::env_vars::CloudEnvVarCollection>, in_subshell: bool },
     OpenTeamSettingsPage,
     OpenImportModal { owner: Owner, initial_folder_id: Option<SyncId> },
-    OpenWorkflowModalWithNew { space: crate::cloud_object::Space, initial_folder_id: Option<SyncId> },
+    OpenWorkflowModalWithNew { space: crate::objects::Space, initial_folder_id: Option<SyncId> },
     OpenWorkflowModalWithCloudWorkflow(SyncId),
     OpenSearch,
     OpenNotebook(crate::notebooks::manager::NotebookSource),

@@ -4,8 +4,8 @@ use warpui::fonts::{Properties, Weight};
 use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
-use crate::cloud_object::CloudObject;
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObject;
+use crate::objects::CloudObjectTypeAndId;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;
 use crate::search::command_palette::render_util::render_search_item_icon;
 use crate::search::command_palette::styles::SEARCH_ITEM_TEXT_PADDING;

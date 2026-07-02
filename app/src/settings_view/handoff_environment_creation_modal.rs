@@ -13,7 +13,7 @@ use crate::ai::ambient_agents::github_auth_url::{AuthSource, GithubAuthRedirectT
 use crate::ai::cloud_environments;
 use crate::appearance::Appearance;
 use crate::modal::MODAL_BACKDROP_OPACITY;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 use crate::ids::{ClientId, SyncId};
 use crate::settings_view::update_environment_form::{
     EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,

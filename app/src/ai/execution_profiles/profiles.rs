@@ -15,10 +15,10 @@ use super::{
 use crate::ai::llms::{LLMId, LLMPreferences};
 use crate::ai::mcp::templatable_manager::TemplatableMCPServerManagerEvent;
 use crate::ai::mcp::TemplatableMCPServerManager;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::model::persistence::{CloudModelEvent, UpdateSource};
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
-use crate::cloud_object::UpdateManager;
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::model::persistence::{CloudModelEvent, UpdateSource};
+use crate::objects::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
+use crate::objects::UpdateManager;
 use crate::ids::{ClientId, SyncId};
 use crate::settings::AgentModeCommandExecutionPredicate;
 use crate::workspaces::user_workspaces::UserWorkspaces;

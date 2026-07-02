@@ -231,9 +231,9 @@ use crate::billing::shared_objects_creation_denied_modal::{
 };
 use crate::changelog_model::{ChangelogModel, ChangelogRequestType, Event as ChangelogEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::toast_message::CloudObjectToastMessage;
-use crate::cloud_object::{
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::toast_message::CloudObjectToastMessage;
+use crate::objects::{
     CloudObject, GenericStringObjectFormat, JsonObjectType, ObjectType, Owner, Space, UpdateManagerEvent, UpdateManager};
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::{add_color, remove_color};
@@ -4121,7 +4121,7 @@ impl Workspace {
                     if show_warp_home {
                         let cloud_model = CloudModel::as_ref(ctx);
                         let candidate_objects = cloud_model
-                            .cloud_objects()
+                            .object_types()
                             .filter(|object| {
                                 !object.is_trashed(cloud_model)
                                     && object.renders_in_warp_drive()
@@ -8081,7 +8081,7 @@ impl Workspace {
                 Some(WarpDriveItemId::Object(
                     CloudObjectTypeAndId::from_generic_string_object(
                         GenericStringObjectFormat::Json(
-                            crate::cloud_object::JsonObjectType::EnvVarCollection,
+                            crate::objects::JsonObjectType::EnvVarCollection,
                         ),
                         *env_var_collection_id,
                     ),
@@ -15872,7 +15872,7 @@ impl Workspace {
                             Some(WarpDriveItemId::Object(
                                 CloudObjectTypeAndId::from_generic_string_object(
                                     GenericStringObjectFormat::Json(
-                                        crate::cloud_object::JsonObjectType::EnvVarCollection,
+                                        crate::objects::JsonObjectType::EnvVarCollection,
                                     ),
                                     env_var_collection_id,
                                 ),

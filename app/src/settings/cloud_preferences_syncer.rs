@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use cloud_object_models::JsonSerializer;
+use object_models::JsonSerializer;
 use lazy_static::lazy_static;
 use settings::{Setting as _, SyncToCloud};
 use warp_core::execution_mode::AppExecutionMode;
@@ -18,11 +18,11 @@ use super::cloud_preferences::{CloudPreferencesSettings, CloudPreferencesSetting
 use super::manager::SettingsEvent;
 use super::PrivacySettings;
 use crate::auth::auth_state::AuthState;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType};
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectTypeAndId, CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType};
 use crate::report_if_error;
-use crate::cloud_object::{
+use crate::objects::{
     GenericStringObjectInput, InitiatedBy, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};
@@ -319,7 +319,7 @@ impl CloudPreferencesSyncer {
             |me, _, ctx| {
                 let ids_to_retry = CloudModel::handle(ctx).update(ctx, |cloud_model, _ctx| {
                     cloud_model
-                        .cloud_objects()
+                        .object_types()
                         .filter_map(move |object| {
                             if !object.metadata().is_errored() {
                                 return None;

@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use cloud_object_models::MockObjectClient;
+use object_models::MockObjectClient;
 use settings::manager::SettingsManager;
 use warpui::{App, SingletonEntity};
 
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerNotebook, ServerPermissions};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{Owner, Revision, ServerMetadata, ServerNotebook, ServerPermissions};
 use crate::notebooks::manager::NotebookManager;
 use crate::notebooks::CloudNotebookModel;
 use crate::search::ai_context_menu::notebooks::data_source::NotebookDataSource;

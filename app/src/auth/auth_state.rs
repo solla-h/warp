@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Duration, Utc};
-use cloud_objects::UserUid;
+use object_types::UserUid;
 use parking_lot::RwLock;
 use uuid::Uuid;
 use warp_core::channel::{Channel, ChannelState};

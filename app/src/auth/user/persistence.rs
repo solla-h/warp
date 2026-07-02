@@ -1,4 +1,4 @@
-use cloud_objects::UserUid;
+use object_types::UserUid;
 use serde::{Deserialize, Serialize};
 use warp_types::ServerTimestamp;
 use warpui_core::AppContext;

@@ -22,9 +22,9 @@ use warpui::{
 
 use super::{is_edit_allowed, is_syncing, style, AIFact, CloudAIFact, CloudAIFactModel};
 use crate::ai::facts::AIMemory;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObject, GenericStringObjectFormat, JsonObjectType, Owner, Revision,
 };
 use crate::editor::{
@@ -33,7 +33,7 @@ use crate::editor::{
 };
 use crate::network::NetworkStatus;
 use crate::search_bar::SearchBar;
-use crate::cloud_object::{UpdateManager, UpdateManagerEvent};
+use crate::objects::{UpdateManager, UpdateManagerEvent};
 use crate::ids::{ClientId, SyncId};
 use crate::sync_queue::SyncQueue;
 use crate::settings::{AISettings, AISettingsChangedEvent};

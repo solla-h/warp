@@ -1,9 +1,9 @@
-pub use cloud_object_models::{AIFact, AIMemory, CloudAIFact, CloudAIFactModel};
+pub use object_models::{AIFact, AIMemory, CloudAIFact, CloudAIFactModel};
 use warp_core::ui::appearance::Appearance;
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{CloudObjectTypeAndId, 
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision,
 };
 use crate::ids::SyncId;

@@ -1,4 +1,4 @@
-use crate::cloud_object::{Owner, Space};
+use crate::objects::{Owner, Space};
 
 mod embedded_fuzzy_match;
 mod notebooks;

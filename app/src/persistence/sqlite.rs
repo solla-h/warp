@@ -63,11 +63,11 @@ use crate::app_state::{
 use crate::auth::auth_manager::PersistedCurrentUserInformation;
 use crate::auth::auth_state::AuthStateProvider;
 use crate::auth::UserUid;
-use crate::cloud_object::model::actions::{
+use crate::objects::model::actions::{
     object_action_from_persisted, ObjectAction, ObjectActionSubtype,
 };
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::{CloudObject, ObjectIdType};
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::{CloudObject, ObjectIdType};
 use crate::code::editor_management::CodeSource;
 use crate::notebooks::NotebookId;
 use crate::persistence::agent::read_agent_conversations;
@@ -2504,7 +2504,7 @@ fn read_sqlite_data(
         )
         .collect();
 
-    let cloud_objects: Vec<Box<dyn CloudObject>> = Vec::new();
+    let object_types: Vec<Box<dyn CloudObject>> = Vec::new();
 
     let db_teams: Vec<model::Team> = schema::teams::dsl::teams.load(conn)?;
 
@@ -2650,7 +2650,7 @@ fn read_sqlite_data(
 
     Ok(PersistedData {
         app_state,
-        cloud_objects,
+        object_types,
         workspaces,
         current_workspace_uid,
         command_history: commands,

@@ -1,9 +1,9 @@
 #![allow(dead_code, unused_variables, unused_imports)]
 use std::sync::{Arc, Mutex};
-use cloud_objects::drive::CloudObjectTypeAndId;
+use object_types::drive::CloudObjectTypeAndId;
 use warpui::AppContext;
 use warpui::elements::MouseStateHandle;
-use crate::cloud_object::Space;
+use crate::objects::Space;
 use crate::ids::{ClientId, SyncId};
 use crate::ui_components::menu_button::MenuDirection;
 
@@ -18,8 +18,8 @@ pub mod ai_fact_collection {
 }
 
 pub mod folder {
-    use cloud_objects::drive::CloudObjectTypeAndId;
-    use cloud_object_models::CloudFolder;
+    use object_types::drive::CloudObjectTypeAndId;
+    use object_models::CloudFolder;
     use super::WarpDriveItem;
     #[derive(Clone)]
     pub struct WarpDriveFolder {
@@ -38,7 +38,7 @@ pub mod item {
     use warpui::AppContext;
     use warpui::elements::Element;
     use crate::appearance::Appearance;
-    use crate::cloud_object::Space;
+    use crate::objects::Space;
     use crate::ui_components::menu_button::MenuDirection;
 
     pub fn tools_panel_menu_direction(_app: &AppContext) -> MenuDirection { MenuDirection::Right }

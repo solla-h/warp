@@ -6,8 +6,8 @@ use warpui::{async_assert, SingletonEntity, WindowId};
 
 use crate::ai::facts::view::AIFactPage;
 use crate::ai::facts::AIMemory;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::Space;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::Space;
 use crate::integration_testing::view_getters::workspace_view;
 use crate::ids::{ClientId, SyncId};
 use crate::workspaces::user_workspaces::UserWorkspaces;
@@ -48,7 +48,7 @@ pub fn create_a_personal_rule(
             CloudModel::handle(app).read(app, |cloud_model, ctx| {
                 async_assert!(
                     cloud_model
-                        .active_cloud_objects_in_space(Space::Personal, ctx)
+                        .active_object_types_in_space(Space::Personal, ctx)
                         .count()
                         > 0,
                     "Rule exists"

@@ -1,9 +1,9 @@
 #![allow(dead_code, unused_variables, unused_imports)]
 use std::sync::Arc;
 use warpui::{Entity, SingletonEntity};
-use crate::cloud_object::InitiatedBy;
+use crate::objects::InitiatedBy;
 use crate::ids::{ClientId, SyncId};
-pub use cloud_objects::cloud_object::SerializedModel;
+pub use object_types::cloud_object::SerializedModel;
 
 #[derive(Default)]
 pub struct SyncQueue;

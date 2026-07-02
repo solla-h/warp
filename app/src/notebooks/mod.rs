@@ -12,19 +12,19 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-pub use cloud_object_models::{CloudNotebook, CloudNotebookModel, NotebookId, SerializedNotebook};
+pub use object_models::{CloudNotebook, CloudNotebookModel, NotebookId, SerializedNotebook};
 use serde::{Deserialize, Serialize};
 use warpui::AppContext;
 
 use crate::appearance::Appearance;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::{CloudObjectTypeAndId, 
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Owner, Revision,
     SerializedModel, UpdateCloudObjectResult,
 };
 use crate::persistence::ModelEvent;
 use crate::ids::{ServerId, SyncId};
-use cloud_object_models::ObjectClient;
+use object_models::ObjectClient;
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]

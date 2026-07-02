@@ -1,10 +1,10 @@
-pub use cloud_object_models::{
+pub use object_models::{
     CloudWorkflowEnum, CloudWorkflowEnumModel, EnumVariants, WorkflowEnum,
 };
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision,
 };
 

@@ -4,13 +4,13 @@ use anyhow::Result;
 use async_channel::Sender;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use cloud_object_models::{
+use object_models::{
     GetCloudObjectResponse, InitialLoadResponse, ObjectActionHistory, ObjectActionType,
     ObjectDeleteResult, ObjectMetadataUpdateResult, ObjectPermissionUpdateResult,
     ObjectPermissionsUpdateData, ObjectUpdateMessage,
 };
-pub use cloud_object_models::{GuestIdentifier, ObjectClient};
-use cloud_object_models::JsonSerializer;
+pub use object_models::{GuestIdentifier, ObjectClient};
+use object_models::JsonSerializer;
 use warp_core::report_error;
 
 use crate::ai::ambient_agents::scheduled::ScheduledAmbientAgent;
@@ -20,22 +20,22 @@ use crate::ai::execution_profiles::AIExecutionProfile;
 use crate::ai::facts::AIFact;
 use crate::ai::mcp::{MCPServer, TemplatableMCPServer};
 use crate::channel::ChannelState;
-use crate::cloud_object::{
+use crate::objects::{
     BulkCreateCloudObjectResult, BulkCreateGenericStringObjectsRequest, CreateCloudObjectResult,
     CreateObjectRequest, GenericStringObjectFormat, GenericStringObjectUniqueKey,
     ObjectsToUpdate, ObjectType, Owner, Revision, ServerMetadata,
     ServerObject, ServerPermissions, UpdateCloudObjectResult,
 };
-use crate::cloud_object::{
+use crate::objects::{
     ServerFolder, ServerNotebook, ServerWorkflow,
 };
-use crate::cloud_object::model::generic_string_model::{
+use crate::objects::model::generic_string_model::{
     GenericStringModel, GenericStringObjectId, Serializer, StringModel,
 };
-use cloud_objects::drive::sharing::SharingAccessLevel;
-use cloud_objects::ids::{FolderId, ServerId};
-use cloud_objects::cloud_object::SerializedModel;
-use cloud_object_models::WorkflowId;
+use object_types::drive::sharing::SharingAccessLevel;
+use object_types::ids::{FolderId, ServerId};
+use object_types::cloud_object::SerializedModel;
+use object_models::WorkflowId;
 
 use super::ServerApi;
 
@@ -84,7 +84,7 @@ impl ObjectClient for ServerApi {
 
     async fn update_notebook(
         &self,
-        _notebook_id: cloud_object_models::NotebookId,
+        _notebook_id: object_models::NotebookId,
         _title: Option<String>,
         _data: Option<SerializedModel>,
         _revision: Option<Revision>,
@@ -115,14 +115,14 @@ impl ObjectClient for ServerApi {
 
     async fn grab_notebook_edit_access(
         &self,
-        _notebook_id: cloud_object_models::NotebookId,
+        _notebook_id: object_models::NotebookId,
     ) -> Result<ServerMetadata> {
         Err(anyhow::anyhow!("cloud backend removed"))
     }
 
     async fn give_up_notebook_edit_access(
         &self,
-        _notebook_id: cloud_object_models::NotebookId,
+        _notebook_id: object_models::NotebookId,
     ) -> Result<ServerMetadata> {
         Err(anyhow::anyhow!("cloud backend removed"))
     }
@@ -149,7 +149,7 @@ impl ObjectClient for ServerApi {
 
     async fn transfer_notebook_owner(
         &self,
-        _notebook_id: cloud_object_models::NotebookId,
+        _notebook_id: object_models::NotebookId,
         _owner: Owner,
     ) -> Result<bool> {
         Err(anyhow::anyhow!("cloud backend removed"))

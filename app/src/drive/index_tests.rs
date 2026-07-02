@@ -1,4 +1,4 @@
-use cloud_objects::cloud_object::ServerPermissions;
+use object_types::cloud_object::ServerPermissions;
 use warp_core::ui::appearance::Appearance;
 use warpui::platform::WindowStyle;
 use warpui::{AddSingletonModel, App, SingletonEntity, TypedActionView, ViewHandle};
@@ -7,10 +7,10 @@ use super::{DriveIndex, DriveIndexAction};
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::actions::ObjectActions;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{
+use crate::objects::model::actions::ObjectActions;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{
     CloudObjectSyncStatus, ObjectIdType, ObjectType, Owner, ServerCreationInfo, Space,
 };
 use crate::drive::items::WarpDriveItemId;

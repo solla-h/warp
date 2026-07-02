@@ -7,8 +7,8 @@ use warpui::{App, SingletonEntity};
 use super::*;
 use crate::ai::agent::conversation::AIConversationId;
 use crate::appearance::Appearance;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{
     CloudObjectMetadata, CloudObjectPermissions, CloudObjectStatuses, CloudObjectSyncStatus, Owner,
 };
 use crate::notebooks::{CloudNotebook, CloudNotebookModel};
@@ -119,7 +119,7 @@ fn cloud_model_sync_event_reconciles_stale_document_client_id() {
         model_handle.update(&mut app, |model, ctx| {
             model.handle_cloud_model_event(
                 &CloudModelEvent::ObjectSynced {
-                    type_and_id: crate::cloud_object::CloudObjectTypeAndId::Notebook(server_sync_id),
+                    type_and_id: crate::objects::CloudObjectTypeAndId::Notebook(server_sync_id),
                     client_id: stale_client_id,
                     server_id,
                 },

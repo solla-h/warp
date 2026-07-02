@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-pub use cloud_object_models::{CloudFolder, CloudFolderModel};
-pub use cloud_objects::ids::FolderId;
+pub use object_models::{CloudFolder, CloudFolderModel};
+pub use object_types::ids::FolderId;
 
 use super::items::folder::WarpDriveFolder;
 use super::items::WarpDriveItem;
 use super::CloudObjectTypeAndId;
 use crate::appearance::Appearance;
-use crate::cloud_object::{
+use crate::objects::{
     SerializedModel,
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision, Space,
@@ -17,7 +17,7 @@ use crate::cloud_object::{
 };
 use crate::persistence::ModelEvent;
 use crate::ids::{ServerId, SyncId};
-use cloud_object_models::ObjectClient;
+use object_models::ObjectClient;
 
 #[cfg_attr(not(target_family = "wasm"), async_trait)]
 #[cfg_attr(target_family = "wasm", async_trait(?Send))]

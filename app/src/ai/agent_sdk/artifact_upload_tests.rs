@@ -8,7 +8,7 @@ use warp_cli::artifact::UploadArtifactArgs;
 use super::*;
 use crate::ai::agent::api::ServerConversationToken;
 use crate::ai::agent::conversation::{AIAgentHarness, ServerAIConversationMetadata};
-use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
+use crate::objects::{Revision, ServerMetadata, ServerPermissions};
 use crate::persistence::model::ConversationUsageMetadata;
 use crate::ids::ServerId;
 

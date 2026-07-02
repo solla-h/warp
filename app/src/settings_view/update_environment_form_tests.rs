@@ -15,7 +15,7 @@ use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
 use crate::ai::ambient_agents::github_auth_url::{self, AuthSource, GithubAuthRedirectTarget};
 use crate::ai::cloud_environments::GithubRepo;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
 use crate::ids::{ClientId, SyncId};
 use crate::infra::ServiceProvider;

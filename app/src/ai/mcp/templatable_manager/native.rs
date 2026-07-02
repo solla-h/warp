@@ -35,15 +35,15 @@ use crate::ai::mcp::{
     TemplatableMCPServer, TemplatableMCPServerInstallation, TransportType,
 };
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObject, CloudObjectLocation, CloudObjectLookup as _, CloudObjectMetadataExt,
     CloudObjectUuidLookup as _, GenericStringObjectFormat, JsonObjectType, Space,
 };
 use crate::persistence::{
     database_file_path_for_scope, establish_ro_connection, ModelEvent, PersistenceScope,
 };
-use crate::cloud_object::{InitiatedBy, UpdateManager};
+use crate::objects::{InitiatedBy, UpdateManager};
 use crate::ids::{ClientId, ServerId, SyncId};
 use crate::telemetry::{
     MCPServerModel, MCPServerTelemetryTransportType, MCPTemplateCreationSource, TelemetryEvent,

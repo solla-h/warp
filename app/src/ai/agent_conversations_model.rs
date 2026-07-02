@@ -43,7 +43,7 @@ use crate::ai::cloud_environments::CloudAmbientAgentEnvironment;
 use crate::ai::conversation_navigation::ConversationNavigationData;
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::CloudObjectLookup as _;
+use crate::objects::CloudObjectLookup as _;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::ids::{ServerId, SyncId};
 use crate::infra::retry_strategies::{
@@ -55,8 +55,8 @@ use crate::infra::ServiceProvider;
 use crate::settings::AISettings;
 use crate::ui_components::icons::Icon;
 use crate::workspace::{RestoreConversationLayout, WorkspaceAction};
-use crate::cloud_object::UpdateManagerEvent;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManagerEvent;
+use crate::objects::UpdateManager;
 
 const POLLING_INTERVAL: Duration = Duration::from_secs(30);
 const RTC_TASK_REFRESH_THROTTLE: Duration = Duration::from_secs(5);

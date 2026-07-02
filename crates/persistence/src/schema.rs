@@ -107,7 +107,7 @@ diesel::table! {
 
 #[cfg(feature = "cloud")]
 diesel::table! {
-    cloud_objects_refreshes (id) {
+    object_types_refreshes (id) {
         id -> Integer,
         time_of_next_refresh -> Timestamp,
     }

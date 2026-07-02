@@ -19,14 +19,14 @@ use crate::ai::cloud_environments::{
     CloudAmbientAgentEnvironmentModel, GithubRepo,
 };
 use crate::auth::UserUid;
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::{CloudObject, CloudObjectLookup as _, UpdateManager, UpdateManagerEvent, ObjectOperation, OperationSuccessType};
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::{CloudObject, CloudObjectLookup as _, UpdateManager, UpdateManagerEvent, ObjectOperation, OperationSuccessType};
 use crate::ids::{ClientId, ServerId, SyncId};
 use crate::infra::ServiceProvider;
 use crate::infra::integrations::{OauthConnectTxStatus, UserRepoAuthStatusEnum};
 use crate::util::time_format::format_approx_duration_from_now_utc;
 use crate::workspaces::user_profiles::UserProfiles;
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObjectTypeAndId;
 
 const WARP_DEV_ENVIRONMENTS_REPO: &str = "https://github.com/warpdotdev/warp-dev-environments";
 

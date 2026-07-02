@@ -23,7 +23,7 @@ use crate::settings_view::update_environment_form::{
     EnvironmentFormInitArgs, UpdateEnvironmentForm, UpdateEnvironmentFormEvent,
 };
 use crate::ui_components::blended_colors;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 
 /// Max width for the content area (matches Figma: 592px)
 const CONTENT_MAX_WIDTH: f32 = 592.;

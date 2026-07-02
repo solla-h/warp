@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 use warpui::{AppContext, Element, Entity, View, ViewContext, ViewHandle};
 use crate::appearance::Appearance;
-use crate::cloud_object::Space;
+use crate::objects::Space;
 use crate::editor::EditorView;
 
 #[derive(Debug, Clone)]

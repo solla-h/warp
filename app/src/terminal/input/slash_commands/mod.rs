@@ -39,7 +39,7 @@ use crate::ai::blocklist::{
     QueuedQueryModel, QueuedQueryOrigin, SlashCommandRequest,
 };
 use crate::ai::conversation_rename::rename_conversation;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
 use crate::search::slash_command_menu::static_commands::commands::{self, COMMAND_REGISTRY};
 use crate::search::slash_command_menu::static_commands::Availability;

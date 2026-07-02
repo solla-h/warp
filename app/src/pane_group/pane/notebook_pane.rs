@@ -11,14 +11,14 @@ use super::{
     ShareableLinkError,
 };
 use crate::app_state::{LeafContents, NotebookPaneSnapshot};
-use crate::cloud_object::Space;
+use crate::objects::Space;
 use crate::notebooks::link::{LinkEvent, NotebookLinks};
 use crate::notebooks::manager::{NotebookManager, NotebookSource};
 use crate::notebooks::notebook::{NotebookEvent, NotebookView};
 use crate::ids::SyncId;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObjectTypeAndId;
 
 pub struct NotebookPane {
     view: ViewHandle<PaneView<NotebookView>>,

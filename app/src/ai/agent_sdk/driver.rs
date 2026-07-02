@@ -75,7 +75,7 @@ use crate::ai::skills::{
     SkillWatcher,
 };
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::{CloudObject, CloudObjectLookup as _};
+use crate::objects::{CloudObject, CloudObjectLookup as _};
 use crate::send_telemetry_from_app_ctx;
 use crate::ids::{ServerId, SyncId};
 use crate::infra::ai::{AIClient, TaskStatusUpdate};

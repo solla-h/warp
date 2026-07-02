@@ -3,8 +3,8 @@ use warpui::windowing::WindowManager;
 use warpui::{async_assert, SingletonEntity, WindowId};
 
 use super::open_workflow_count;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectEventEntrypoint, Space};
 use crate::integration_testing::view_getters::workspace_view;
 use crate::ids::{ClientId, SyncId};
 use crate::workflows::manager::WorkflowOpenSource;
@@ -40,7 +40,7 @@ pub fn create_a_personal_workflow(key: impl Into<String>) -> TestStep {
             CloudModel::handle(app).read(app, |cloud_model, ctx| {
                 async_assert!(
                     cloud_model
-                        .active_cloud_objects_in_space(Space::Personal, ctx)
+                        .active_object_types_in_space(Space::Personal, ctx)
                         .count()
                         > 0,
                     "Workflow exists"

@@ -36,7 +36,7 @@ use crate::ai::ambient_agents::{
 };
 use crate::ai::artifacts::Artifact;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::ids::{ServerId, SyncId};
 use crate::infra::ai::{
     AIClient, AgentMessageHeader, AgentRunEvent, AgentSource, ArtifactType, ExecutionLocation,

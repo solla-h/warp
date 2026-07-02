@@ -1,10 +1,10 @@
-pub use cloud_object_models::{CloudPreference, CloudPreferenceModel, Platform, Preference};
+pub use object_models::{CloudPreference, CloudPreferenceModel, Platform, Preference};
 use settings::macros::define_settings_group;
 use settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision, UniquePer,
 };
 define_settings_group!(CloudPreferencesSettings, settings: [

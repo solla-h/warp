@@ -223,7 +223,7 @@ fn make_server_metadata_with_harness(
     use chrono::Utc;
 
     use crate::ai::agent::api::ServerConversationToken;
-    use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
+    use crate::objects::{Revision, ServerMetadata, ServerPermissions};
     use crate::persistence::model::ConversationUsageMetadata;
     use crate::ids::ServerId;
 

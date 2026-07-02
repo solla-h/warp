@@ -8,7 +8,7 @@ use warpui::{
 use super::CreateEnvironmentModal;
 use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
 use crate::infra::ServiceProvider;
 use crate::settings::PrivacySettings;

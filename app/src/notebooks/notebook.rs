@@ -45,10 +45,10 @@ use super::{styles, CloudNotebookModel, NotebookId, NotebookLocation};
 use crate::ai::blocklist::secret_redaction::find_secrets_in_text;
 use crate::ai::document::ai_document_model::AIDocumentId;
 use crate::appearance::Appearance;
-use crate::cloud_object::grab_edit_access_modal::{GrabEditAccessModal, GrabEditAccessModalEvent};
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent, UpdateSource};
-use crate::cloud_object::model::view::{Editor, EditorState};
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, CloudObjectEventEntrypoint, ObjectType, Owner, Space};
+use crate::objects::grab_edit_access_modal::{GrabEditAccessModal, GrabEditAccessModalEvent};
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent, UpdateSource};
+use crate::objects::model::view::{Editor, EditorState};
+use crate::objects::{CloudObjectTypeAndId, CloudObject, CloudObjectEventEntrypoint, ObjectType, Owner, Space};
 use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, InteractionState, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextColors, TextOptions,
@@ -62,7 +62,7 @@ use crate::notebooks::CloudNotebook;
 use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusEvent};
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::cloud_object::{FetchSingleObjectOption, UpdateManager};
+use crate::objects::{FetchSingleObjectOption, UpdateManager};
 use crate::ids::{ClientId, ServerId, SyncId};
 use crate::telemetry::{
     CloudObjectTelemetryMetadata, NotebookActionEvent, NotebookTelemetryMetadata,

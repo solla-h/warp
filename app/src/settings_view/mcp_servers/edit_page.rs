@@ -34,7 +34,7 @@ use crate::ai::mcp::{
     TransportType,
 };
 use crate::banner::{Banner, BannerTextContent};
-use crate::cloud_object::{CloudObject, Space, InitiatedBy};
+use crate::objects::{CloudObject, Space, InitiatedBy};
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]

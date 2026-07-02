@@ -10,7 +10,7 @@ use crate::ai::agent::conversation::{
 };
 use crate::ai::agent::{AIAgentInput, UserQueryMode};
 use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::cloud_object::{Revision, ServerMetadata, ServerPermissions};
+use crate::objects::{Revision, ServerMetadata, ServerPermissions};
 use crate::persistence::model::ConversationUsageMetadata;
 use crate::ids::ServerId;
 

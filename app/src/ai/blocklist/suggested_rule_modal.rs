@@ -16,10 +16,10 @@ use warpui::{
 
 use crate::ai::agent::SuggestedRule;
 use crate::ai::facts::{AIFact, AIMemory, CloudAIFactModel};
-use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
-use crate::cloud_object::CloudObjectTypeAndId;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::Owner;
+use crate::objects::model::generic_string_model::GenericStringObjectId;
+use crate::objects::CloudObjectTypeAndId;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::Owner;
 use crate::editor::{
     EditorOptions, EditorView, EnterAction, EnterSettings, Event as EditorEvent, InteractionState,
     PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
@@ -27,7 +27,7 @@ use crate::editor::{
 use crate::modal::{Modal, ModalEvent};
 use crate::network::NetworkStatus;
 use crate::send_telemetry_from_ctx;
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::SyncId;

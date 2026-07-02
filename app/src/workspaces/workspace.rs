@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use crate::auth::UserUid;
-pub use cloud_object_models::ActionPermission;
-pub use cloud_object_models::ComputerUsePermission;
-pub use cloud_object_models::AgentModeCommandExecutionPredicate;
+pub use object_models::ActionPermission;
+pub use object_models::ComputerUsePermission;
+pub use object_models::AgentModeCommandExecutionPredicate;
 
 pub type WorkspaceUid = String;
 
@@ -58,7 +58,7 @@ pub struct AiAutonomySettings {
     pub execute_commands_setting: Option<ActionPermission>,
     pub execute_commands_allowlist: Option<Vec<AgentModeCommandExecutionPredicate>>,
     pub execute_commands_denylist: Option<Vec<AgentModeCommandExecutionPredicate>>,
-    pub write_to_pty_setting: Option<cloud_object_models::ai_execution_profile::WriteToPtyPermission>,
+    pub write_to_pty_setting: Option<object_models::ai_execution_profile::WriteToPtyPermission>,
     pub computer_use_setting: Option<ComputerUsePermission>,
 }
 impl AiAutonomySettings {

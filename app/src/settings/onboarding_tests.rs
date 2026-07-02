@@ -10,8 +10,8 @@ use crate::ai::execution_profiles::{
 };
 use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{Revision, ServerAIExecutionProfile, ServerMetadata, ServerPermissions};
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{Revision, ServerAIExecutionProfile, ServerMetadata, ServerPermissions};
 use crate::network::NetworkStatus;
 use crate::ids::{ServerId, SyncId};
 use crate::settings::{apply_onboarding_settings, PrivacySettings};

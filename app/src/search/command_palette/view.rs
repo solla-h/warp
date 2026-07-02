@@ -47,7 +47,7 @@ use crate::themes::theme::WarpTheme;
 use crate::view_components::DismissibleToast;
 use crate::workspace::{active_terminal_in_window, ForkedConversationDestination, WorkspaceAction};
 use crate::{send_telemetry_from_ctx, ToastStack};
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObjectTypeAndId;
 
 lazy_static! {
     /// Set of hardcoded action names that we want to show in the command palette zero state.
@@ -95,7 +95,7 @@ pub enum Event {
     /// Open a notebook identified by `id`.
     OpenNotebook { id: SyncId },
     /// View the relevant object in the Warp Drive sidebar.
-    ViewInWarpDrive { id: crate::cloud_object::CloudObjectTypeAndId },
+    ViewInWarpDrive { id: crate::objects::CloudObjectTypeAndId },
     /// Open a file at the given path.
     OpenFile {
         path: String,

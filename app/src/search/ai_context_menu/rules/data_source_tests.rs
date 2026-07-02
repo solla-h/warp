@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use cloud_object_models::MockObjectClient;
+use object_models::MockObjectClient;
 use settings::manager::SettingsManager;
 use warpui::{App, SingletonEntity};
 
 use crate::ai::facts::{AIFact, AIMemory, CloudAIFactModel};
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::generic_string_model::GenericStringModel;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{
+use crate::objects::model::generic_string_model::GenericStringModel;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{
     GenericServerObject, Owner, Revision, ServerMetadata, ServerPermissions,
 };
 use crate::notebooks::manager::NotebookManager;
@@ -29,7 +29,7 @@ use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::NetworkStatus;
 
 type ServerAIFact = GenericServerObject<
-    crate::cloud_object::model::generic_string_model::GenericStringObjectId,
+    crate::objects::model::generic_string_model::GenericStringObjectId,
     CloudAIFactModel,
 >;
 

@@ -15,7 +15,7 @@ use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
 use crate::ai::execution_profiles::ActionPermission;
 use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
 use crate::terminal::event::BlockMetadataReceivedEvent;
 use crate::terminal::model::block::BlockMetadata;

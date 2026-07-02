@@ -19,7 +19,7 @@ use super::schema::{
 };
 #[cfg(feature = "cloud")]
 use super::schema::{
-    cloud_objects_refreshes, current_user_information, folders, notebooks, object_actions,
+    object_types_refreshes, current_user_information, folders, notebooks, object_actions,
     object_metadata, object_permissions, server_experiments, team_members, team_settings, teams,
     user_profiles, workspace_teams, workspaces,
 };
@@ -843,14 +843,14 @@ pub struct UserProfile {
 
 #[cfg(feature = "cloud")]
 #[derive(Insertable)]
-#[diesel(table_name = cloud_objects_refreshes)]
+#[diesel(table_name = object_types_refreshes)]
 pub struct NewCloudObjectsRefresh {
     pub time_of_next_refresh: NaiveDateTime,
 }
 
 #[cfg(feature = "cloud")]
 #[derive(Identifiable, Queryable)]
-#[diesel(table_name = cloud_objects_refreshes)]
+#[diesel(table_name = object_types_refreshes)]
 pub struct CloudObjectsRefresh {
     pub id: i32,
     pub time_of_next_refresh: NaiveDateTime,

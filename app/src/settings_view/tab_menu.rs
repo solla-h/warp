@@ -6,7 +6,7 @@ use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::Element;
 
 use super::teams_page::TeamsPageAction;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::workspaces::team::Team;
 use crate::Appearance;
 

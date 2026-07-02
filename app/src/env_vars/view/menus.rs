@@ -4,12 +4,12 @@ use warpui::keymap::Trigger;
 use warpui::{SingletonEntity, ViewContext, ViewHandle};
 
 use super::env_var_collection::{EnvVarCollectionAction, EnvVarCollectionView, VariableRowIndex};
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, Space};
+use crate::objects::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, Space};
 use crate::env_vars::active_env_var_collection_data::TrashStatus;
 use crate::external_secrets::SecretManager;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::PaneEvent;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 use crate::ui_components::icons::Icon;
 use crate::util::bindings::{
     keybinding_name_to_display_string, trigger_to_keystroke, CustomAction,
@@ -424,7 +424,7 @@ impl EnvVarCollectionView {
                 update_manager.untrash_object(
                     CloudObjectTypeAndId::GenericStringObject {
                         object_type: GenericStringObjectFormat::Json(
-                            crate::cloud_object::JsonObjectType::EnvVarCollection,
+                            crate::objects::JsonObjectType::EnvVarCollection,
                         ),
                         id: env_var_collection_id,
                     },
@@ -443,7 +443,7 @@ impl EnvVarCollectionView {
                 update_manager.trash_object(
                     CloudObjectTypeAndId::from_generic_string_object(
                         GenericStringObjectFormat::Json(
-                            crate::cloud_object::JsonObjectType::EnvVarCollection,
+                            crate::objects::JsonObjectType::EnvVarCollection,
                         ),
                         env_var_collection_id,
                     ),
@@ -460,7 +460,7 @@ impl EnvVarCollectionView {
                 update_manager.duplicate_object(
                     CloudObjectTypeAndId::from_generic_string_object(
                         GenericStringObjectFormat::Json(
-                            crate::cloud_object::JsonObjectType::EnvVarCollection,
+                            crate::objects::JsonObjectType::EnvVarCollection,
                         ),
                         env_var_collection_id,
                     ),

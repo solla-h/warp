@@ -1,12 +1,12 @@
 use warpui::{Entity, ModelContext, SingletonEntity};
 
 use super::CloudEnvVarCollectionModel;
-use crate::cloud_object::breadcrumbs::ContainingObject;
-use crate::cloud_object::model::persistence::CloudModelEvent;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObject, Owner, Revision, Space};
+use crate::objects::breadcrumbs::ContainingObject;
+use crate::objects::model::persistence::CloudModelEvent;
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{CloudObject, Owner, Revision, Space};
 use crate::env_vars::CloudEnvVarCollection;
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, ServerId, SyncId};

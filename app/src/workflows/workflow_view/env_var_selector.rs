@@ -5,8 +5,8 @@ use warpui::{
     ViewHandle,
 };
 
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{CloudObjectTypeAndId, CloudObject as _, GenericStringObjectFormat, JsonObjectType};
 use crate::ids::SyncId;
 use crate::view_components::{DropdownItem, FilterableDropdown, FilterableDropdownOrientation};
 

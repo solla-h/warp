@@ -2773,60 +2773,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cloud_object_models"
-version = "0.1.0"
-dependencies = [
- "ai",
- "anyhow",
- "async-channel",
- "async-trait",
- "cfg-if",
- "chrono",
- "cloud_objects",
- "diesel",
- "handlebars",
- "lazy_static",
- "log",
- "mcp_types",
- "persistence",
- "regex",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "serde_regex",
- "session-sharing-protocol",
- "settings",
- "settings_value",
- "uuid",
- "warp-workflows",
- "warp_cli",
- "warp_core",
- "warp_types",
- "warp_util",
-]
-
-[[package]]
-name = "cloud_objects"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "derivative",
- "itertools 0.14.0",
- "lasso",
- "pathfinder_geometry",
- "schemars 1.0.4",
- "serde",
- "session-sharing-protocol",
- "settings_value",
- "thiserror 2.0.17",
- "uuid",
- "warp_core",
- "warp_types",
- "warpui_core",
-]
-
-[[package]]
 name = "cmake"
 version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9032,6 +8978,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "object_models"
+version = "0.1.0"
+dependencies = [
+ "ai",
+ "anyhow",
+ "async-channel",
+ "async-trait",
+ "cfg-if",
+ "chrono",
+ "diesel",
+ "handlebars",
+ "lazy_static",
+ "log",
+ "mcp_types",
+ "object_types",
+ "persistence",
+ "regex",
+ "schemars 1.0.4",
+ "serde",
+ "serde_json",
+ "serde_regex",
+ "session-sharing-protocol",
+ "settings",
+ "settings_value",
+ "uuid",
+ "warp-workflows",
+ "warp_cli",
+ "warp_core",
+ "warp_types",
+ "warp_util",
+]
+
+[[package]]
+name = "object_types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "derivative",
+ "itertools 0.14.0",
+ "lasso",
+ "pathfinder_geometry",
+ "schemars 1.0.4",
+ "serde",
+ "session-sharing-protocol",
+ "settings_value",
+ "thiserror 2.0.17",
+ "uuid",
+ "warp_core",
+ "warp_types",
+ "warpui_core",
+]
+
+[[package]]
 name = "onboarding"
 version = "0.1.0"
 dependencies = [
@@ -14377,8 +14377,6 @@ dependencies = [
  "channel_versions",
  "chrono",
  "clap",
- "cloud_object_models",
- "cloud_objects",
  "cocoa 0.26.0",
  "comfy-table",
  "command",
@@ -14487,6 +14485,8 @@ dependencies = [
  "objc2-app-kit 0.3.2",
  "objc2-core-foundation",
  "objc2-foundation 0.3.2",
+ "object_models",
+ "object_types",
  "onboarding",
  "once_cell",
  "ordered-float 3.9.2",

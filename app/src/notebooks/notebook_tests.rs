@@ -18,10 +18,10 @@ use super::{NotebookEvent, NotebookView, EDIT_WINDOW_DURATION, SAVE_PERIOD};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::user::{TEST_USER_EMAIL, TEST_USER_UID};
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::cloud_object::model::actions::ObjectActions;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
-use crate::cloud_object::{
+use crate::objects::model::actions::ObjectActions;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::model::view::{CloudViewModel, Editor, EditorState};
+use crate::objects::{
     Owner, Revision, ServerCloudObject, ServerMetadata, ServerNotebook, ServerPermissions,
 };
 use crate::editor::{DisplayPoint, EditorAction, InteractionState, SelectAction};

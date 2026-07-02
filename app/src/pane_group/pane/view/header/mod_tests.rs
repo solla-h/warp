@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cloud_object_models::MockObjectClient;
+use object_models::MockObjectClient;
 use warp_core::ui::appearance::Appearance;
 use warpui::elements::Empty;
 use warpui::platform::WindowStyle;
@@ -9,7 +9,7 @@ use warpui::{App, AppContext, Element, Entity, TypedActionView, View, ViewContex
 use super::{Event, OpenOverlay};
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::menu::MenuItemFields;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneId, PaneView};

@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObjectTypeAndId;
 
 use strum_macros::IntoStaticStr;
 use warp_util::path::LineAndColumnArg;

@@ -29,7 +29,7 @@ use crate::ai::blocklist::controller::RequestInput;
 use crate::ai::blocklist::ResponseStreamId;
 use crate::ai::llms::LLMId;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
+use crate::objects::{Owner, Revision, ServerMetadata, ServerPermissions};
 use crate::input_suggestions::HistoryInputSuggestion;
 use crate::persistence::model::{
     AgentConversation, AgentConversationData, AgentConversationRecord, PersistedAutoexecuteMode,

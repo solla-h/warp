@@ -5,7 +5,7 @@ use markdown_parser::{parse_markdown, FormattedTextLine};
 use warpui::{AppContext, SingletonEntity};
 
 use crate::ai::agent::AIAgentCitation;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::env_vars::{EnvVarCollection, EnvVarCollectionExt, EnvVarExt, EnvVarValue};
 use crate::notebooks::CloudNotebookModel;
 use crate::terminal::shell::ShellType;

@@ -5,7 +5,7 @@
 //! (serde only) so they can be shared by:
 //!
 //! - the local MCP runtime ([`mcp`] crate), which spawns the servers, and
-//! - cloud storage ([`cloud_object_models`]), which persists MCP server configs.
+//! - cloud storage ([`object_models`]), which persists MCP server configs.
 //!
 //! Keeping them in a standalone crate lets the local runtime depend on these
 //! types without pulling in any cloud machinery.

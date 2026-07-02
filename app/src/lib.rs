@@ -17,7 +17,7 @@ mod billing;
 mod changelog_model;
 mod chip_configurator;
 mod workspaces;
-mod cloud_object;
+mod objects;
 mod code;
 mod code_review;
 mod coding_entrypoints;
@@ -267,10 +267,10 @@ use crate::app_state::AppState;
 use crate::autoupdate::AutoupdateState;
 use crate::autoupdate::RelaunchModel;
 use crate::changelog_model::ChangelogModel;
-pub(crate) use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
-pub(crate) use crate::cloud_object::model::persistence::CloudModel;
-pub(crate) use crate::cloud_object::{FetchSingleObjectOption, GenericStringObjectInput, InitiatedBy, Listener, ObjectOperation, ObjectOperationResult, OperationSuccessType, UpdateManager, UpdateManagerEvent};
-use crate::cloud_object::model::view::CloudViewModel;
+pub(crate) use crate::objects::model::actions::{ObjectAction, ObjectActions};
+pub(crate) use crate::objects::model::persistence::CloudModel;
+pub(crate) use crate::objects::{FetchSingleObjectOption, GenericStringObjectInput, InitiatedBy, Listener, ObjectOperation, ObjectOperationResult, OperationSuccessType, UpdateManager, UpdateManagerEvent};
+use crate::objects::model::view::CloudViewModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
@@ -1298,7 +1298,7 @@ pub(crate) fn initialize_app(
     });
 
     let (
-        mut cloud_objects,
+        mut object_types,
         mut cached_workspaces,
         mut current_workspace_uid,
         mut app_state,
@@ -1319,7 +1319,7 @@ pub(crate) fn initialize_app(
     ) = sqlite_data
         .map(|sqlite_data| {
             (
-                sqlite_data.cloud_objects,
+                sqlite_data.object_types,
                 sqlite_data.workspaces,
                 sqlite_data.current_workspace_uid,
                 Some(sqlite_data.app_state),
@@ -1367,7 +1367,7 @@ pub(crate) fn initialize_app(
         log::debug!(
             "[Remote codebase indexing] Restored daemon codebase index metadata: metadata_count={codebase_index_count}"
         );
-        cloud_objects = Default::default();
+        object_types = Default::default();
         cached_workspaces = Default::default();
         current_workspace_uid = None;
         app_state = None;
@@ -1799,7 +1799,7 @@ pub(crate) fn initialize_app(
         VoiceTranscriber::new(Arc::new(ServerVoiceTranscriber::new(server_api.clone())))
     });
 
-    let notebooks = cloud_objects
+    let notebooks = object_types
         .iter()
         .filter_map(|object| {
             let notebook: Option<&CloudNotebook> = object.into();
@@ -1811,7 +1811,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_ctx| {
         CloudModel::new(
             persistence_writer.sender(),
-            cloud_objects,
+            object_types,
             time_of_next_force_object_refresh,
         )
     });
@@ -1894,7 +1894,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|ctx| {
         UpdateManager::new(
             persistence_writer.sender(),
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
+            server_api_provider.as_ref(ctx).get_object_types_client(),
             ctx,
         )
     });
@@ -1962,7 +1962,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| ActiveSession::default());
     ctx.add_singleton_model(|ctx| {
         Listener::new(
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
+            server_api_provider.as_ref(ctx).get_object_types_client(),
             ctx,
         )
     });

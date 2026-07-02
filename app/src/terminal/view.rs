@@ -290,9 +290,9 @@ use crate::banner::{
     Banner, BannerAction, BannerEvent, BannerState, BannerTextButton, BannerTextContent,
     DismissalType,
 };
-use crate::cloud_object::model::actions::ObjectActionType;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, JsonObjectType};
+use crate::objects::model::actions::ObjectActionType;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectTypeAndId, CloudObject, GenericStringObjectFormat, JsonObjectType};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code_review::comments::{
@@ -335,7 +335,7 @@ use crate::resource_center::{
     mark_feature_used_and_write_to_user_defaults, Tip, TipHint, TipsCompleted,
 };
 use crate::search::slash_command_menu::static_commands::commands;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 use crate::ids::SyncId;
 use crate::infra::ServerApi;
 use crate::telemetry::{

@@ -43,9 +43,9 @@ use crate::ai::mcp::TemplatableMCPServerInstallation;
 use crate::ai::persisted_workspace::EnablementState;
 use crate::app_state::AppState;
 use crate::auth::auth_manager::PersistedCurrentUserInformation;
-use crate::cloud_object::model::actions::ObjectAction;
-use crate::cloud_object::model::generic_string_model::CloudStringObject;
-use crate::cloud_object::{
+use crate::objects::model::actions::ObjectAction;
+use crate::objects::model::generic_string_model::CloudStringObject;
+use crate::objects::{
     CloudObject, CloudObjectMetadata, ObjectIdType, RevisionAndLastEditor, ServerCreationInfo,
 };
 use crate::notebooks::CloudNotebook;
@@ -58,7 +58,7 @@ use crate::terminal::model::session::SessionId;
 use crate::workflows::CloudWorkflow;
 use crate::workspaces::user_profiles::UserProfileWithUID;
 use crate::workspaces::workspace::{Workspace as WorkspaceMetadata, WorkspaceUid};
-use cloud_object_models::CloudFolder;
+use object_models::CloudFolder;
 
 pub enum PersistenceScope {
     App,
@@ -186,7 +186,7 @@ pub struct PersistedData {
     pub app_state: AppState,
 
     /// Shareable objects.
-    pub cloud_objects: Vec<Box<dyn CloudObject>>,
+    pub object_types: Vec<Box<dyn CloudObject>>,
     pub workspaces: Vec<WorkspaceMetadata>,
     pub current_workspace_uid: Option<WorkspaceUid>,
     pub command_history: Vec<PersistedCommand>,

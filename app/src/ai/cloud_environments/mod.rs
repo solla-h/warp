@@ -1,17 +1,17 @@
 // Some of these re-exported types aren't used in the wasm build, so we suppress this
 // warning.
 #[cfg_attr(target_family = "wasm", expect(unused_imports))]
-pub use cloud_object_models::{
+pub use object_models::{
     AmbientAgentEnvironment, AwsProviderConfig, BaseImage, CloudAmbientAgentEnvironment,
     CloudAmbientAgentEnvironmentModel, GcpProviderConfig, GithubRepo, ProvidersConfig,
 };
-use cloud_objects::cloud_object::Owner;
+use object_types::cloud_object::Owner;
 use warpui::{AppContext, SingletonEntity as _};
 
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision,
 };
 use crate::workspaces::user_workspaces::UserWorkspaces;

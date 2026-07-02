@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use warp_core::features::FeatureFlag;
-use cloud_objects::cloud_object::AccessLevel;
+use object_types::cloud_object::AccessLevel;
 use warpui::{App, SingletonEntity};
 
 use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
@@ -10,8 +10,8 @@ use crate::ai::execution_profiles::{
 use crate::ai::mcp::TemplatableMCPServerManager;
 use crate::auth::user::TEST_USER_UID;
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::{
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::{
     Owner, Revision, ServerAIExecutionProfile, ServerGuestSubject, ServerMetadata,
     ServerObjectGuest, ServerPermissions,
 };

@@ -39,10 +39,10 @@ use crate::ai::AIRequestUsageModel;
 use crate::appearance::Appearance;
 use crate::auth::auth_state::AuthState;
 use crate::auth::{AuthStateProvider, UserUid};
-use crate::cloud_object::breadcrumbs::ContainingObject;
-use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::breadcrumbs::ContainingObject;
+use crate::objects::model::persistence::{CloudModel, CloudModelEvent};
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObject, CloudObjectEventEntrypoint, ObjectType, Owner, Revision, Space,
 };
 use crate::editor::{
@@ -55,7 +55,7 @@ use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::cloud_object::{
+use crate::objects::{
     FetchSingleObjectOption, ObjectOperation, OperationSuccessType, UpdateManager,
     UpdateManagerEvent,
 };

@@ -10,8 +10,8 @@ use crate::ai::agent::{
 use crate::ai::blocklist::BlocklistAIHistoryModel;
 use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentModel};
 use crate::appearance::Appearance;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{
     CloudObjectMetadata, CloudObjectPermissions, CloudObjectStatuses, CloudObjectSyncStatus, Owner,
 };
 use crate::notebooks::{CloudNotebook, CloudNotebookModel};

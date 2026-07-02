@@ -4,7 +4,7 @@ use warp_core::ui::appearance::Appearance;
 use warpui::App;
 
 use super::expand_dirs;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::UserWorkspaces;

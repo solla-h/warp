@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::future::Future;
 
-pub use cloud_object_models::{
+pub use object_models::{
     CloudScheduledAmbientAgent, CloudScheduledAmbientAgentModel, ScheduledAmbientAgent,
 };
 use futures::channel::oneshot;
@@ -9,14 +9,14 @@ use futures::FutureExt;
 use serde_json::{Map, Value};
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::model::persistence::CloudModel;
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObjectLookup as _, GenericStringObjectFormat, GenericStringObjectUniqueKey,
     JsonObjectType, Owner, Revision,
 };
-use crate::cloud_object::{
+use crate::objects::{
     ObjectOperation, OperationSuccessType, UpdateManager, UpdateManagerEvent,
 };
 use crate::ids::{ClientId, SyncId};

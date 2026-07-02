@@ -28,7 +28,7 @@ use crate::palette::PaletteMode;
 use crate::pane_group::PaneGroup;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search;
-use crate::cloud_object::CloudObjectTypeAndId;
+use crate::objects::CloudObjectTypeAndId;
 use crate::ids::SyncId;
 use crate::telemetry::{
     AddTabWithShellSource, AgentModeEntrypoint, PaletteSource, SharingDialogSource,

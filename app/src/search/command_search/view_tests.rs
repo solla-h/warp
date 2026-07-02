@@ -2,7 +2,7 @@ use warpui::platform::WindowStyle;
 use warpui::App;
 
 use super::*;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::network::NetworkStatus;
 use crate::infra::ServiceProvider;
 use crate::telemetry::context_provider::AppTelemetryContextProvider;

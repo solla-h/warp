@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_variables)]
-use cloud_objects::cloud_object::Owner;
+use object_types::cloud_object::Owner;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 use crate::auth::UserUid;
 use crate::ids::ServerId;
@@ -53,14 +53,14 @@ impl UserWorkspaces {
     pub fn has_teams(&self) -> bool { false }
     pub fn has_workspaces(&self) -> bool { false }
     pub fn user_email(&self) -> &str { "" }
-    pub fn team_spaces(&self) -> Vec<crate::cloud_object::Space> { vec![] }
-    pub fn all_user_spaces(&self, _ctx: &AppContext) -> Vec<crate::cloud_object::Space> { vec![] }
+    pub fn team_spaces(&self) -> Vec<crate::objects::Space> { vec![] }
+    pub fn all_user_spaces(&self, _ctx: &AppContext) -> Vec<crate::objects::Space> { vec![] }
     pub fn team_from_uid(&self, _uid: ServerId) -> Option<&Team> { None }
     pub fn team_from_uid_across_all_workspaces<U: 'static>(&self, _uid: U) -> Option<&Team> { None }
     pub fn num_joinable_teams(&self) -> usize { 0 }
     pub fn total_teammates_in_joinable_teams(&self) -> usize { 0 }
     pub fn owner_to_space(&self, _owner: impl std::borrow::Borrow<Owner>, _ctx: &AppContext) -> Space { Space::Personal }
-    pub fn space_to_owner(&self, _space: impl std::borrow::Borrow<crate::cloud_object::Space>, _ctx: &AppContext) -> Option<Owner> { None }
+    pub fn space_to_owner(&self, _space: impl std::borrow::Borrow<crate::objects::Space>, _ctx: &AppContext) -> Option<Owner> { None }
     pub fn workspaces_metadata(&self) -> Option<&WorkspacesMetadataResponse> { None }
     pub fn workspaces(&self) -> &[Workspace] { &[] }
     pub fn usage_based_pricing_settings(&self) -> UsageBasedPricingSettings { UsageBasedPricingSettings::default() }
@@ -128,4 +128,4 @@ impl UserWorkspaces {
 impl Entity for UserWorkspaces { type Event = UserWorkspacesEvent; }
 impl SingletonEntity for UserWorkspaces {}
 
-use crate::cloud_object::Space;
+use crate::objects::Space;

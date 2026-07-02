@@ -4,7 +4,7 @@ use futures_lite::future::yield_now;
 use warpui::{AppContext, SingletonEntity};
 
 use super::NotebookSearchItem;
-use crate::cloud_object::model::persistence::CloudModel;
+use crate::objects::model::persistence::CloudModel;
 use crate::notebooks::manager::NotebookManager;
 use crate::notebooks::CloudNotebookModel;
 use crate::search::async_snapshot_data_source::AsyncSnapshotDataSource;

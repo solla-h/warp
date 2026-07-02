@@ -86,8 +86,8 @@ cfg-if.workspace = true
 channel_versions.workspace = true
 chrono.workspace = true
 clap.workspace = true
-cloud_object_models = { workspace = true }
-cloud_objects = { workspace = true }
+object_models = { workspace = true }
+object_types = { workspace = true }
 command = { workspace = true }
 command-corrections.workspace = true
 command-signatures-v2 = { workspace = true, optional = true }
@@ -698,7 +698,7 @@ agent_mode_evals = [
     "integration_tests",
     "full_source_code_embedding",
     "cross_repo_context",
-    "cloud_object_models/agent_mode_evals",
+    "object_models/agent_mode_evals",
     "rust-embed/debug-embed",
     "warpui/log_named_telemetry_events",
     "warp_logging/agent_mode_evals",

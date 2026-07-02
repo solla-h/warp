@@ -15,9 +15,9 @@ pub use templatable_manager::TemplatableMCPServerManager;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::Icon;
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{CloudObjectTypeAndId, 
     CloudObjectUuid, GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType,
     Revision,
 };
@@ -47,10 +47,10 @@ pub mod gallery;
 pub use gallery::MCPGalleryManager;
 pub mod templatable;
 #[cfg(not(target_family = "wasm"))]
-pub use cloud_object_models::{
+pub use object_models::{
     CLIServer, JSONMCPServer, JSONTransportType, ServerSentEvents, StaticEnvVar, StaticHeader,
 };
-pub use cloud_object_models::{
+pub use object_models::{
     CloudMCPServer, CloudMCPServerModel, MCPServer, MCPServerState, TransportType,
 };
 pub use templatable::{JsonTemplate, TemplatableMCPServer, TemplateVariable};

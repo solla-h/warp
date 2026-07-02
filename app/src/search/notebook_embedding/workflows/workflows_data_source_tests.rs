@@ -1,4 +1,4 @@
-use crate::cloud_object::{Owner, Space};
+use crate::objects::{Owner, Space};
 use crate::search::notebook_embedding::is_embed_accessible;
 use crate::ids::ServerId;
 

@@ -1,4 +1,4 @@
-pub use cloud_object_models::{
+pub use object_models::{
     CloudEnvVarCollection, CloudEnvVarCollectionModel, EnvVar, EnvVarCollection, EnvVarValue,
 };
 use itertools::Itertools;
@@ -9,9 +9,9 @@ pub mod env_var_collection_block;
 pub mod manager;
 pub mod view;
 
-use crate::cloud_object::model::generic_string_model::StringModel;
-use crate::cloud_object::model::json_model::JsonModel;
-use crate::cloud_object::{CloudObjectTypeAndId, 
+use crate::objects::model::generic_string_model::StringModel;
+use crate::objects::model::json_model::JsonModel;
+use crate::objects::{CloudObjectTypeAndId, 
     GenericStringObjectFormat, GenericStringObjectUniqueKey, JsonObjectType, Revision,
 };
 use crate::ids::SyncId;

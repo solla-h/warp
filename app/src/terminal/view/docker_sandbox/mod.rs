@@ -39,7 +39,7 @@ use crate::terminal::local_tty::docker_sandbox::DOCKER_SANDBOX_HOME_DIR;
 use crate::terminal::remote_tty::TerminalManager as RemoteTtyTerminalManager;
 #[cfg(feature = "local_tty")]
 use crate::terminal::TerminalManager;
-use crate::cloud_object::UpdateManager;
+use crate::objects::UpdateManager;
 
 /// Default base Docker image used for newly created sandbox shells.
 ///
@@ -240,7 +240,7 @@ impl TerminalView {
                 // Look up the environment by hardcoded ID.
                 let environment = spawner
                     .spawn(|_, ctx| {
-                        use crate::cloud_object::CloudObjectLookup as _;
+                        use crate::objects::CloudObjectLookup as _;
 
                         let server_id = ServerId::try_from("SVhg783GBFQHk1OfdPfFU9").ok()?;
                         let sync_id = SyncId::ServerId(server_id);

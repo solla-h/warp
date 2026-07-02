@@ -3194,7 +3194,7 @@ pub struct RequestMetadata {
     pub is_auto_resume_after_error: bool,
 }
 
-pub use cloud_object_models::SuggestedLoggingId;
+pub use object_models::SuggestedLoggingId;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SuggestedRule {

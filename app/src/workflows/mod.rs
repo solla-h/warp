@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-pub use cloud_object_models::{CloudWorkflow, CloudWorkflowModel, WorkflowId};
+pub use object_models::{CloudWorkflow, CloudWorkflowModel, WorkflowId};
 use serde::{Deserialize, Serialize};
 use warp_core::context_flag::ContextFlag;
 use warp_core::features::FeatureFlag;
@@ -24,8 +24,8 @@ use async_trait::async_trait;
 pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 
 use crate::appearance::Appearance;
-use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObjectTypeAndId,
+use crate::objects::model::view::CloudViewModel;
+use crate::objects::{CloudObjectTypeAndId,
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, InitiatedBy, ObjectType, Revision,
     SerializedModel, UpdateCloudObjectResult,
@@ -33,7 +33,7 @@ use crate::cloud_object::{CloudObjectTypeAndId,
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;
 use crate::ids::{ServerId, SyncId};
-use cloud_object_models::ObjectClient;
+use object_models::ObjectClient;
 
 pub fn init(app: &mut AppContext) {
     categories::init(app);
