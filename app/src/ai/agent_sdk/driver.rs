@@ -2825,6 +2825,7 @@ impl AgentDriver {
         let history_model_handle = BlocklistAIHistoryModel::handle(ctx);
         let terminal_id = self.terminal_driver.as_ref(ctx).terminal_view().id();
         let mut written_conversation_id = false;
+        let mut streaming_msg_count: std::collections::HashMap<crate::ai::agent::AIAgentExchangeId, usize> = std::collections::HashMap::new();
 
         // Create shared storage for the conversation ID
         let conversation_id_cell = Arc::new(Mutex::new(Option::<String>::None));
@@ -2955,6 +2956,40 @@ impl AgentDriver {
                         report_if_error!(me
                             .write_exchange_output(exchange)
                             .context("Failed to write exchange output"));
+                    } else if matches!(me.output_format, OutputFormat::Pretty | OutputFormat::Text) {
+                        // Stream progress: show reasoning/tool activity while waiting.
+                        if let Some(output) = exchange.output_status.output() {
+                            let msgs = &output.get().messages;
+                            let n = msgs.len();
+                            // Only print for messages we haven't printed yet.
+                            let prev = *streaming_msg_count.get(&exchange.id).unwrap_or(&0);
+                            for msg in msgs.iter().skip(prev) {
+                                match &msg.message {
+                                    crate::ai::agent::AIAgentOutputMessageType::Reasoning { .. } => {
+                                        let _ = output::with_stdout_buffered(|buf| {
+                                            writeln!(buf, "\x1b[2m[thinking...]\x1b[0m")
+                                        });
+                                    }
+                                    crate::ai::agent::AIAgentOutputMessageType::Action(action) => {
+                                        let _ = output::with_stdout_buffered(|buf| {
+                                            writeln!(buf, "\x1b[36m▶ {}\x1b[0m", action.action)
+                                        });
+                                    }
+                                    crate::ai::agent::AIAgentOutputMessageType::WebSearch(_) => {
+                                        let _ = output::with_stdout_buffered(|buf| {
+                                            writeln!(buf, "\x1b[36m▶ websearch\x1b[0m")
+                                        });
+                                    }
+                                    crate::ai::agent::AIAgentOutputMessageType::WebFetch(_) => {
+                                        let _ = output::with_stdout_buffered(|buf| {
+                                            writeln!(buf, "\x1b[36m▶ webfetch\x1b[0m")
+                                        });
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            streaming_msg_count.insert(exchange.id, n);
+                        }
                     }
 
                     // Perform task update after all immutable borrows end

@@ -3141,6 +3141,21 @@ impl BlocklistAIController {
                         ctx,
                     );
                 });
+                // Auto-compaction: if context usage exceeds 80%, trigger summarization.
+                let should_compact = BlocklistAIHistoryModel::as_ref(ctx)
+                    .conversation(&conversation_id)
+                    .is_some_and(|c| c.context_window_usage() > 0.8);
+                if should_compact {
+                    log::info!("[byop] auto-compaction triggered: context_window_usage > 80%");
+                    let context: std::sync::Arc<[crate::ai::agent::AIAgentContext]> = std::sync::Arc::from([]);
+                    self.send_custom_ai_input_query(
+                        crate::ai::agent::AIAgentInput::SummarizeConversation {
+                            prompt: None,
+                            context,
+                        },
+                        ctx,
+                    );
+                }
             }
             Some(warp_multi_agent_api::response_event::stream_finished::Reason::Other(_)) => {
                 let error_message = "Response stream finished unexpectedly (with finish reason `Other`).";

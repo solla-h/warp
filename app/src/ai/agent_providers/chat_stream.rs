@@ -3884,6 +3884,7 @@ pub async fn generate_byop_output(
                             }
                         }
                     }
+                    saved_stream_end = Some(end);
                 }
                 _ => {
                     other_count += 1;
