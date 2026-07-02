@@ -132,8 +132,8 @@ pub trait AuthClient: Send + Sync {
     async fn create_api_key(
         &self,
         name: String,
-        team_id: Option<cynic::Id>,
-        agent_uid: Option<cynic::Id>,
+        team_id: Option<String>,
+        agent_uid: Option<String>,
         expires_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<GenerateApiKeyResult>;
     async fn expire_api_key(&self, uid: &ApiKeyUid) -> Result<ExpireApiKeyResult>;
@@ -181,8 +181,8 @@ mockall::mock! {
         async fn create_api_key(
             &self,
             name: String,
-            team_id: Option<cynic::Id>,
-            agent_uid: Option<cynic::Id>,
+            team_id: Option<String>,
+            agent_uid: Option<String>,
             expires_at: Option<chrono::DateTime<chrono::Utc>>,
         ) -> Result<GenerateApiKeyResult>;
         async fn expire_api_key(&self, uid: &ApiKeyUid) -> Result<ExpireApiKeyResult>;
@@ -245,8 +245,8 @@ impl AuthClient for AuthClientImpl {
     async fn create_api_key(
         &self,
         _name: String,
-        _team_id: Option<cynic::Id>,
-        _agent_uid: Option<cynic::Id>,
+        _team_id: Option<String>,
+        _agent_uid: Option<String>,
         _expires_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<GenerateApiKeyResult> {
         Err(anyhow!("API keys require cloud backend"))

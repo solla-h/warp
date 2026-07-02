@@ -55,7 +55,7 @@ pub struct GqlApiKeyAgentInfo {
 /// Placeholder for the former GraphQL `ApiKeyProperties` type.
 #[derive(Debug, Clone)]
 pub struct GqlApiKeyProperties {
-    pub uid: cynic::Id,
+    pub uid: String,
     pub name: String,
     pub key_suffix: String,
     pub owner_type: OwnerType,
@@ -400,7 +400,7 @@ impl From<&GqlApiKeyProperties> for APIKeyProperties {
         };
 
         Self {
-            uid: gql_key.uid.clone().into_inner(),
+            uid: gql_key.uid.clone(),
             name: gql_key.name.clone(),
             key_suffix: gql_key.key_suffix.clone(),
             scope,
