@@ -49,13 +49,10 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 use warp_multi_agent_api as api;
 
-use genai::adapter::AdapterKind;
 use genai::chat::{
     Binary, BinarySource, CacheControl, ChatMessage, ChatOptions, ChatRequest, ChatRole,
     ChatStreamEvent, ContentPart, MessageContent, Tool as GenaiTool, ToolCall, ToolResponse,
 };
-use genai::resolver::{AuthData, Endpoint, ServiceTargetResolver};
-use genai::{Client, ModelIden, ServiceTarget, WebConfig};
 
 use crate::ai::agent::api::{RequestParams, ResponseStream};
 use crate::ai::agent::{AIAgentActionResult, AIAgentInput, RunningCommand, UserQueryMode};
@@ -89,6 +86,10 @@ use super::user_context;
 use crate::ai::agent::AIAgentContext;
 
 pub(crate) mod context;
+pub(crate) mod client;
+pub(crate) mod diagnostics;
+
+pub(crate) use client::{adapter_kind_for, normalize_endpoint_url, build_user_agent_header, map_genai_error, build_client};
 use context::{
     latest_input_context, render_lrc_request_context, render_running_command_context,
     render_running_command_id_context, render_ssh_session_block, xml_attr, xml_text,
@@ -2641,138 +2642,6 @@ fn build_tools_array(params: &RequestParams) -> Vec<GenaiTool> {
     out
 }
 
-// ---------------------------------------------------------------------------
-// Client / 路由
-// ---------------------------------------------------------------------------
-
-/// 把 `AgentProviderApiType` 一对一映射到 genai `AdapterKind`。
-pub(crate) fn adapter_kind_for(api_type: AgentProviderApiType) -> AdapterKind {
-    match api_type {
-        AgentProviderApiType::OpenAi => AdapterKind::OpenAI,
-        AgentProviderApiType::OpenAiResp => AdapterKind::OpenAIResp,
-        AgentProviderApiType::Gemini => AdapterKind::Gemini,
-        AgentProviderApiType::Anthropic => AdapterKind::Anthropic,
-        AgentProviderApiType::Ollama => AdapterKind::Ollama,
-        AgentProviderApiType::DeepSeek => AdapterKind::DeepSeek,
-    }
-}
-
-/// 规范化用户填写的 `base_url`,产出供 genai adapter 拼接 service path 的 endpoint URL。
-///
-/// genai 0.6.x 所有 adapter 都假设 endpoint 以 `/` 结尾、且已经包含版本路径段:
-/// - Anthropic:`format!("{base_url}messages")` 期望 `…/v1/`
-/// - Gemini:`format!("{base_url}models/{m}:streamGenerateContent")` 期望 `…/v1beta/`
-/// - OpenAI / OpenAIResp / DeepSeek:`Url::join("chat/completions" 或 "responses")` 期望 `…/v1/`
-/// - Ollama:`format!("{base_url}api/chat")` 期望根路径 `…/`
-///
-/// 用户实际三种填法:
-/// 1. 纯 host(`https://ai.zerx.dev`)— 早期默认行为只补尾 `/` 会拼成 `https://ai.zerx.dev/messages`
-///    漏掉 `/v1/` 导致 404。**这里按 api_type 自动追加默认版本路径段**(Anthropic/OpenAI 系→`/v1/`,
-///    Gemini→`/v1beta/`,Ollama 不补)。
-/// 2. 完整带版本路径(`https://ai.zerx.dev/v1`)— 仅补尾 `/`,不动 path。
-/// 3. 留空 — 用 [`AgentProviderApiType::default_base_url`]。
-pub(crate) fn normalize_endpoint_url(api_type: AgentProviderApiType, base_url: &str) -> String {
-    let trimmed = base_url.trim();
-    if trimmed.is_empty() {
-        return api_type.default_base_url().to_owned();
-    }
-
-    // 解析失败(用户填了畸形 URL)→ 退化到原"补尾 /"行为,让上游报错而不是这里 panic。
-    let parsed = match url::Url::parse(trimmed) {
-        Ok(u) => u,
-        Err(_) => {
-            let stripped = trimmed.trim_end_matches('/');
-            return format!("{stripped}/");
-        }
-    };
-
-    // path == "/" 或为空 → 用户只填了 host,自动补上 api_type 默认版本路径段。
-    if parsed.path() == "/" || parsed.path().is_empty() {
-        // 从 default_base_url 抽 path 部分(如 "/v1/" / "/v1beta/" / "/")。
-        let default_path = url::Url::parse(api_type.default_base_url())
-            .ok()
-            .map(|u| u.path().to_owned())
-            .unwrap_or_else(|| "/".to_owned());
-        let host_part = trimmed.trim_end_matches('/');
-        return format!("{host_part}{default_path}");
-    }
-
-    // 用户已自带 path → 仅确保尾随 `/`(genai format!/Url::join 都依赖)。
-    let stripped = trimmed.trim_end_matches('/');
-    format!("{stripped}/")
-}
-
-/// 构造 genai Client。每次请求新建(开销低 — Client 内部只是 reqwest::Client + adapter 表)。
-/// `ServiceTargetResolver` capture 当前请求的 endpoint/key/api_type 后,把每次 exec_chat_stream
-/// 都强制路由到指定 AdapterKind,完全绕过 genai 默认的"按模型名识别"。
-pub(super) fn build_client(
-    api_type: AgentProviderApiType,
-    base_url: String,
-    api_key: String,
-) -> Client {
-    let adapter_kind = adapter_kind_for(api_type);
-    let endpoint_url = normalize_endpoint_url(api_type, &base_url);
-    log::info!("[byop] build_client: adapter={adapter_kind:?} endpoint_url={endpoint_url}");
-    let key_for_resolver = api_key.clone();
-    let resolver = ServiceTargetResolver::from_resolver_fn(
-        move |service_target: ServiceTarget| -> Result<ServiceTarget, genai::resolver::Error> {
-            let ServiceTarget { model, .. } = service_target;
-            let endpoint = Endpoint::from_owned(endpoint_url.clone());
-            let auth = AuthData::from_single(key_for_resolver.clone());
-            // 用我们指定的 AdapterKind 覆盖 genai 的"按模型名"识别结果,
-            // 但保留 model_name 以便上游服务正确寻址模型。
-            let model = ModelIden::new(adapter_kind, model.model_name);
-            Ok(ServiceTarget {
-                endpoint,
-                auth,
-                model,
-            })
-        },
-    );
-
-    // Marb BYOP:SSE 流必须不带 gzip。`Accept-Encoding: gzip` 会让 nginx
-    // 类代理把响应压缩,server 必须 flush 完整 deflate frame 客户端才能解出
-    // 明文,流式语义被破坏成 ~K 字节 burst,体感"几百毫秒一卡"。zed/opencode
-    // 用 native fetch / std HTTP 不主动协商 gzip on SSE,所以同代理无问题。
-    //
-    // 这里显式构造 `WebConfig` 即使 genai default 已经 `gzip=false`(fork 修改)。
-    //
-    // User-Agent 动态绑定当前应用名(取自 `ChannelState::app_id().application_name()`,
-    // 由入口 bin 注册:`bin/oss.rs` → "Marb";其它 channel 自带各自名称)。
-    // 这样上游服务能识别请求来自哪个分支构建,后续若改名也会自动跟随。
-    let mut headers = reqwest::header::HeaderMap::new();
-    if let Ok(value) = build_user_agent_header() {
-        headers.insert(reqwest::header::USER_AGENT, value);
-    }
-    let web_config = WebConfig {
-        gzip: false,
-        default_headers: Some(headers),
-        ..WebConfig::default()
-    };
-    // TODO: proxy support not yet ported
-    Client::builder()
-        .with_web_config(web_config)
-        .with_service_target_resolver(resolver)
-        .build()
-}
-
-/// 构造 BYOP 出站请求的 `User-Agent` 头,值形如:
-/// - `Marb/<git-tag>` —— release 构建有 `GIT_RELEASE_TAG` 注入时
-/// - `Marb` —— Dev / 本地构建无版本时
-///
-/// 应用名一律从 `ChannelState::app_id().application_name()` 取,确保与入口 bin
-/// 注册的 `AppId` 一致(`bin/oss.rs` 注册 "Marb")。
-fn build_user_agent_header(
-) -> Result<reqwest::header::HeaderValue, reqwest::header::InvalidHeaderValue> {
-    let app_name = warp_core::channel::ChannelState::app_id()
-        .application_name()
-        .to_owned();
-    let ua = match warp_core::channel::ChannelState::app_version() {
-        Some(v) if !v.is_empty() => format!("{app_name}/{v}"),
-        _ => app_name,
-    };
-    reqwest::header::HeaderValue::from_str(&ua)
-}
 
 /// 判定是否给 DashScope(阿里云百炼,OpenAI 兼容路径)注入 `enable_thinking: true`。
 ///
@@ -2986,38 +2855,6 @@ fn build_chat_options(
     opts
 }
 
-fn map_genai_error(err: genai::Error) -> OpenAiCompatibleError {
-    use genai::Error as G;
-    match err {
-        // 真·解析失败:JSON 反序列化阶段
-        G::StreamParse { .. }
-        | G::SerdeJson(_)
-        | G::JsonValueExt(_)
-        | G::InvalidJsonResponseElement { .. } => OpenAiCompatibleError::Decode(format!("{err}")),
-
-        // 网络/流式发送阶段失败(reqwest 连接、TLS、DNS、超时、流中断等)
-        G::WebStream { .. } | G::WebAdapterCall { .. } | G::WebModelCall { .. } => {
-            OpenAiCompatibleError::Stream(format!("{err}"))
-        }
-
-        // 服务端返回的 HTTP 错误状态
-        G::HttpError {
-            status,
-            body,
-            canonical_reason,
-        } => OpenAiCompatibleError::Status {
-            status: status.as_u16(),
-            body: if canonical_reason.is_empty() {
-                body
-            } else {
-                format!("{canonical_reason}: {body}")
-            },
-        },
-
-        // 其余(请求构造、鉴权、能力不支持等)归为通用错误,避免误导成"解析失败"
-        other => OpenAiCompatibleError::Other(format!("{other}")),
-    }
-}
 
 // ---------------------------------------------------------------------------
 // 主流程
