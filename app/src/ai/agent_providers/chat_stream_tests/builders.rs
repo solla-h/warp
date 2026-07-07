@@ -3,11 +3,13 @@
 //! These create the minimum viable `ByopOutputInput` and `RequestParams`
 //! for testing chat_stream functions without wiring up the full app.
 
+use std::sync::Arc;
+
 use futures::channel::oneshot;
 use warp_multi_agent_api as api;
 
 use crate::ai::agent::api::RequestParams;
-use crate::ai::agent::AIAgentInput;
+use crate::ai::agent::{AIAgentInput, UserQueryMode};
 use crate::ai::agent_providers::attachment_caps::AttachmentCaps;
 use crate::ai::agent_providers::chat_stream::{ByopOutputInput, TitleGenInput};
 use crate::settings::{AgentProviderApiType, ReasoningEffortSetting};
@@ -130,8 +132,10 @@ pub fn minimal_request_params_with_user_message(msg: &str) -> RequestParams {
         messages: vec![api::Message {
             id: "msg-user-1".to_string(),
             task_id: "test-task-1".to_string(),
-            r#type: api::MessageType::UserQuery,
-            content: Some(api::MessageContent::Text(msg.to_string())),
+            message: Some(api::message::Message::UserQuery(api::message::UserQuery {
+                query: msg.to_string(),
+                ..Default::default()
+            })),
             ..Default::default()
         }],
         ..Default::default()
@@ -139,9 +143,12 @@ pub fn minimal_request_params_with_user_message(msg: &str) -> RequestParams {
 
     let input = vec![AIAgentInput::UserQuery {
         query: msg.to_string(),
-        mode: crate::ai::agent::UserQueryMode::Agent,
-        request_id: "req-1".to_string(),
-        binaries: Vec::new(),
+        context: Arc::from(vec![]),
+        static_query_type: None,
+        referenced_attachments: Default::default(),
+        user_query_mode: UserQueryMode::Normal,
+        running_command: None,
+        intended_agent: None,
     }];
 
     RequestParams::new_for_test(input, vec![task])

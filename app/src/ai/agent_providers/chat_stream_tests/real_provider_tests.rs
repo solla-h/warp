@@ -6,10 +6,10 @@
 //!   - Run explicitly with: `cargo nextest run -- --ignored`
 //!
 //! Configuration (env vars):
-//!   BYOP_TEST_BASE_URL  — default: "https://ds-api.xnurta.com/"
-//!   BYOP_TEST_API_KEY   — required (no default)
-//!   BYOP_TEST_MODEL     — default: "claude-opus-4-8"
-//!   BYOP_TEST_API_TYPE  — default: "Anthropic"
+//!   BYOP_TEST_BASE_URL  -- default: "https://ds-api.xnurta.com/"
+//!   BYOP_TEST_API_KEY   -- required (no default)
+//!   BYOP_TEST_MODEL     -- default: "claude-opus-4-8"
+//!   BYOP_TEST_API_TYPE  -- default: "Anthropic"
 
 use std::time::Instant;
 
@@ -40,7 +40,7 @@ async fn test_real_provider_simple_text() {
     assertions::assert_stream_done(&collected);
     assertions::assert_has_text_content(&collected);
     assert!(
-        collected.text_content.len() > 0,
+        !collected.text_content.is_empty(),
         "Expected non-empty text response from real provider"
     );
     eprintln!(
@@ -89,7 +89,7 @@ async fn test_real_provider_streaming_is_incremental() {
 
     assert!(
         ratio < 0.5,
-        "First event arrived at {:.0}% of total time — response may be buffered, not streamed",
+        "First event arrived at {:.0}% of total time -- response may be buffered, not streamed",
         ratio * 100.0
     );
 }
@@ -109,23 +109,19 @@ async fn test_real_provider_has_usage_metadata() {
     let collected = CollectedStream::collect_from(stream).await;
 
     assertions::assert_stream_done(&collected);
+    // Token usage is reported per-model in the StreamFinished event.
     assert!(
-        collected.usage.is_some(),
-        "Expected usage metadata in StreamFinished event"
+        !collected.token_usage.is_empty(),
+        "Expected token_usage in StreamFinished event"
     );
 
-    if let Some(usage) = &collected.usage {
-        eprintln!(
-            "[real_provider] Usage: input={}, output={}",
-            usage.input_tokens.unwrap_or(0),
-            usage.output_tokens.unwrap_or(0)
-        );
-        // At minimum, output_tokens should be > 0 for a non-empty response
-        assert!(
-            usage.output_tokens.unwrap_or(0) > 0,
-            "Expected output_tokens > 0"
-        );
-    }
+    let first = &collected.token_usage[0];
+    eprintln!(
+        "[real_provider] Usage: input={}, output={}",
+        first.total_input, first.output,
+    );
+    // At minimum, output tokens should be > 0 for a non-empty response
+    assert!(first.output > 0, "Expected output tokens > 0");
 }
 
 #[tokio::test]
@@ -160,6 +156,6 @@ async fn test_real_provider_event_order_correct() {
 
     let collected = CollectedStream::collect_from(stream).await;
 
-    // Verify fundamental event ordering: init → create_task → text → done
+    // Verify fundamental event ordering: init -> create_task -> text -> done
     assertions::assert_event_order(&collected, &["init", "create_task", "*", "done"]);
 }

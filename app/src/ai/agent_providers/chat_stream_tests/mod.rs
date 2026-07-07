@@ -7,15 +7,13 @@
 //! - Stream collector utilities
 //! - Real provider integration tests (gated by env vars)
 
-// TODO: Enable these modules once type paths are fixed
-// pub mod assertions;
-// pub mod builders;
-// pub mod fixtures;
-// pub mod stream_collector;
-// pub mod yakbak_harness;
+pub mod assertions;
+pub mod builders;
+pub mod stream_collector;
+pub mod yakbak_harness;
 
 #[cfg(test)]
 mod context_tests;
 
-// #[cfg(test)]
-// pub mod real_provider_tests;
+#[cfg(test)]
+pub mod real_provider_tests;
