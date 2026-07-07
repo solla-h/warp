@@ -12,4 +12,6 @@ mod client_tests;
 #[cfg(test)]
 mod diagnostics_tests;
 #[cfg(test)]
+mod serialization_tests;
+#[cfg(test)]
 pub mod real_provider_tests;
