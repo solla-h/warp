@@ -19,3 +19,7 @@ mod options_tests;
 mod events_tests;
 #[cfg(test)]
 pub mod real_provider_tests;
+#[cfg(test)]
+mod repair_tests;
+#[cfg(test)]
+mod title_tests;

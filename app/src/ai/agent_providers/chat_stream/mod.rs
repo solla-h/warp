@@ -91,6 +91,8 @@ pub(crate) mod diagnostics;
 pub(crate) mod events;
 pub(crate) mod options;
 pub(crate) mod serialization;
+pub(crate) mod repair;
+pub(crate) mod title;
 
 pub(crate) use client::{adapter_kind_for, normalize_endpoint_url, build_user_agent_header, map_genai_error, build_client};
 use context::{
@@ -118,6 +120,12 @@ use events::{
     make_tool_call_carrier_message, make_tool_call_message, create_task_event,
     create_subtask_event, make_finished_done,
 };
+use repair::{
+    is_placeholder_tool_response_content, repair_placeholder_content,
+    repair_tool_call_pairs_for_accepted_history_gaps, should_replace_tool_response,
+    REPAIR_PLACEHOLDER_NOTE,
+};
+pub(crate) use title::{generate_title_via_byop, sanitize_title, TitleGenInput};
 
 struct SerializerProjectionBuilder {
     items: Vec<ProjectionItem>,
@@ -1275,44 +1283,6 @@ fn build_chat_request(
 }
 
 const BYOP_DIAG_SNIPPET_CHARS: usize = 240;
-const REPAIR_PLACEHOLDER_NOTE: &str =
-    "tool result was unavailable in repaired conversation history";
-
-fn is_placeholder_tool_response_content(content: &str) -> bool {
-    if content == "(tool 执行结果未保留)" {
-        return true;
-    }
-
-    let Ok(Value::Object(object)) = serde_json::from_str::<Value>(content) else {
-        return false;
-    };
-
-    object.len() == 3
-        && object.get("status").and_then(Value::as_str) == Some("unavailable")
-        && matches!(
-            object.get("reason").and_then(Value::as_str),
-            Some("forked_history_repair" | "restored_legacy_history_repair")
-        )
-        && object.get("note").and_then(Value::as_str) == Some(REPAIR_PLACEHOLDER_NOTE)
-}
-
-fn insert_preferred_tool_response(
-    responses_by_call_id: &mut HashMap<String, ToolResponse>,
-    response: &ToolResponse,
-) {
-    let should_replace = match responses_by_call_id.get(&response.call_id) {
-        None => true,
-        Some(existing) => should_replace_tool_response(existing, response),
-    };
-    if should_replace {
-        responses_by_call_id.insert(response.call_id.clone(), response.clone());
-    }
-}
-
-fn should_replace_tool_response(existing: &ToolResponse, candidate: &ToolResponse) -> bool {
-    is_placeholder_tool_response_content(&existing.content)
-        || !is_placeholder_tool_response_content(&candidate.content)
-}
 
 fn snippet_for_log(s: &str, max_chars: usize) -> String {
     use std::fmt::Write as _;
@@ -1609,182 +1579,6 @@ fn log_chat_request_details(
     }
 }
 
-/// 仅在 serializer 已判定为 `AcceptedHistoryRepair` 后运行:把被 RepairRecord
-/// 明确授权的历史缺口转换为 outbound-only 结构化 ToolResponse。
-///
-/// 普通缺失、重复、孤儿或跨边界乱序已经在 readiness validation 阶段阻断;
-/// 这里不再为 normal flow 生成占位结果,也不写回 conversation history。
-fn repair_tool_call_pairs_for_accepted_history_gaps(
-    messages: &mut Vec<ChatMessage>,
-    repairs: &[AcceptedRepair],
-    outbound_tool_groups: &[OutboundAssistantToolGroup],
-) -> Result<(), ConvertToAPITypeError> {
-    use std::collections::{HashMap, HashSet};
-
-    if repairs.is_empty() {
-        return Ok(());
-    }
-
-    let repair_by_key: HashMap<ToolCallKey, &AcceptedRepair> = repairs
-        .iter()
-        .map(|repair| (repair.tool_call.key.clone(), repair))
-        .collect();
-    let group_by_message_index: HashMap<usize, &OutboundAssistantToolGroup> = outbound_tool_groups
-        .iter()
-        .map(|group| (group.message_index, group))
-        .collect();
-    let mut call_id_counts: HashMap<String, usize> = HashMap::new();
-    for group in outbound_tool_groups {
-        for key in &group.tool_call_keys {
-            *call_id_counts.entry(key.tool_call_id.clone()).or_default() += 1;
-        }
-    }
-    let mut placeholders_inserted: Vec<String> = Vec::new();
-    let mut orphan_call_ids: Vec<String> = Vec::new();
-    let mut missing_without_repair: Vec<String> = Vec::new();
-
-    let original = std::mem::take(messages);
-    let mut late_responses_by_unique_call_id: HashMap<String, ToolResponse> = HashMap::new();
-    let mut late_response_call_ids: HashSet<String> = HashSet::new();
-    for (idx, msg) in original.iter().enumerate() {
-        if msg.role != genai::chat::ChatRole::Tool {
-            continue;
-        }
-
-        let is_adjacent_to_group =
-            idx > 0 && group_by_message_index.contains_key(&(idx.saturating_sub(1)));
-        if is_adjacent_to_group {
-            continue;
-        }
-
-        for resp in msg.content.tool_responses() {
-            if call_id_counts.get(&resp.call_id) == Some(&1) {
-                insert_preferred_tool_response(&mut late_responses_by_unique_call_id, resp);
-                late_response_call_ids.insert(resp.call_id.clone());
-            }
-        }
-    }
-
-    let mut rewritten: Vec<ChatMessage> = Vec::with_capacity(original.len());
-    let mut idx = 0;
-    while idx < original.len() {
-        let msg = original[idx].clone();
-        if msg.role == genai::chat::ChatRole::Tool {
-            orphan_call_ids.extend(
-                msg.content
-                    .tool_responses()
-                    .iter()
-                    .filter(|response| !late_response_call_ids.contains(&response.call_id))
-                    .map(|response| response.call_id.clone()),
-            );
-            idx += 1;
-            continue;
-        }
-
-        let Some(group) = group_by_message_index.get(&idx).copied() else {
-            rewritten.push(msg);
-            idx += 1;
-            continue;
-        };
-
-        rewritten.push(msg);
-        idx += 1;
-
-        let mut responses_by_call_id: HashMap<String, ToolResponse> = HashMap::new();
-        while idx < original.len() && original[idx].role == genai::chat::ChatRole::Tool {
-            for resp in original[idx].content.tool_responses() {
-                insert_preferred_tool_response(&mut responses_by_call_id, resp);
-            }
-            idx += 1;
-        }
-
-        let mut bundled: Vec<ToolResponse> = Vec::new();
-        for key in &group.tool_call_keys {
-            let cid = &key.tool_call_id;
-            let mut response = responses_by_call_id.remove(cid);
-            if call_id_counts.get(cid) == Some(&1) {
-                if let Some(late_response) = late_responses_by_unique_call_id.remove(cid) {
-                    response = match response {
-                        Some(existing)
-                            if !should_replace_tool_response(&existing, &late_response) =>
-                        {
-                            Some(existing)
-                        }
-                        _ => Some(late_response),
-                    };
-                }
-            }
-
-            match response {
-                Some(resp) => bundled.push(resp),
-                None => {
-                    if let Some(repair) = repair_by_key.get(key) {
-                        placeholders_inserted.push(cid.clone());
-                        bundled.push(ToolResponse::new(
-                            cid.clone(),
-                            repair_placeholder_content(repair.record.source),
-                        ));
-                    } else {
-                        missing_without_repair.push(cid.clone());
-                    }
-                }
-            }
-        }
-
-        if !bundled.is_empty() {
-            rewritten.push(ChatMessage::from(bundled));
-        }
-
-        if !responses_by_call_id.is_empty() {
-            orphan_call_ids.extend(responses_by_call_id.into_keys());
-        }
-    }
-
-    *messages = rewritten;
-
-    if !orphan_call_ids.is_empty() {
-        log::warn!(
-            "[byop-diag] accepted_history_repair: 丢弃 {} 个孤儿 ToolResponse: \
-             orphan_call_ids={:?}",
-            orphan_call_ids.len(),
-            orphan_call_ids
-        );
-    }
-    if !placeholders_inserted.is_empty() {
-        log::info!(
-            "[byop-diag] accepted_history_repair: 给 {} 个 ToolCall 补 repair placeholder \
-             ToolResponse: missing_call_ids={:?}",
-            placeholders_inserted.len(),
-            placeholders_inserted
-        );
-    }
-    if !missing_without_repair.is_empty() {
-        // readiness classifier 已判定 AcceptedHistoryRepair 时,每个 missing tool call 都应
-        // 在 repairs 中有对应授权;若到这里仍 missing,说明 classifier 与 serializer 的
-        // tool call key 来源出现了不一致(例如未来重构 projection 或 outbound_tool_groups 构建逻辑
-        // 引入差异)。此时不能继续发出缺失 ToolResponse 的非法请求,必须阻断。
-        log::error!(
-            "[byop-diag] accepted_history_repair: readiness 未授权的缺失 ToolResponse: \
-             missing_call_ids={:?}",
-            missing_without_repair
-        );
-        return Err(ConvertToAPITypeError::Other(
-            BlockedByopReadinessError::new(ReadinessCategory::MissingResultWithoutRepairSource)
-                .into(),
-        ));
-    }
-    Ok(())
-}
-
-fn repair_placeholder_content(source: RepairSource) -> String {
-    json!({
-        "status": "unavailable",
-        "reason": source.placeholder_reason(),
-        "note": REPAIR_PLACEHOLDER_NOTE,
-    })
-    .to_string()
-}
-
 /// 兜底:确保 messages 末尾是 user(或 tool 响应)。
 ///
 /// 触发场景:`AIAgentInput::ResumeConversation` 不附加新 user 消息,直接重发历史。
@@ -1808,16 +1602,6 @@ fn ensure_ends_with_user(messages: &mut Vec<ChatMessage>) {
 // ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
-
-/// 标题生成所需的 BYOP 配置。可能与主请求同 provider 也可能不同(用户在 Profile
-/// Editor 里独立选了 title_model)。
-pub struct TitleGenInput {
-    pub base_url: String,
-    pub api_key: String,
-    pub model_id: String,
-    pub api_type: AgentProviderApiType,
-    pub reasoning_effort: crate::settings::ReasoningEffortSetting,
-}
 
 pub struct ByopOutputInput {
     pub params: RequestParams,
@@ -2993,151 +2777,6 @@ pub async fn generate_byop_output(
     };
 
     Ok(Box::pin(stream))
-}
-
-/// 用独立 BYOP 配置发一个短的非工具请求,让模型对首条 user query 生成会话标题。
-/// 所有错误吞掉(返回 Err 让上游打 warn log,不影响主流程)。
-///
-/// 实现委托给 `oneshot::byop_oneshot_streaming_completion`,这里只负责拼 prompt 和清洗输出。
-///
-/// ## prompt 设计
-///
-/// - **system**: 见 `prompts/tasks/title_system.md`,结构化 task/rules/examples,
-///   覆盖中英双语示例,显式禁止 "回答用户问题 / 拒绝 / 加引号"。
-/// - **user**: 把原始 `user_query` 包在 `<user>...</user>` 里,前置一句明确的
-///   "Generate a title for this conversation:",避免弱模型把 user 当主指令直接答复
-///   (典型坏 case:user="你是谁" → 模型答"我是 Claude"被当作标题)。
-/// - **temperature**: 0.3 — opencode title agent 用 0.5,这里更保守,降低跑题。
-pub(crate) async fn generate_title_via_byop(
-    tg: &TitleGenInput,
-    user_query: &str,
-) -> Result<Option<String>, anyhow::Error> {
-    let cfg = super::oneshot::OneshotConfig {
-        base_url: tg.base_url.clone(),
-        api_key: tg.api_key.clone(),
-        model_id: tg.model_id.clone(),
-        api_type: tg.api_type,
-        reasoning_effort: tg.reasoning_effort,
-    };
-    let system = include_str!("../prompts/tasks/title_system.md");
-    let user_prompt = format!(
-        "Generate a title for this conversation:\n<user>{}</user>",
-        user_query
-    );
-    let opts = super::oneshot::OneshotOptions {
-        max_chars: Some(1000),
-        temperature: Some(0.5),
-        ..Default::default()
-    };
-    let raw = super::oneshot::byop_oneshot_completion(&cfg, system, &user_prompt, &opts).await?;
-    Ok(sanitize_title(&raw))
-}
-
-/// 清洗 title 文本。空字符串 → None(让上游跳过 emit)。
-///
-/// 处理顺序:
-/// 1. 剥 `<think>...</think>` / `<reasoning>...</reasoning>` 思考块(reasoning 模型常见前缀)。
-/// 2. 取首行非空内容(模型常前置"好的,标题是:"再换行给标题)。
-/// 3. 剥 `Title:` / `标题:` / `Thread:` / `Subject:` 等前缀(大小写不敏感)。
-/// 4. 剥首尾引号 / 反引号(中英文)。
-/// 5. 去尾标点。
-/// 6. 50 字符截断(按 char,保护 CJK),超过则尾部加 `…`。
-fn sanitize_title(raw: &str) -> Option<String> {
-    // 1. 剥 reasoning 标签(可能有多个,DOTALL 模式)。
-    let mut s = raw.to_owned();
-    for tag in &["think", "reasoning", "thought", "scratchpad"] {
-        let open = format!("<{}>", tag);
-        let close = format!("</{}>", tag);
-        while let (Some(start), Some(end_rel)) =
-            (s.find(&open), s.find(&close).map(|e| e + close.len()))
-        {
-            if end_rel <= start {
-                break;
-            }
-            s.replace_range(start..end_rel, "");
-        }
-    }
-
-    // 2. 取首行非空。
-    let first_line = s
-        .lines()
-        .map(|l| l.trim())
-        .find(|l| !l.is_empty())
-        .unwrap_or("")
-        .to_owned();
-    let mut s = first_line;
-
-    // 3. 剥前缀(循环剥,处理 "Title: 标题: foo" 这类双前缀)。
-    let prefixes = [
-        "title:",
-        "subject:",
-        "thread:",
-        "标题:",
-        "标题：",
-        "主题:",
-        "主题：",
-    ];
-    loop {
-        let lower = s.to_lowercase();
-        let mut stripped = false;
-        for p in &prefixes {
-            if lower.starts_with(p) {
-                s = s[p.len()..].trim_start().to_owned();
-                stripped = true;
-                break;
-            }
-        }
-        if !stripped {
-            break;
-        }
-    }
-
-    // 4. 剥首尾引号(中英文)。
-    let quotes = ['"', '\'', '`', '“', '”', '‘', '’', '《', '》', '「', '」'];
-    while let Some(c) = s.chars().next() {
-        if quotes.contains(&c) {
-            s.remove(0);
-        } else {
-            break;
-        }
-    }
-    while let Some(c) = s.chars().last() {
-        if quotes.contains(&c) {
-            let new_len = s.len() - c.len_utf8();
-            s.truncate(new_len);
-        } else {
-            break;
-        }
-    }
-
-    // 5. 去尾标点。
-    while let Some(c) = s.chars().last() {
-        if matches!(
-            c,
-            '.' | '。' | '!' | '！' | '?' | '？' | ',' | '，' | ';' | '；' | ':' | '：'
-        ) {
-            let new_len = s.len() - c.len_utf8();
-            s.truncate(new_len);
-        } else {
-            break;
-        }
-    }
-
-    let s = s.trim().to_owned();
-    if s.is_empty() {
-        return None;
-    }
-
-    // 6. 50 字符截断(按 char,保护 CJK)。超长加省略号。
-    const MAX_CHARS: usize = 50;
-    let chars: Vec<char> = s.chars().collect();
-    if chars.len() > MAX_CHARS {
-        let mut truncated: String = chars.iter().take(MAX_CHARS - 1).collect();
-        truncated.push('…');
-        Some(truncated)
-    } else {
-        Some(s)
-    }
 }
 
 /// BYOP web tool local dispatcher (webfetch / websearch).
