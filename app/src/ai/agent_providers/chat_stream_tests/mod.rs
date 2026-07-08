@@ -25,3 +25,5 @@ mod readiness_tests;
 mod repair_tests;
 #[cfg(test)]
 mod title_tests;
+#[cfg(test)]
+mod e2e_tests;

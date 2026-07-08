@@ -118,9 +118,16 @@ impl CollectedStream {
                         }
                         Some(api::client_action::Action::AddMessagesToTask(add)) => {
                             for msg in &add.messages {
-                                if matches!(&msg.message, Some(api::message::Message::ToolCall(_)))
-                                {
-                                    self.tool_calls.push(msg.clone());
+                                match &msg.message {
+                                    Some(api::message::Message::ToolCall(_)) => {
+                                        self.tool_calls.push(msg.clone());
+                                    }
+                                    Some(api::message::Message::AgentOutput(out)) => {
+                                        if !out.text.is_empty() {
+                                            self.text_content.push_str(&out.text);
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
                         }
