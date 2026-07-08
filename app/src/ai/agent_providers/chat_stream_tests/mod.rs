@@ -16,4 +16,6 @@ mod serialization_tests;
 #[cfg(test)]
 mod options_tests;
 #[cfg(test)]
+mod events_tests;
+#[cfg(test)]
 pub mod real_provider_tests;

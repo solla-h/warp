@@ -88,6 +88,7 @@ use crate::ai::agent::AIAgentContext;
 pub(crate) mod context;
 pub(crate) mod client;
 pub(crate) mod diagnostics;
+pub(crate) mod events;
 pub(crate) mod options;
 pub(crate) mod serialization;
 
@@ -107,6 +108,15 @@ pub use options::available_tool_names;
 use options::{
     apply_caching_anthropic, build_chat_options, build_tools_array, dashscope_needs_enable_thinking,
     is_plan_mode_turn, PLAN_MODE_BLOCKED_TOOLS,
+};
+use events::{
+    make_add_messages_event, make_update_message_event, make_append_event, AppendKind,
+    make_reasoning_message, make_agent_output_message, make_user_query_message,
+    make_web_search_searching_message, extract_search_pages_from_exa_results,
+    make_web_search_status_from_result, make_web_fetch_fetching_message,
+    make_web_fetch_status_from_result, make_tool_call_result_message,
+    make_tool_call_carrier_message, make_tool_call_message, create_task_event,
+    create_subtask_event, make_finished_done,
 };
 
 struct SerializerProjectionBuilder {
@@ -3130,108 +3140,9 @@ fn sanitize_title(raw: &str) -> Option<String> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Event 构造辅助
-// ---------------------------------------------------------------------------
-
-enum AppendKind {
-    Reasoning(String),
-    Text(String),
-}
-
-fn make_add_messages_event(task_id: &str, messages: Vec<api::Message>) -> api::ResponseEvent {
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::ClientActions(
-            api::response_event::ClientActions {
-                actions: vec![api::ClientAction {
-                    action: Some(api::client_action::Action::AddMessagesToTask(
-                        api::client_action::AddMessagesToTask {
-                            task_id: task_id.to_owned(),
-                            messages,
-                        },
-                    )),
-                }],
-            },
-        )),
-    }
-}
-
-/// 用 `UpdateTaskMessage` + FieldMask 替换已有 message 的部分字段。controller
-/// `conversation::Action::UpdateTaskMessage` → `task::upsert_message` →
-/// `FieldMaskOperation::update` 原地合并,id 已存在则不会 push 重复记录。
-/// 用于 BYOP web 工具 loading → success/error 状态切换(见拦截分支)。
-fn make_update_message_event(
-    task_id: &str,
-    message: api::Message,
-    mask_paths: Vec<String>,
-) -> api::ResponseEvent {
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::ClientActions(
-            api::response_event::ClientActions {
-                actions: vec![api::ClientAction {
-                    action: Some(api::client_action::Action::UpdateTaskMessage(
-                        api::client_action::UpdateTaskMessage {
-                            task_id: task_id.to_owned(),
-                            message: Some(message),
-                            mask: Some(prost_types::FieldMask { paths: mask_paths }),
-                        },
-                    )),
-                }],
-            },
-        )),
-    }
-}
-
-fn make_append_event(task_id: &str, message_id: &str, kind: AppendKind) -> api::ResponseEvent {
-    let (msg_inner, mask_path) = match kind {
-        AppendKind::Reasoning(r) => (
-            api::message::Message::AgentReasoning(api::message::AgentReasoning {
-                reasoning: r,
-                finished_duration: None,
-            }),
-            "agent_reasoning.reasoning",
-        ),
-        AppendKind::Text(t) => (
-            api::message::Message::AgentOutput(api::message::AgentOutput { text: t }),
-            "agent_output.text",
-        ),
-    };
-    let message = api::Message {
-        id: message_id.to_owned(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(msg_inner),
-        request_id: String::new(),
-        timestamp: None,
-    };
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::ClientActions(
-            api::response_event::ClientActions {
-                actions: vec![api::ClientAction {
-                    action: Some(api::client_action::Action::AppendToMessageContent(
-                        api::client_action::AppendToMessageContent {
-                            task_id: task_id.to_owned(),
-                            message: Some(message),
-                            mask: Some(prost_types::FieldMask {
-                                paths: vec![mask_path.to_owned()],
-                            }),
-                        },
-                    )),
-                }],
-            },
-        )),
-    }
-}
-
-/// BYOP web 工具(`webfetch` / `websearch`)的本地分发器。
-///
-/// 不通过 protobuf executor —— 直接在本地用 reqwest 跑 HTTP,把结构化结果
-/// 序列化成 JSON Value 给上游 LLM。错误也序列化成 `{status:"error", ...}`,
-/// 让模型看到标准 tool_result。
+/// BYOP web tool local dispatcher (webfetch / websearch).
 async fn dispatch_byop_web_tool(tool_name: &str, args_str: &str) -> Value {
     use tools::web_runtime;
-    // 为 webfetch 构建带 SSRF 防护的 client：自定义重定向策略会校验每一跳目标。
     let client = match web_runtime::build_ssrf_safe_client() {
         Ok(c) => c,
         Err(e) => {
@@ -3254,7 +3165,6 @@ async fn dispatch_byop_web_tool(tool_name: &str, args_str: &str) -> Value {
             ),
         }
     } else {
-        // websearch
         match serde_json::from_str::<web_runtime::SearchToolArgs>(args_str) {
             Ok(args) => {
                 let api_key = std::env::var("EXA_API_KEY").ok();
@@ -3278,8 +3188,6 @@ fn parse_incoming_tool_call(
     call: &ToolCall,
     mcp_ctx: Option<&crate::ai::agent::MCPContext>,
 ) -> anyhow::Result<api::message::tool_call::Tool> {
-    // genai ToolCall.fn_arguments 是 Value;tools::* 的 from_args 期望 &str,
-    // 把 Value 序列化回字符串后传入(原协议就是字符串 JSON)。
     let args_str = if call.fn_arguments.is_string() {
         call.fn_arguments.as_str().unwrap_or("").to_owned()
     } else {
@@ -3294,8 +3202,6 @@ fn parse_incoming_tool_call(
     match (tool.from_args)(&args_str) {
         Ok(t) => Ok(t),
         Err(e) => {
-            // 第一次失败:大概率是模型把 bool/数字/数组 序列化成了字符串。
-            // 拿工具自身的 schema 跑一次类型 coerce,再 retry。
             let schema = (tool.parameters)();
             if let Some(coerced) = tools::coerce::coerce_args_against_schema(&args_str, &schema) {
                 match (tool.from_args)(&coerced) {
@@ -3315,448 +3221,12 @@ fn parse_incoming_tool_call(
                     }
                 }
             }
-            // 诊断:解析失败时把 from_args 实际拿到的字符串原样打出来,
-            // 配合上层 [byop] tool_call_in 的 args= 行可以判断:
-            //   1. 是否模型出参类型错(bool→"true" / 数字→"1" 等)
-            //   2. 是否 genai Value→string 转换中 escape 出问题
-            //   3. 是否 fn_arguments 整段被字符串化(应该 object 却是 string)
             log::warn!(
                 "[byop] from_args failed: tool={} err={e:#} args_str={args_str}",
                 call.fn_name
             );
             Err(e)
         }
-    }
-}
-
-fn make_reasoning_message(task_id: &str, request_id: &str, reasoning: String) -> api::Message {
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::AgentReasoning(
-            api::message::AgentReasoning {
-                reasoning,
-                finished_duration: None,
-            },
-        )),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-fn make_agent_output_message(task_id: &str, request_id: &str, text: String) -> api::Message {
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::AgentOutput(
-            api::message::AgentOutput { text },
-        )),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-fn make_user_query_message(
-    task_id: &str,
-    request_id: &str,
-    query: String,
-    binaries: &[user_context::UserBinary],
-) -> api::Message {
-    // Marb:把 multimodal binary(image / pdf / audio 等)写进 `UserQuery.context.images`
-    // (InputContext 字段,proto Image 实际是 `bytes data + string mime_type` 通用容器,
-    // 字段名叫 images 历史原因)。UserBinary.data 是 base64 字符串,proto.data 是 raw bytes,
-    // 这里 decode 一次;decode 失败的条目跳过,不阻塞模型流(decode 失败本来就意味着这条
-    // 当轮也没真送上游,丢就丢了,不影响 history 一致性)。
-    let proto_binaries: Vec<api::input_context::Image> = binaries
-        .iter()
-        .filter_map(|b| {
-            use base64::Engine;
-            base64::engine::general_purpose::STANDARD
-                .decode(&b.data)
-                .ok()
-                .map(|bytes| api::input_context::Image {
-                    data: bytes,
-                    mime_type: b.content_type.clone(),
-                })
-        })
-        .collect();
-    let context = if proto_binaries.is_empty() {
-        None
-    } else {
-        Some(api::InputContext {
-            images: proto_binaries,
-            ..Default::default()
-        })
-    };
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::UserQuery(api::message::UserQuery {
-            query,
-            context,
-            ..Default::default()
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-/// BYOP 拦截 websearch 时,emit `Message::WebSearch(Searching{query})`,UI 据此渲染
-/// "Searching the web for \"query\"" loading 卡(`inline_action::web_search`)。
-fn make_web_search_searching_message(
-    task_id: &str,
-    request_id: &str,
-    query: String,
-) -> api::Message {
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::WebSearch(api::message::WebSearch {
-            status: Some(api::message::web_search::Status {
-                r#type: Some(api::message::web_search::status::Type::Searching(
-                    api::message::web_search::status::Searching { query },
-                )),
-            }),
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-/// 从 exa MCP 返回的 results 字符串里抽 (url, title)。
-///
-/// 实际格式是行式 metadata block,以 `---` 分隔多条结果:
-/// ```
-/// Title: Announcing Rust 1.95.0 | Rust Blog
-/// URL: https://blog.rust-lang.org/2026/04/16/Rust-1.95.0/
-/// Published: 2026-04-16T00:00:00.000Z
-/// Author: N/A
-/// Highlights:
-/// ...
-/// ---
-/// Title: ...
-/// ```
-/// 扫到 `Title: X` 缓存 candidate,紧随的第一条 `URL: Y` 配对成 (Y, X) 入列,去重。
-/// 兼容兜底:也扫 `[title](url)` markdown link 形式(若 exa 模板未来切换)。
-fn extract_search_pages_from_exa_results(s: &str) -> Vec<(String, String)> {
-    let mut pages = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-
-    // 路线 1:Title:/URL: 行式
-    let mut current_title: Option<String> = None;
-    for line in s.lines() {
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix("Title:") {
-            current_title = Some(rest.trim().to_owned());
-        } else if let Some(rest) = trimmed.strip_prefix("URL:") {
-            let url = rest.trim().to_owned();
-            let title = current_title.take().unwrap_or_default();
-            if (url.starts_with("http://") || url.starts_with("https://"))
-                && seen.insert(url.clone())
-            {
-                pages.push((url, title));
-            }
-        }
-    }
-
-    // 路线 2:markdown link `[title](url)` 兜底(去重已生效,不会重复)
-    let bytes = s.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'[' {
-            if let Some(rel_close_text) = s[i + 1..].find("](") {
-                let text_end = i + 1 + rel_close_text;
-                let url_start = text_end + 2;
-                if let Some(rel_close_url) = s[url_start..].find(')') {
-                    let url_end = url_start + rel_close_url;
-                    let title = s[i + 1..text_end].trim().to_owned();
-                    let url = s[url_start..url_end].trim().to_owned();
-                    if (url.starts_with("http://") || url.starts_with("https://"))
-                        && seen.insert(url.clone())
-                    {
-                        pages.push((url, title));
-                    }
-                    i = url_end + 1;
-                    continue;
-                }
-            }
-        }
-        i += 1;
-    }
-
-    pages
-}
-
-/// BYOP websearch 完成后,根据 `result_json` 决定 Success / Error 状态。
-///
-/// `pages` 从 `result_json["results"]` 这段 exa 拼好的 markdown 里扫 `[title](url)` 抽。
-fn make_web_search_status_from_result(
-    task_id: &str,
-    request_id: &str,
-    query: &str,
-    result_json: &Value,
-) -> api::Message {
-    let is_error = result_json.get("status").and_then(|v| v.as_str()) == Some("error");
-    let r#type = if is_error {
-        api::message::web_search::status::Type::Error(())
-    } else {
-        let pages = result_json
-            .get("results")
-            .and_then(|v| v.as_str())
-            .map(extract_search_pages_from_exa_results)
-            .unwrap_or_default()
-            .into_iter()
-            .map(
-                |(url, title)| api::message::web_search::status::success::SearchedPage {
-                    url,
-                    title,
-                },
-            )
-            .collect();
-        api::message::web_search::status::Type::Success(api::message::web_search::status::Success {
-            query: query.to_owned(),
-            pages,
-        })
-    };
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::WebSearch(api::message::WebSearch {
-            status: Some(api::message::web_search::Status {
-                r#type: Some(r#type),
-            }),
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-/// BYOP 拦截 webfetch 时,emit `Message::WebFetch(Fetching{urls})`,UI 据此渲染
-/// "Fetching N URLs" loading 卡(`inline_action::web_fetch`)。
-fn make_web_fetch_fetching_message(
-    task_id: &str,
-    request_id: &str,
-    urls: Vec<String>,
-) -> api::Message {
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::WebFetch(api::message::WebFetch {
-            status: Some(api::message::web_fetch::Status {
-                r#type: Some(api::message::web_fetch::status::Type::Fetching(
-                    api::message::web_fetch::status::Fetching { urls },
-                )),
-            }),
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-/// BYOP webfetch 完成后,从 `FetchOutput` JSON 抽 `url` + HTTP `status` 组装 Success
-/// 卡;status="error" 走 Error 卡。
-fn make_web_fetch_status_from_result(
-    task_id: &str,
-    request_id: &str,
-    fallback_urls: &[String],
-    result_json: &Value,
-) -> api::Message {
-    let is_error = result_json.get("status").and_then(|v| v.as_str()) == Some("error");
-    let r#type = if is_error {
-        api::message::web_fetch::status::Type::Error(())
-    } else {
-        let url = result_json
-            .get("url")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned())
-            .unwrap_or_else(|| fallback_urls.first().cloned().unwrap_or_default());
-        // FetchOutput.status 是 HTTP 状态码,2xx 算 success。
-        let success = result_json
-            .get("status")
-            .and_then(|v| v.as_u64())
-            .map(|c| (200..300).contains(&c))
-            .unwrap_or(true);
-        api::message::web_fetch::status::Type::Success(api::message::web_fetch::status::Success {
-            pages: vec![api::message::web_fetch::status::success::FetchedPage {
-                url,
-                title: String::new(),
-                success,
-            }],
-        })
-    };
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::WebFetch(api::message::WebFetch {
-            status: Some(api::message::web_fetch::Status {
-                r#type: Some(r#type),
-            }),
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-fn make_tool_call_result_message(
-    task_id: &str,
-    request_id: &str,
-    tool_call_id: String,
-    content: String,
-) -> api::Message {
-    // ToolCallResult 持久化:warp protobuf 的 `tool_call_result.result` oneof 都是
-    // 结构化 variant(RunShellCommand / Grep / ReadFiles / ...),没有通用的字符串
-    // 兜底 variant。BYOP 已经在 chat_stream 自己把 result 序列化为 JSON 字符串,
-    // 不再需要按 warp 协议结构化 — 直接把字符串存到 `server_message_data` 这个
-    // 自由字符串字段,并把 `result` oneof 留 None。下一轮 build_chat_request 在
-    // `Message::ToolCallResult` 分支需要特判:result=None 时从 server_message_data
-    // 读 content(否则走 tools::serialize_result 反序列化结构化 variant)。
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: content,
-        citations: vec![],
-        message: Some(api::message::Message::ToolCallResult(
-            api::message::ToolCallResult {
-                tool_call_id,
-                context: None,
-                result: None,
-            },
-        )),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-/// BYOP `from_args` 解析失败时,emit 占位 ToolCall 作 carrier:
-/// `tool` oneof 留 None(没有合适的结构化 variant),原始 fn_name + args_str 编码到
-/// `server_message_data` 为 `<fn_name>\n<args_str>`。下一轮 build_chat_request →
-/// `serialize_outgoing_tool_call` 的 carrier 分支据此还原,保证上游模型看到的
-/// tool_use name / args 与原 call 一致(否则用 "warp_internal_empty" 占位会让模型
-/// 困惑,也对不上紧随的 ToolCallResult error 上下文)。
-fn make_tool_call_carrier_message(
-    task_id: &str,
-    request_id: &str,
-    tool_call_id: &str,
-    fn_name: &str,
-    args_str: &str,
-) -> api::Message {
-    let carrier = format!("{}\n{}", fn_name, args_str);
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: carrier,
-        citations: vec![],
-        message: Some(api::message::Message::ToolCall(api::message::ToolCall {
-            tool_call_id: tool_call_id.to_owned(),
-            tool: None,
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-fn make_tool_call_message(
-    task_id: &str,
-    request_id: &str,
-    tool_call_id: &str,
-    tool: api::message::tool_call::Tool,
-) -> api::Message {
-    api::Message {
-        id: Uuid::new_v4().to_string(),
-        task_id: task_id.to_owned(),
-        server_message_data: String::new(),
-        citations: vec![],
-        message: Some(api::message::Message::ToolCall(api::message::ToolCall {
-            tool_call_id: tool_call_id.to_owned(),
-            tool: Some(tool),
-        })),
-        request_id: request_id.to_owned(),
-        timestamp: None,
-    }
-}
-
-fn create_task_event(task_id: &str) -> api::ResponseEvent {
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::ClientActions(
-            api::response_event::ClientActions {
-                actions: vec![api::ClientAction {
-                    action: Some(api::client_action::Action::CreateTask(
-                        api::client_action::CreateTask {
-                            task: Some(api::Task {
-                                id: task_id.to_owned(),
-                                description: String::new(),
-                                dependencies: None,
-                                messages: vec![],
-                                summary: String::new(),
-                                server_data: String::new(),
-                            }),
-                        },
-                    )),
-                }],
-            },
-        )),
-    }
-}
-
-/// 构造一条 `Action::CreateTask` 表示新 subtask,带 `dependencies.parent_task_id`。
-/// conversation 在 `apply_client_action::CreateTask` 看到 `task.parent_id()` 非空 →
-/// 走 `Task::new_subtask` 路径,从 parent.messages 找匹配的 subagent tool_call、
-/// 抽 `SubagentParams` 挂到 subtask、emit `BlocklistAIHistoryEvent::CreatedSubtask`。
-/// LRC tag-in 浮窗 spawn 链路依赖此事件。
-fn create_subtask_event(subtask_id: &str, parent_task_id: &str) -> api::ResponseEvent {
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::ClientActions(
-            api::response_event::ClientActions {
-                actions: vec![api::ClientAction {
-                    action: Some(api::client_action::Action::CreateTask(
-                        api::client_action::CreateTask {
-                            task: Some(api::Task {
-                                id: subtask_id.to_owned(),
-                                description: String::new(),
-                                dependencies: Some(api::task::Dependencies {
-                                    parent_task_id: parent_task_id.to_owned(),
-                                }),
-                                messages: vec![],
-                                summary: String::new(),
-                                server_data: String::new(),
-                            }),
-                        },
-                    )),
-                }],
-            },
-        )),
-    }
-}
-
-fn make_finished_done(
-    usage_metadata: Option<api::response_event::stream_finished::ConversationUsageMetadata>,
-) -> api::ResponseEvent {
-    api::ResponseEvent {
-        r#type: Some(api::response_event::Type::Finished(
-            api::response_event::StreamFinished {
-                reason: Some(api::response_event::stream_finished::Reason::Done(
-                    api::response_event::stream_finished::Done {},
-                )),
-                conversation_usage_metadata: usage_metadata,
-                token_usage: vec![],
-                should_refresh_model_config: false,
-                request_cost: None,
-            },
-        )),
     }
 }
 
